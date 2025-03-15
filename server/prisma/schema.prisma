@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model order_items {
+  id         Int      @id(map: "PK__order_it__3213E83FEA75D3F2") @default(autoincrement())
+  order_id   Int
+  service_id Int
+  quantity   Int
+  price      Decimal  @db.Decimal(10, 2)
+  orders     orders   @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_order_items_orders")
+  services   services @relation(fields: [service_id], references: [id], onUpdate: NoAction, map: "FK_order_items_services")
+}
+
+model order_statuses {
+  id          Int      @id(map: "PK__order_st__3213E83F3827EE0F") @default(autoincrement())
+  status_name String   @unique(map: "UQ__order_st__501B37534F868B8D") @db.NVarChar(50)
+  orders      orders[]
+}
+
+model orders {
+  id             Int            @id(map: "PK__orders__3213E83FA76F9DF0") @default(autoincrement())
+  user_id        Int
+  status_id      Int
+  total_price    Decimal        @default(0.00, map: "DF__orders__total_pr__44FF419A") @db.Decimal(10, 2)
+  created_at     DateTime?      @default(now(), map: "DF__orders__created___45F365D3")
+  updated_at     DateTime?      @default(now(), map: "DF__orders__updated___46E78A0C")
+  order_items    order_items[]
+  order_statuses order_statuses @relation(fields: [status_id], references: [id], onUpdate: NoAction, map: "FK_orders_status")
+  users          users          @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_orders_users")
+  payments       payments[]
+}
+
+model payments {
+  id             Int       @id(map: "PK__payments__3213E83FE6D010EC") @default(autoincrement())
+  order_id       Int
+  payment_method String    @db.NVarChar(10)
+  amount         Decimal   @db.Decimal(10, 2)
+  payment_status String    @default("pending", map: "DF__payments__paymen__52593CB8") @db.NVarChar(10)
+  created_at     DateTime? @default(now(), map: "DF__payments__create__534D60F1")
+  orders         orders    @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_payments_orders")
+}
+
+model services {
+  id          Int           @id(map: "PK__services__3213E83FC8246582") @default(autoincrement())
+  name        String        @unique(map: "UQ__services__72E12F1B328B0CA6") @db.NVarChar(100)
+  description String?       @db.NVarChar(Max)
+  price       Decimal       @db.Decimal(10, 2)
+  created_at  DateTime?     @default(now(), map: "DF__services__create__3F466844")
+  order_items order_items[]
+}
+
+model users {
+  id            Int       @id(map: "PK__users__3213E83F330722C6") @default(autoincrement())
+  username      String    @unique(map: "UQ__users__F3DBC5729B67007B") @db.NVarChar(50)
+  email         String    @unique(map: "UQ__users__AB6E6164CEB82026") @db.NVarChar(100)
+  password_hash String    @db.NVarChar(255)
+  role          String    @default("customer", map: "DF__users__role__3A81B327") @db.NVarChar(10)
+  created_at    DateTime? @default(now(), map: "DF__users__created_a__3B75D760")
+  orders        orders[]
+}
