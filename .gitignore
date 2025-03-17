@@ -11,6 +11,8 @@ lerna-debug.log*
 #ide files
 .idea
 
+#secrets
+.env
 
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
