@@ -88,3 +88,5 @@ VALUES ('Pending'),
        ('Completed'),
        ('Cancelled');
 GO
+
+alter table users add goodleId varchar(max)

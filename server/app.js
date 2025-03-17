@@ -5,7 +5,10 @@ const jwt = require("jsonwebtoken");
 const {PrismaClient} = require("@prisma/client");
 const path = require("path");
 const cookieParser = require("cookie-parser");
-const verifyToken = require("./middleware/authMiddleware")
+const verifyTokenExceptLogin = require("./middleware/authMiddleware")
+
+//routes import
+const authRouter = require("./routes/authRoutes");
 
 const app = express();
 
@@ -20,7 +23,19 @@ const credentials = {
     passphrase: "qwer",
 };
 
-router.get("/", verifyToken, (req, res) => {
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+
+app.use(express.static(path.join(__dirname, "public")));
+app.use(verifyTokenExceptLogin);
+app.use(cookieParser());
+
+//routes
+app.use("/api",authRouter);
+
+app.get("/", verifyTokenExceptLogin, (req, res) => {
+    res.redirect("/api/login");
 })
 
 

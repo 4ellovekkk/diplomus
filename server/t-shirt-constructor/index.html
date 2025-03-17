@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T-Shirt Constructor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+    <h1>Fancy T-Shirt Constructor</h1>
+    <div class="tshirt-container">
+        <div id="tshirt-model" class="tshirt-model">
+            <img src="t-shirt-template.png" alt="T-Shirt Model" class="tshirt-template">
+            <div id="text-overlay" class="text-overlay" draggable="true">Your Text Here</div>
+            <div id="image-wrapper" class="image-wrapper">
+                <img id="custom-image" class="custom-image" src="" alt="Custom Image" style="display: none;">
+                <div class="resize-handle"></div>
+            </div>
+        </div>
+    </div>
+    <div class="controls">
+        <label for="text-input">Text:</label>
+        <input type="text" id="text-input" placeholder="Enter your text">
+
+        <label for="text-color-picker">Text Color:</label>
+        <input type="color" id="text-color-picker" value="#000000">
+
+        <label for="font-size">Font Size:</label>
+        <input type="range" id="font-size" min="10" max="50" value="20">
+
+        <label for="image-upload">Upload Image:</label>
+        <input type="file" id="image-upload" accept="image/*">
+    </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
