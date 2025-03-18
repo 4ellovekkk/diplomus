@@ -1,10 +1,10 @@
 const jwt = require("jsonwebtoken");
-const { PrismaClient } = require("@prisma/client");
+const {PrismaClient} = require("@prisma/client");
 const prisma = new PrismaClient();
 
 const verifyTokenExceptLogin = (req, res, next) => {
     // Skip token verification for /api/login
-    if (req.path === "/api/login") {
+    if ((req.path === "/favicon.ico") || (req.path === "/api/login") || (req.path === "/auth/google") || (req.path === "/") || (req.path === "/api/register")) {
         return next();
     }
 
@@ -12,7 +12,7 @@ const verifyTokenExceptLogin = (req, res, next) => {
     const token = req.headers["authorization"] || req.cookies.token || req.query.token;
 
     if (!token) {
-        return res.status(401).json({ message: "Access denied. No token provided." });
+        return res.status(401).json({message: "Access denied. No token provided."});
     }
 
     try {
@@ -21,18 +21,18 @@ const verifyTokenExceptLogin = (req, res, next) => {
         req.user = decoded;
 
         // Optionally, you can check if the user exists in the database
-        prisma.user.findUnique({ where: { id: decoded.userId } })
+        prisma.user.findUnique({where: {id: decoded.userId}})
             .then(user => {
                 if (!user) {
-                    return res.status(401).json({ message: "User not found." });
+                    return res.status(401).json({message: "User not found."});
                 }
                 next();
             })
             .catch(err => {
-                return res.status(500).json({ message: "Internal server error." });
+                return res.status(500).json({message: "Internal server error."});
             });
     } catch (err) {
-        return res.status(400).json({ message: "Invalid token." });
+        return res.status(400).json({message: "Invalid token."});
     }
 };
 module.exports = verifyTokenExceptLogin;

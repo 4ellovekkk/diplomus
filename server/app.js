@@ -5,6 +5,8 @@ const jwt = require("jsonwebtoken");
 const {PrismaClient} = require("@prisma/client");
 const path = require("path");
 const cookieParser = require("cookie-parser");
+const passport = require('./config/passport');
+const session = require('express-session');
 const verifyTokenExceptLogin = require("./middleware/authMiddleware")
 
 //routes import
@@ -22,21 +24,35 @@ const credentials = {
     ca: ca,
     passphrase: "qwer",
 };
-
+//set view engine
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-
+//middleware
+app.use(cookieParser());
+app.use(express.json());
+app.use(express.urlencoded({extended: true}));
+app.use(session({
+    resave: false,
+    saveUninitialized: false,
+    secret: ca
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(verifyTokenExceptLogin);
-app.use(cookieParser());
-
 //routes
-app.use("/api",authRouter);
+app.use("/api", authRouter);
 
-app.get("/", verifyTokenExceptLogin, (req, res) => {
-    res.redirect("/api/login");
-})
+
+//basic routes
+app.get("/", (req, res) => {
+    res.render("index");
+});
+app.get(
+    "/auth/google",
+    passport.authenticate("google", {scope: ["profile", "email"]})
+);
 
 
 https.createServer(credentials, app).listen(3000, () => {

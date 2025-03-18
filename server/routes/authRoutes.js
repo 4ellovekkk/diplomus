@@ -1,72 +1,113 @@
 const express = require("express");
-const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { PrismaClient } = require("@prisma/client");
-
+const {PrismaClient} = require("@prisma/client");
+const bcrypt = require("bcryptjs");
 const prisma = new PrismaClient();
 const router = express.Router();
+const bodyParser = require("body-parser");
 
-router.get("/login", async (req, res) => {
-    res.render("login"); // Render the login.ejs file
-})
+// Middleware for authentication
+const verifyTokenExceptLogin = require("../middleware/authMiddleware");
 
-router.post("/api/login", async (req, res) => {
-    const { username, password } = req.body;
-
+// Register a new user
+router.post("/users", async (req, res) => {
     try {
-        // Find the user by username or email
-        const user = await prisma.users.findFirst({
-            where: {
-                OR: [
-                    { username: username },
-                    { email: username },
-                ],
-            },
+        const {username, email, password, role} = req.body;
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const user = await prisma.users.create({
+            data: {
+                username,
+                email,
+                password_hash: hashedPassword,
+                role: role || "customer"
+            }
         });
 
-        if (!user) {
-            return res.status(401).json({ message: "Invalid username or password" });
-        }
-
-        // Compare the provided password with the hashed password in the database
-        const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-
-        if (!isPasswordValid) {
-            return res.status(401).json({ message: "Invalid username or password" });
-        }
-
-        // Generate a JWT token
-        const token = jwt.sign(
-            { userId: user.id, role: user.role },
-            JWT_SECRET,
-            { expiresIn: "1h" } // Token expires in 1 hour
-        );
-
-        // Set the token in a cookie
-        res.cookie(COOKIE_NAME, token, {
-            httpOnly: true, // Prevent client-side JavaScript from accessing the cookie
-            secure: true, // Ensure the cookie is only sent over HTTPS
-            maxAge: 3600000, // 1 hour in milliseconds
-        });
-
-        // Return success response
-        res.status(200).json({ message: "Login successful", token });
+        res.status(201).json(user);
     } catch (error) {
-        console.error("Login error:", error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({message: "Error creating user", error: error.message});
     }
 });
 
-// Logout Route
-router.post("/api/logout", (req, res) => {
-    // Clear the auth cookie
-    res.clearCookie(COOKIE_NAME, {
-        httpOnly: true,
-        secure: true,
-    });
+router.get("/login", (req, res) => {
+    res.render("login");
+})
 
-    // Return success response
-    res.status(200).json({ message: "Logout successful" });
+// Login route
+router.post("/login", async (req, res) => {
+    try {
+        const {email, password} = req.body;
+        console.log(email, password);
+        const user = await prisma.users.findUnique({where: {email}});
+
+        if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+            return res.status(401).json({message: "Invalid email or password"});
+        }
+
+        const token = jwt.sign({userId: user.id, role: user.role}, "your_jwt_secret_key", {expiresIn: "1h"});
+        res.json({token});
+    } catch (error) {
+        res.status(500).json({message: "Error logging in", error: error.message});
+    }
+});
+
+// Get all users
+router.get("/users", verifyTokenExceptLogin, async (req, res) => {
+    try {
+        const users = await prisma.users.findMany();
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({message: "Error retrieving users", error: error.message});
+    }
+});
+
+// Get a single user by ID
+router.get("/users/:id", verifyTokenExceptLogin, async (req, res) => {
+    try {
+        const user = await prisma.users.findUnique({
+            where: {id: parseInt(req.params.id)}
+        });
+
+        if (!user) return res.status(404).json({message: "User not found"});
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({message: "Error retrieving user", error: error.message});
+    }
+});
+
+// Update a user by ID
+router.put("/users/:id", verifyTokenExceptLogin, async (req, res) => {
+    try {
+        const {username, email, password, role} = req.body;
+        const hashedPassword = password ? await bcrypt.hash(password, 10) : undefined;
+
+        const updatedUser = await prisma.users.update({
+            where: {id: parseInt(req.params.id)},
+            data: {
+                username,
+                email,
+                password_hash: hashedPassword,
+                role
+            }
+        });
+
+        res.json(updatedUser);
+    } catch (error) {
+        res.status(500).json({message: "Error updating user", error: error.message});
+    }
+});
+
+// Delete a user by ID
+router.delete("/users/:id", verifyTokenExceptLogin, async (req, res) => {
+    try {
+        await prisma.users.delete({
+            where: {id: parseInt(req.params.id)}
+        });
+        res.json({message: "User deleted successfully"});
+    } catch (error) {
+        res.status(500).json({message: "Error deleting user", error: error.message});
+    }
 });
 
 module.exports = router;
