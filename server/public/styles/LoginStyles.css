@@ -1,0 +1,99 @@
+/* General Styles */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    background: radial-gradient(circle at bottom left, #fa8a09 10%, transparent 50%),
+    radial-gradient(circle at top right, #ff8c00 10%, transparent 40%),
+    #2f4858; /* Fallback background color */
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: #333;
+}
+
+/* Login Container */
+.login-container {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+/* Login Box */
+.login-box h1 {
+    margin-bottom: 1rem;
+    font-size: 2rem;
+    color: #ff8c00;
+    -webkit-text-stroke: 1px black;
+}
+
+.login-box p {
+    margin-bottom: 2rem;
+    color: #666;
+}
+
+/* Input Groups */
+.input-group {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #444;
+}
+
+.input-group input {
+    width: 90%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.input-group input:focus {
+    border-color: #ff8c00;
+}
+
+/* Button */
+button {
+    width: 100%;
+    padding: 0.75rem;
+    background: #ff8c00;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+button:hover {
+    background: #e07b00;
+}
+
+/* Footer */
+.footer {
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.footer a {
+    color: coral;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}
