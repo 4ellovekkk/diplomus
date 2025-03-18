@@ -12,6 +12,8 @@
     <div class="login-box">
         <h1>Welcome Back!</h1>
         <p>Please log in to continue</p>
+
+        <!-- Regular Login Form -->
         <form action="/api/login" method="POST">
             <div class="input-group">
                 <label for="email">Username or Email</label>
@@ -23,6 +25,15 @@
             </div>
             <button type="submit">Log In</button>
         </form>
+
+        <!-- Google Login Button -->
+        <div class="google-login">
+            <p>Or login with</p>
+            <a href="/auth/google" class="google-btn">
+                <img src="/images/google-logo.png" width="20%" height="20%" alt="Google Logo">
+            </a>
+        </div>
+
         <div class="footer">
             <p>Don't have an account? <a href="/api/register">Sign Up</a></p>
         </div>
