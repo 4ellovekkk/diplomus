@@ -63,5 +63,6 @@ model users {
   role          String    @default("customer", map: "DF__users__role__3A81B327") @db.NVarChar(10)
   created_at    DateTime? @default(now(), map: "DF__users__created_a__3B75D760")
   goodleId      String?   @db.VarChar(Max)
+  is_locked     Boolean?
   orders        orders[]
 }

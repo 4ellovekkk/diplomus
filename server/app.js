@@ -13,6 +13,7 @@ const verifyTokenExceptLogin = require("./middleware/authMiddleware")
 const authRouter = require("./routes/authRoutes");
 
 const app = express();
+const prisma = new PrismaClient();
 
 const privateKey = fs.readFileSync("server.key", "utf8");
 const certificate = fs.readFileSync("server.pem", "utf8");
@@ -53,6 +54,10 @@ app.get(
     "/auth/google",
     passport.authenticate("google", {scope: ["profile", "email"]})
 );
+app.get("/admin", async (req, res) => {
+    const users = await prisma.users.findMany();
+    res.render("admin", { users });
+});
 
 
 https.createServer(credentials, app).listen(3000, () => {

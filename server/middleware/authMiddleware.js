@@ -4,10 +4,9 @@ const prisma = new PrismaClient();
 
 const verifyTokenExceptLogin = (req, res, next) => {
     // Skip token verification for /api/login
-    if ((req.path === "/favicon.ico") || (req.path === "/api/login") || (req.path === "/auth/google") || (req.path === "/") || (req.path === "/api/register")) {
+    if  ((req.path === "/api/login") || (req.path === "/auth/google") || (req.path === "/") || (req.path === "/api/register")) {
         return next();
     }
-
     // Get the token from the request headers, cookies, or query parameters
     const token = req.headers["authorization"] || req.cookies.token || req.query.token;
 
@@ -17,11 +16,10 @@ const verifyTokenExceptLogin = (req, res, next) => {
 
     try {
         // Verify the token
-        const decoded = jwt.verify(token, "your_jwt_secret_key");
+        const decoded = jwt.verify(token, "lexa");
         req.user = decoded;
-
         // Optionally, you can check if the user exists in the database
-        prisma.user.findUnique({where: {id: decoded.userId}})
+        prisma.users.findUnique({where: {id: decoded.userId}})
             .then(user => {
                 if (!user) {
                     return res.status(401).json({message: "User not found."});
@@ -32,6 +30,7 @@ const verifyTokenExceptLogin = (req, res, next) => {
                 return res.status(500).json({message: "Internal server error."});
             });
     } catch (err) {
+        console.log(err);
         return res.status(400).json({message: "Invalid token."});
     }
 };

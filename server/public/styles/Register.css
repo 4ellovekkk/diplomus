@@ -1,54 +1,52 @@
-/* General Styles */
 body {
     margin: 0;
     padding: 0;
     font-family: 'Poppins', sans-serif;
-    display: flex;
     background: gray;
+    display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     color: #333;
 }
 
-/* Login Container */
-.login-container {
+/* Registration Container */
+.register-container {
     background: rgba(255, 255, 255, 0.9);
     padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     width: 100%;
     max-width: 400px;
     text-align: center;
 }
 
-/* Login Box */
-.login-box h1 {
-    margin-bottom: 1rem;
+.register-container h1 {
+    margin-bottom: 1.5rem;
     font-size: 2rem;
     color: #ff8c00;
 }
 
-.login-box p {
+.register-container p {
     margin-bottom: 2rem;
     color: #666;
 }
 
-/* Input Groups */
-.input-group {
+/* Form Styles */
+.form-group {
     margin-bottom: 1.5rem;
-    text-align: center;
+    text-align: left;
 }
 
-.input-group label {
+.form-group label {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600;
     color: #444;
 }
 
-.input-group input {
-    width: 90%;
+.form-group input {
+    width: 95%;
     padding: 0.75rem;
     border: 1px solid #ccc;
     border-radius: 10px;
@@ -57,28 +55,28 @@ body {
     transition: border-color 0.3s ease;
 }
 
-.input-group input:focus {
+.form-group input:focus {
     border-color: #ff8c00;
 }
 
-/* Button */
-button {
+/* Button Styles */
+.register-button {
     width: 100%;
     padding: 0.75rem;
     background: #ff8c00;
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 10px;
     font-size: 1rem;
     cursor: pointer;
     transition: background 0.3s ease;
 }
 
-button:hover {
+.register-button:hover {
     background: #e07b00;
 }
 
-/* Footer */
+/* Footer Styles */
 .footer {
     margin-top: 1.5rem;
     font-size: 0.9rem;
@@ -86,7 +84,7 @@ button:hover {
 }
 
 .footer a {
-    color: coral;
+    color: #ff8c00;
     text-decoration: none;
     font-weight: 600;
 }
