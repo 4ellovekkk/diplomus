@@ -1,127 +1,72 @@
-async function updateUserRole(userId, newRole) {
-    await fetch(`/api/users/${userId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: newRole })
-    });
-    location.reload();
+document.addEventListener("DOMContentLoaded", function () {
+    fetchUsers();
+
+    document.getElementById("searchInput").addEventListener("input", filterUsers);
+    document.getElementById("sortField").addEventListener("change", sortUsers);
+    document.getElementById("sortOrder").addEventListener("change", sortUsers);
+});
+
+let users = [];
+
+function fetchUsers() {
+    fetch("/api/users")
+        .then(response => response.json())
+        .then(data => {
+            users = data;
+            displayUsers(users);
+        })
+        .catch(error => console.error("Error fetching users:", error));
 }
 
-async function toggleLockUser(userId) {
-    await fetch(`/api/users/${userId}/lock`, { method: "PATCH" });
-    location.reload();
-}
+function displayUsers(usersList) {
+    const tableBody = document.getElementById("userTableBody");
+    tableBody.innerHTML = "";
 
-async function deleteUser(userId) {
-    if (confirm("Are you sure you want to delete this user?")) {
-        await fetch(`/api/users/${userId}`, { method: "DELETE" });
-        location.reload();
-    }
-}
-
-function showCreateUserForm() {
-    document.getElementById("formTitle").innerText = "Create User";
-    document.getElementById("userForm").reset();
-    document.getElementById("userId").value = "";
-    document.getElementById("userFormModal").style.display = "block";
-}
-
-function editUser(userId) {
-    fetch(`/api/users/${userId}`)
-        .then(res => res.json())
-        .then(user => {
-            document.getElementById("formTitle").innerText = "Edit User";
-            document.getElementById("userId").value = user.id;
-            document.getElementById("username").value = user.username;
-            document.getElementById("email").value = user.email;
-            document.getElementById("role").value = user.role;
-            document.getElementById("userFormModal").style.display = "block";
-        });
-}
-
-
-async function saveUser(event) {
-    event.preventDefault();
-
-    const userId = document.getElementById("userId").value;
-    const username = document.getElementById("username").value;
-    const email = document.getElementById("email").value;
-    const role = document.getElementById("role").value;
-    const password = document.getElementById("password").value;
-
-    // Only send password field if creating a new user
-    const user = { username, email, role };
-    if (!userId && password.trim()) {
-        user.password = password;
-    }
-
-    const method = userId ? "PUT" : "POST";
-    const url = userId ? `/api/users/${userId}` : "/api/users";
-
-    try {
-        const response = await fetch(url, {
-            method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(user)
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            alert(`Error: ${errorData.message || "Failed to save user"}`);
-            return;
+    usersList.forEach(user => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${user.id}</td>
+            <td>${user.username}</td>
+            <td>${user.email}</td>
+            <td>${user.role}</td>
+            <td>${user.is_locked ? 'Locked' : 'Active'}</td>
+            <td>
+                <button class="edit" onclick="editUser(${user.id})">Изменить</button>
+                <button class="delete" onclick="deleteUser(${user.id})">Удалить</button>
+                ${user.is_locked ?
+            `<button class="unlock" onclick="unlockUser(${user.id})">Разблокировать</button>` :
+            `<button class="lock" onclick="lockUser(${user.id})">Заблокировать</button>`
         }
-
-        closeUserForm();
-        location.reload();
-    } catch (error) {
-        console.error("Error saving user:", error);
-        alert("An unexpected error occurred.");
-    }
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
 }
 
-
-function closeUserForm() {
-    document.getElementById("userFormModal").style.display = "none";
+function filterUsers() {
+    const query = document.getElementById("searchInput").value.toLowerCase();
+    const filteredUsers = users.filter(user =>
+        user.username.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query) ||
+        user.role.toLowerCase().includes(query)
+    );
+    displayUsers(filteredUsers);
 }
 
-//-----------------------------------------------
-async function fetchUsers() {
-    const search = document.getElementById("searchInput").value.trim();
-    const sortBy = document.getElementById("sortField").value;
+function sortUsers() {
+    const field = document.getElementById("sortField").value;
     const order = document.getElementById("sortOrder").value;
 
-    const queryParams = new URLSearchParams({ search, sortBy, order }).toString();
-    const response = await fetch(`/api/users?${queryParams}`);
+    users.sort((a, b) => {
+        let valueA = a[field];
+        let valueB = b[field];
 
-    const users = await response.json();
-    renderUsers(users);
-}
+        if (typeof valueA === "string") valueA = valueA.toLowerCase();
+        if (typeof valueB === "string") valueB = valueB.toLowerCase();
 
-function renderUsers(users) {
-    const tbody = document.getElementById("userTableBody");
-    tbody.innerHTML = "";
-    users.forEach(user => {
-        tbody.innerHTML += `
-            <tr>
-                <td>${user.id}</td>
-                <td>${user.username}</td>
-                <td>${user.email}</td>
-                <td>
-                    <select onchange="updateUserRole(${user.id}, this.value)">
-                        <option value="customer" ${user.role === 'customer' ? 'selected' : ''}>Customer</option>
-                        <option value="employee" ${user.role === 'employee' ? 'selected' : ''}>Employee</option>
-                        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
-                    </select>
-                </td>
-                <td>
-                    <button onclick="toggleLockUser(${user.id})" class="${user.is_locked ? 'locked' : 'unlocked'}">
-                        ${user.is_locked ? 'Locked' : 'Active'}
-                    </button>
-                </td>
-                <td>
-                    <button onclick="editUser(${user.id})">Edit</button>
-                    <button onclick="deleteUser(${user.id})" class="btn-danger">Delete</button>
-                </td>
-            </tr>`;
+        if (order === "asc") return valueA > valueB ? 1 : -1;
+        else return valueA < valueB ? 1 : -1;
     });
+
+    displayUsers(users);
 }

@@ -58,6 +58,12 @@ app.get("/admin", async (req, res) => {
     const users = await prisma.users.findMany();
     res.render("admin", { users });
 });
+app.get("/about", (req, res) => {
+    res.render("about");
+})
+app.get("/services", (req, res) => {
+    res.render("services");
+})
 
 
 https.createServer(credentials, app).listen(3000, () => {

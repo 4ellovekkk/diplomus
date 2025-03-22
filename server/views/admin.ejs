@@ -44,7 +44,28 @@
         </tr>
 
         </thead>
-        <tbody id="userTableBody"></tbody>
+        <tbody id="userTableBody">
+        <% users.forEach(user => { %>
+        <tr>
+            <td><%= user.id %></td>
+            <td><%= user.username %></td>
+            <td><%= user.email%></td>
+            <td><%= user.role%></td>
+            <td><%= user.is_locked ? 'Locked' : 'Active' %></td>
+            <td>
+                <button class="view" onclick="viewUser(<%= user.id %>)">Просмотреть</button>
+                <button class="edit" onclick="editUser(<%= user.id %>)">Изменить</button>
+                <button class="delete" onclick="deleteUser(<%= user.id %>)">Удалить</button>
+                <% if (user.is_locked) { %>
+                    <button class="unlock" onclick="unlockUser(<%= user.id %>)">Разблокировать</button>
+                <% } else { %>
+                    <button class="lock" onclick="lockUser(<%= user.id %>)">Заблокировать</button>
+                <% } %>
+            </td>
+        </tr>
+        <% }); %>
+
+        </tbody>
     </table>
 </section>
 

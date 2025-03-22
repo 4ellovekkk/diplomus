@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - Print Center</title>
+    <link rel="stylesheet" href="/styles/about.css">
+    <script src="https://api-maps.yandex.ru/2.1/?lang=en_RU&apikey=fbdc0972-5e05-434e-bb16-6236571a6f3b"
+            type="text/javascript"></script>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=ваш API-ключ&lang=ru_RU" type="text/javascript"></script>
+    <script>
+        ymaps.ready(init);
+
+        function init() {
+            const map = new ymaps.Map("map", {
+                center: [55.7558, 37.6176],  // Example coordinates (Moscow)
+                zoom: 15,
+                type: 'yandex#hybrid'  // Set the map to the hybrid type
+            });
+
+            const placemark = new ymaps.Placemark([55.7558, 37.6176], {
+                hintContent: 'Print Center',
+                balloonContent: 'Our print center is located here.'
+            });
+
+            map.geoObjects.add(placemark);
+        }
+    </script>
+</head>
+<body>
+<header>
+    <nav>
+        <div class="logo">Print Center</div>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/services">Services</a></li>
+            <li><a href="/about">About</a></li>
+            <li><a href="/api/login" class="btn">Login</a></li>
+        </ul>
+    </nav>
+</header>
+
+<section class="info">
+    <h2>Our Address</h2>
+    <p>123 Print Center Street, Cityname, Country</p>
+
+    <h2>Working Hours</h2>
+    <p>Monday - Friday: 9:00 AM - 6:00 PM</p>
+    <p>Saturday: 10:00 AM - 4:00 PM</p>
+    <p>Sunday: Closed</p>
+
+    <h2>Contact Information</h2>
+    <p>Email: contact@printcenter.com</p>
+    <p>Phone: +1 234 567 890</p>
+</section>
+
+<section class="map">
+    <h2>Find Us Here</h2>
+    <div id="map" style="width: 100%; height: 400px;"></div>
+</section>
+</body>
+</html>

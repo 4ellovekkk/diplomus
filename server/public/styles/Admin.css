@@ -48,12 +48,11 @@ nav ul li a {
     font-weight: 600;
     padding: 8px 12px;
     transition: 0.3s;
+    border-radius: 5px;
 }
 
-nav ul li a:hover,
-nav ul li .btn:hover {
+nav ul li a:hover {
     background: #e07b00;
-    border-radius: 5px;
 }
 
 /* Admin Panel */
@@ -69,12 +68,13 @@ nav ul li .btn:hover {
 }
 
 .admin-panel h1 {
-    color:coral;
+    color: coral;
     margin-bottom: 1.5rem;
 }
 
+/* Buttons */
 button {
-    background:coral;
+    background: coral;
     color: white;
     border: none;
     padding: 10px 15px;
@@ -82,17 +82,50 @@ button {
     font-size: 1rem;
     cursor: pointer;
     transition: background 0.3s ease;
+    margin: 5px;
 }
 
 button:hover {
     background: #e07b00;
 }
 
-.btn-danger {
+.view {
+    background: #5bc0de;
+}
+
+.view:hover {
+    background: #31b0d5;
+}
+
+.edit {
+    background: #f0ad4e;
+}
+
+.edit:hover {
+    background: #ec971f;
+}
+
+.delete {
     background: #d9534f;
 }
 
-.btn-danger:hover {
+.delete:hover {
+    background: #c9302c;
+}
+
+.unlock {
+    background: #5cb85c;
+}
+
+.unlock:hover {
+    background: #4cae4c;
+}
+
+.lock {
+    background: #d9534f;
+}
+
+.lock:hover {
     background: #c9302c;
 }
 
@@ -110,7 +143,7 @@ th, td {
 }
 
 th {
-    background:coral;
+    background: coral;
     color: white;
 }
 
@@ -118,28 +151,16 @@ tr:hover {
     background: #f1f1f1;
 }
 
-/* Select Dropdown */
-select {
-    padding: 5px;
+/* Search & Sort */
+.search-sort {
+    margin-bottom: 1.5rem;
+}
+
+.search-sort input, .search-sort select {
+    padding: 8px;
     border-radius: 5px;
     border: 1px solid #ccc;
-}
-
-/* Lock / Unlock Button */
-button.locked {
-    background: #d9534f;
-}
-
-button.unlocked {
-    background: #5cb85c;
-}
-
-button.locked:hover {
-    background: #c9302c;
-}
-
-button.unlocked:hover {
-    background: #4cae4c;
+    margin: 0 5px;
 }
 
 /* Modal */
@@ -178,9 +199,6 @@ button.unlocked:hover {
     width: 100%;
 }
 
-
-
-
 .close {
     position: absolute;
     right: 20px;
@@ -189,6 +207,8 @@ button.unlocked:hover {
     cursor: pointer;
     color: #666;
 }
+
+/* Form Buttons */
 .form-buttons {
     display: flex;
     justify-content: space-between;
