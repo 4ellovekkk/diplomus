@@ -5,27 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Print Center</title>
     <link rel="stylesheet" href="/styles/Index.css">
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/styles/Header.css">
+    <link rel="stylesheet" href="/styles/Buttons.css">
+    <link rel="stylesheet" href="/styles/Footer.css">
 </head>
 <body>
 <!-- Navigation Bar -->
-<header>
-    <nav>
-        <div class="logo">Print Center</div>
-        <ul>
-            <li><a href="/">Home</a></li>
-            <li><a href="/services">Services</a></li>
-            <li><a href="/about">About</a></li>
-            <li><a href="/api/login" class="btn">Login</a></li>
-        </ul>
-    </nav>
-</header>
+<%- include('./partials/header'); %>
 
 <!-- Hero Section -->
 <section class="hero">
     <h1>Fast & Reliable Printing Services</h1>
     <p>Get high-quality prints at affordable prices. Order online today!</p>
-    <a href="/services" class="btn">Explore Services</a>
+    <%- include('./partials/button', { href: '/services', text: 'Explore Services' }); %>
 </section>
 
 <!-- Services Section -->
@@ -35,29 +27,29 @@
         <div class="service">
             <i class="fas fa-print"></i>
             <h3>Document Printing</h3>
-            <p>High-quality prints for all your documents.</p>
+            <p>High-quality prints for all your documents in any sizes and parameters.</p>
+            <%- include('./partials/button', { href: '/services/document-printing', text: 'Learn More' }); %>
         </div>
         <div class="service">
             <i class="fas fa-copy"></i>
             <h3>Copy & Scanning</h3>
             <p>Fast and precise scanning and copying services.</p>
+            <%- include('./partials/button', { href: '/services/copy-scanning', text: 'Learn More' }); %>
         </div>
         <div class="service">
             <i class="fas fa-paint-brush"></i>
             <h3>Graphic Design</h3>
             <p>Custom design solutions for your printing needs.</p>
+            <%- include('./partials/button', { href: '/services/graphic-design', text: 'Learn More' }); %>
         </div>
         <div class="service">
             <i class="fas fa-paint-brush"></i>
             <h3>Merch Design</h3>
-            <p>Custom design solutions for your merch. Such as T-shirts, cups,etc.</p>
+            <p>Custom design solutions for your merch, such as T-shirts, cups, etc.</p>
+            <%- include('./partials/button', { href: '/services/merch-design', text: 'Learn More' }); %>
         </div>
     </div>
 </section>
-
-<!-- Footer -->
-<footer>
-    <p>&copy; 2025 Print Center. All rights reserved.</p>
-</footer>
+<%- include('./partials/footer')%>
 </body>
 </html>

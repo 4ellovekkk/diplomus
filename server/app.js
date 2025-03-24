@@ -8,16 +8,24 @@ const cookieParser = require("cookie-parser");
 const passport = require('./config/passport');
 const session = require('express-session');
 const verifyTokenExceptLogin = require("./middleware/authMiddleware")
+const validator = require("validator");
+
+
 
 //routes import
 const authRouter = require("./routes/authRoutes");
+const orderRoutes = require("./routes/orderRoutes");
 
 const app = express();
 const prisma = new PrismaClient();
 
+
+
+
 const privateKey = fs.readFileSync("server.key", "utf8");
 const certificate = fs.readFileSync("server.pem", "utf8");
 const ca = fs.readFileSync("server.pem", "utf8");
+
 
 const credentials = {
     key: privateKey,
@@ -25,9 +33,14 @@ const credentials = {
     ca: ca,
     passphrase: "qwer",
 };
+
+
+
 //set view engine
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
+
+
 
 //middleware
 app.use(cookieParser());
@@ -42,9 +55,12 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(verifyTokenExceptLogin);
+
+
+
 //routes
 app.use("/api", authRouter);
-
+app.use("/api", orderRoutes);
 
 //basic routes
 app.get("/", (req, res) => {
@@ -56,7 +72,7 @@ app.get(
 );
 app.get("/admin", async (req, res) => {
     const users = await prisma.users.findMany();
-    res.render("admin", { users });
+    res.render("admin", {users});
 });
 app.get("/about", (req, res) => {
     res.render("about");
@@ -64,6 +80,8 @@ app.get("/about", (req, res) => {
 app.get("/services", (req, res) => {
     res.render("services");
 })
+
+
 
 
 https.createServer(credentials, app).listen(3000, () => {

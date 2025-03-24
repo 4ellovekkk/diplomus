@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About Us - Print Center</title>
     <link rel="stylesheet" href="/styles/about.css">
+    <link rel="stylesheet" href="/styles/Header.css">
+    <link rel="stylesheet" href="/styles/Footer.css">
+    <link rel="stylesheet" href="/styles/Buttons.css">
     <script src="https://api-maps.yandex.ru/2.1/?lang=en_RU&apikey=fbdc0972-5e05-434e-bb16-6236571a6f3b"
             type="text/javascript"></script>
     <script src="https://api-maps.yandex.ru/2.1/?apikey=ваш API-ключ&lang=ru_RU" type="text/javascript"></script>
@@ -28,17 +31,7 @@
     </script>
 </head>
 <body>
-<header>
-    <nav>
-        <div class="logo">Print Center</div>
-        <ul>
-            <li><a href="/">Home</a></li>
-            <li><a href="/services">Services</a></li>
-            <li><a href="/about">About</a></li>
-            <li><a href="/api/login" class="btn">Login</a></li>
-        </ul>
-    </nav>
-</header>
+<%- include('./partials/header');%>
 
 <section class="info">
     <h2>Our Address</h2>
@@ -58,5 +51,8 @@
     <h2>Find Us Here</h2>
     <div id="map" style="width: 100%; height: 400px;"></div>
 </section>
+
+
+<%- include('./partials/footer');%>
 </body>
 </html>
