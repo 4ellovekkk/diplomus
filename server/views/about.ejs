@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="/styles/Buttons.css">
     <script src="https://api-maps.yandex.ru/2.1/?lang=en_RU&apikey=fbdc0972-5e05-434e-bb16-6236571a6f3b"
             type="text/javascript"></script>
-    <script src="https://api-maps.yandex.ru/2.1/?apikey=ваш API-ключ&lang=ru_RU" type="text/javascript"></script>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=ваш API-ключ&lang=en_US" type="text/javascript"></script>
     <script>
         ymaps.ready(init);
 
@@ -18,7 +18,7 @@
             const map = new ymaps.Map("map", {
                 center: [55.7558, 37.6176],  // Example coordinates (Moscow)
                 zoom: 15,
-                type: 'yandex#hybrid'  // Set the map to the hybrid type
+                type: 'yandex#map',  // Set the map to the hybrid type
             });
 
             const placemark = new ymaps.Placemark([55.7558, 37.6176], {

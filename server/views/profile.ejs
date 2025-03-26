@@ -4,23 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Profile</title>
-    <link rel="stylesheet" href="/styles/profile.css">
+    <link rel="stylesheet" href="/styles/Profile.css">
+    <link rel="stylesheet" href="/styles/Cart.css">
+    <link rel="stylesheet" href="/styles/Header.css">
+    <link rel="stylesheet" href="/styles/Footer.css">
+    <link rel="stylesheet" href="/styles/Buttons.css">
+
 </head>
 <body>
 
-<header>
-    <nav>
-        <div class="logo">Print Center</div>
-        <ul>
-            <li><a href="/">Home</a></li>
-            <li><a href="/services">Services</a></li>
-            <li><a href="/profile" class="active">Profile</a></li>
-            <li><a href="/contact">Contact</a></li>
-            <li><a href="/api/logout" class="btn">Logout</a></li>
-        </ul>
-    </nav>
-</header>
-
+<%- include('./partials/header');%>
 <section class="profile-container">
     <div class="user-info">
         <h2>👤 Personal Info</h2>
@@ -30,18 +23,7 @@
         <p><strong>Address:</strong> <%= user.address %></p>
     </div>
 
-    <div class="cart">
-        <h2>🛒 Shopping Cart</h2>
-        <% if (user.cart.length > 0) { %>
-            <ul>
-                <% user.cart.forEach(item => { %>
-                    <li><strong><%= item.item %></strong> - $<%= item.price %> x <%= item.quantity %></li>
-                <% }) %>
-            </ul>
-        <% } else { %>
-            <p>Your cart is empty.</p>
-        <% } %>
-    </div>
+    <%- include('./partials/cart',{cart:cart || [] });%>
 
     <div class="orders">
         <h2>📦 Previous Orders</h2>
@@ -60,9 +42,6 @@
     </div>
 </section>
 
-<footer>
-    <p>&copy; 2025 Print Center. All rights reserved.</p>
-</footer>
-
+<%- include('./partials/footer');%>
 </body>
 </html>

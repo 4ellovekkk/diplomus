@@ -16,7 +16,7 @@ const verifyTokenExceptLogin = (req, res, next) => {
 
     try {
         // Verify the token
-        const decoded = jwt.verify(token, env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded;
         // Optionally, you can check if the user exists in the database
         prisma.users.findUnique({where: {id: decoded.userId}})

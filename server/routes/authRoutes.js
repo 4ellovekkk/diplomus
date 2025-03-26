@@ -35,7 +35,8 @@ router.post("/register", async (req, res) => {
                 username,
                 email,
                 password_hash: hashedPassword,
-                role: role || "customer"
+                role: role || "customer",
+                is_locked: 0
             }
         });
 
@@ -82,7 +83,7 @@ router.post("/login", async (req, res) => {
             maxAge: 3600000,
             sameSite: "strict"
         });
-        res.redirect(301, "/");
+        res.redirect(301, "/profile");
 
         // res.json({message: "Logged in successfully"});
     } catch (error) {

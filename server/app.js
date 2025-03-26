@@ -14,10 +14,16 @@ const validator = require("validator");
 
 //routes import
 const authRouter = require("./routes/authRoutes");
-const orderRoutes = require("./routes/orderRoutes");
+const cartRoutes = require("./routes/cartRoutes");
 
 const app = express();
 const prisma = new PrismaClient();
+
+app.use(session({
+    secret: "lexa",
+    resave: false,
+    saveUninitialized: true
+}));
 
 
 
@@ -31,7 +37,7 @@ const credentials = {
     key: privateKey,
     cert: certificate,
     ca: ca,
-    passphrase: "qwer",
+    passphrase: process.env.SESSION_SECRET,
 };
 
 
@@ -60,11 +66,12 @@ app.use(verifyTokenExceptLogin);
 
 //routes
 app.use("/api", authRouter);
-app.use("/api", orderRoutes);
+// app.use("/api", orderRoutes);
+app.use("/api", cartRoutes);
 
 //basic routes
 app.get("/", (req, res) => {
-    res.render("index");
+    res.render("index",);
 });
 app.get(
     "/auth/google",
@@ -80,6 +87,27 @@ app.get("/about", (req, res) => {
 app.get("/services", (req, res) => {
     res.render("services");
 })
+app.get("/profile", verifyTokenExceptLogin, async (req, res) => {
+    try {
+        const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+        const user = await prisma.users.findUnique({
+            where: { id: decoded.userId },
+            include: { orders: true } // Include user's orders
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        // Retrieve cart from session (ensure it exists)
+        const cart = req.session.cart || [];
+
+        res.render("profile", { user, cart }); // Pass 'cart' to the template
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Internal server error." });
+    }
+});
 
 
 
