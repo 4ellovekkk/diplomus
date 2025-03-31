@@ -61,7 +61,7 @@ router.get("/users", verifyTokenExceptLogin, async (req, res) => {
         const whereCondition = search
             ? {
                 OR: [
-                    {username: {contains: search }},
+                    {username: {contains: search}},
                     {email: {contains: search}},
                     {role: {contains: search}}
                 ]
@@ -136,21 +136,21 @@ router.get("/users/:id", verifyTokenExceptLogin, async (req, res) => {
 router.put("/users/:id", verifyTokenExceptLogin, async (req, res) => {
     try {
         const id = parseInt(req.params.id);
-        if (isNaN(id)) return res.status(400).json({ success: false, message: "Invalid user ID" });
+        if (isNaN(id)) return res.status(400).json({success: false, message: "Invalid user ID"});
 
-        const { username, email, password, role } = req.body;
-        const updateData = { username, email, role };
+        const {username, email, password, role} = req.body;
+        const updateData = {username, email, role};
 
         if (password) {
             updateData.password_hash = await bcrypt.hash(password, 10);
         }
 
         const updatedUser = await prisma.users.update({
-            where: { id },
+            where: {id},
             data: updateData
         });
 
-        res.json({ success: true, user: updatedUser }); // Add success flag
+        res.json({success: true, user: updatedUser}); // Add success flag
     } catch (error) {
         handleError(res, error, "Error updating user");
     }
@@ -169,7 +169,7 @@ router.patch("/users/:id/lock", verifyTokenExceptLogin, async (req, res) => {
             where: {id},
             data: {is_locked: !user.is_locked}
         });
-        updatedUser.success=true;
+        updatedUser.success = true;
 
         res.json(updatedUser);
     } catch (error) {
@@ -178,20 +178,19 @@ router.patch("/users/:id/lock", verifyTokenExceptLogin, async (req, res) => {
 });
 
 
-
 router.delete("/users/:id", verifyTokenExceptLogin, async (req, res) => {
     try {
         const id = parseInt(req.params.id);
-        if (isNaN(id)) return res.status(400).json({ success: false, message: "Invalid user ID" });
+        if (isNaN(id)) return res.status(400).json({success: false, message: "Invalid user ID"});
 
         await prisma.users.delete({
-            where: { id }
+            where: {id}
         });
 
-        res.json({ success: true, message: "User deleted successfully" });
+        res.json({success: true, message: "User deleted successfully"});
     } catch (error) {
         if (error.code === "P2025") {
-            return res.status(404).json({ success: false, message: "User not found" });
+            return res.status(404).json({success: false, message: "User not found"});
         }
         handleError(res, error, "Error deleting user");
     }

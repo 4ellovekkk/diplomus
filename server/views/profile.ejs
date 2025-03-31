@@ -13,7 +13,7 @@
 </head>
 <body>
 
-<%- include('./partials/header');%>
+<%- include('./partials/header'); %>
 <section class="profile-container">
     <div class="user-info">
         <h2>👤 Personal Info</h2>
@@ -23,7 +23,7 @@
         <p><strong>Address:</strong> <%= user.address %></p>
     </div>
 
-    <%- include('./partials/cart',{cart:cart || [] });%>
+    <%- include('./partials/cart',{cart:cart || [] }); %>
 
     <div class="orders">
         <h2>📦 Previous Orders</h2>
@@ -42,6 +42,6 @@
     </div>
 </section>
 
-<%- include('./partials/footer');%>
+<%- include('./partials/footer'); %>
 </body>
 </html>

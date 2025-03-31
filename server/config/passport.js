@@ -53,7 +53,8 @@ passport.serializeUser(function (user, done) {
 passport.deserializeUser(async function (email, done) {
     try {
         const user = await prisma.users.findUnique({
-            where: {   email: email, // Find the user by ID
+            where: {
+                email: email, // Find the user by ID
             },
         });
         done(null, user); // Return the user object

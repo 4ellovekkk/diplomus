@@ -99,13 +99,12 @@ router.get("/logout", (req, res) => {
             expires: new Date(0),
             sameSite: "strict"
         });
-
-        res.json({message: "Logged out successfully"});
+        res.render("logout");
+        // res.json({message: "Logged out successfully"});
     } catch (error) {
         handleError(res, error, "Error logging out");
     }
 });
-
 
 
 module.exports = router;
