@@ -1,6 +1,7 @@
 header {
     background: #222;
     padding: 15px 0;
+    width: 100%;
 }
 
 nav {
@@ -20,6 +21,7 @@ nav .logo {
 nav ul {
     list-style: none;
     display: flex;
+    align-items: center;
 }
 
 nav ul li {
@@ -35,4 +37,29 @@ nav ul li a {
 nav ul li a:hover {
     color: #ff5722;
     text-decoration: none !important;
+}
+
+/* Language Switcher Styles */
+#languageSwitcher {
+    background: #333;
+    color: white;
+    border: 1px solid #444;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    outline: none;
+}
+
+#languageSwitcher:hover {
+    background: #444;
+}
+
+#languageSwitcher:focus {
+    border-color: #ff5722;
+}
+
+/* Ensure alignment inside nav */
+nav ul li select {
+    margin-left: 15px;
 }

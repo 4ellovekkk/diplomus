@@ -5,33 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - User Management</title>
     <link rel="stylesheet" href="/styles/Admin.css">
+    <link rel="stylesheet" href="/styles/Header.css">
 </head>
 <body>
-<header>
-    <nav>
-        <div class="logo">Admin Panel</div>
-        <ul>
-            <li><a href="/">Home</a></li>
-            <li><a href="/api/logout" class="btn">Logout</a></li>
-        </ul>
-    </nav>
-</header>
+<%- include('./partials/header'); %>
+
 <section class="admin-panel">
     <h1>User Management</h1>
     <div class="search-sort">
-        <input type="text" id="searchInput" placeholder="Search users...">
-        <select id="sortField">
+        <label for="searchInput">Search</label>
+        <input type="text" id="searchInput" placeholder="Search users..." oninput="debouncedFetchUsers()">
+        <label for="sortField">Sort by</label>
+        <select id="sortField" onchange="fetchUsers()">
             <option value="id" selected="selected">ID</option>
             <option value="username">Username</option>
             <option value="email">Email</option>
             <option value="role">Role</option>
+            <option value="is_locked">Status</option>
         </select>
-        <select id="sortOrder">
+        <label for="sortOrder">Order</label>
+        <select id="sortOrder" onchange="fetchUsers()">
             <option value="asc" selected="selected">Ascending</option>
             <option value="desc">Descending</option>
         </select>
-        <button onclick="fetchUsers()">Search</button>
+        <label for="limit">Items per page</label>
+        <select id="limit" onchange="fetchUsers()">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+        </select>
     </div>
+
+    <div class="loading" id="loadingIndicator">
+        Loading users, please wait...
+    </div>
+
     <table>
         <thead>
         <tr>
@@ -40,33 +49,18 @@
             <th>Email</th>
             <th>Role</th>
             <th>Status</th>
+            <th>Created At</th>
             <th>Actions</th>
         </tr>
-
         </thead>
         <tbody id="userTableBody">
-        <% users.forEach(user => { %>
-        <tr>
-            <td><%= user.id %></td>
-            <td><%= user.username %></td>
-            <td><%= user.email%></td>
-            <td><%= user.role%></td>
-            <td><%= user.is_locked ? 'Locked' : 'Active' %></td>
-            <td>
-                <button class="view" onclick="viewUser(<%= user.id %>)">Просмотреть</button>
-                <button class="edit" onclick="editUser(<%= user.id %>)">Изменить</button>
-                <button class="delete" onclick="deleteUser(<%= user.id %>)">Удалить</button>
-                <% if (user.is_locked) { %>
-                    <button class="unlock" onclick="unlockUser(<%= user.id %>)">Разблокировать</button>
-                <% } else { %>
-                    <button class="lock" onclick="lockUser(<%= user.id %>)">Заблокировать</button>
-                <% } %>
-            </td>
-        </tr>
-        <% }); %>
-
+        <!-- Dynamic content will be inserted here -->
         </tbody>
     </table>
+
+    <div class="pagination" id="paginationControls">
+        <!-- Pagination controls will be inserted here -->
+    </div>
 </section>
 
 <div id="userFormModal" class="modal">
@@ -81,8 +75,9 @@
             <input type="email" id="email" required>
             <label>Password:</label>
             <input type="password" id="password">
+            <br>
             <label>Role:</label>
-            <select id="role">
+            <select id="role" required >
                 <option value="customer">Customer</option>
                 <option value="employee">Employee</option>
                 <option value="admin">Admin</option>
@@ -94,9 +89,43 @@
         </form>
     </div>
 </div>
-
+<!-- Add this modal right after the edit user modal in your HTML -->
+<div id="viewUserModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeViewUserModal()">&times;</span>
+        <h2>User Details</h2>
+        <form id="viewUserForm">
+            <div class="form-group">
+                <label>ID:</label>
+                <input type="text" id="viewUserId" readonly>
+            </div>
+            <div class="form-group">
+                <label>Username:</label>
+                <input type="text" id="viewUsername" readonly>
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="viewEmail" readonly>
+            </div>
+            <div class="form-group">
+                <label>Role:</label>
+                <input type="text" id="viewRole" readonly>
+            </div>
+            <div class="form-group">
+                <label>Status:</label>
+                <input type="text" id="viewStatus" readonly>
+            </div>
+            <div class="form-group">
+                <label>Created At:</label>
+                <input type="text" id="viewCreatedAt" readonly>
+            </div>
+            <div class="form-buttons">
+                <button type="button" class="btn btn-secondary" onclick="closeViewUserModal()">Close</button>
+            </div>
+        </form>
+    </div>
+</div>
 <script src="/scripts/admin.js">
-
 </script>
 </body>
 </html>

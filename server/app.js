@@ -8,14 +8,12 @@ const cookieParser = require("cookie-parser");
 const passport = require('./config/passport');
 const session = require('express-session');
 const verifyTokenExceptLogin = require("./middleware/authMiddleware")
-const validator = require("validator");
-
-
-
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+require("dotenv").config();
 //routes import
 const authRouter = require("./routes/authRoutes");
 const cartRoutes = require("./routes/cartRoutes");
-
+const userRoutes = require("./routes/userRoutes");
 const app = express();
 const prisma = new PrismaClient();
 
@@ -63,12 +61,24 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(verifyTokenExceptLogin);
 
 
+passport.use(
+    new GoogleStrategy(
+        {
+            clientID: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            callbackURL: "https://localhost:3000/auth/google/callback",
+        },
+        async (accessToken, refreshToken, profile, done) => {
+            done(null, profile);
+        }
+    )
+);
 
 //routes
 app.use("/api", authRouter);
 // app.use("/api", orderRoutes);
 app.use("/api", cartRoutes);
-
+app.use("/api", userRoutes);
 //basic routes
 app.get("/", (req, res) => {
     res.render("index",);
@@ -109,6 +119,46 @@ app.get("/profile", verifyTokenExceptLogin, async (req, res) => {
     }
 });
 
+app.get("/auth/google/callback", passport.authenticate("google", { failureRedirect: "/login" }), async (req, res) => {
+    try {
+        const { displayName, emails } = req.user;
+        const email = emails[0].value;
+
+        // Check if the user already exists in the database
+        let user = await prisma.users.findUnique({
+            where: { email },
+        });
+
+        // If user does not exist, create a new user
+        if (!user) {
+            user = await prisma.users.create({
+                data: {
+                    username: displayName.replace(/\s/g, "").toLowerCase(),
+                    email,
+                    password_hash: "", // No password required for OAuth
+                    role: "customer",
+                    is_locked: false,
+                },
+            });
+        }
+
+        // Generate a JWT token
+        const token = jwt.sign({ userId: user.id, role: user.role }, "lexa", { expiresIn: "1h" });
+
+        console.log(token);
+        // Set token in a cookie
+        res.cookie("token", token, {
+            httpOnly: true,
+            maxAge: 3600000,
+            sameSite: "strict",
+        });
+
+        res.redirect("/profile");
+    } catch (error) {
+        console.error("Google OAuth error:", error);
+        res.redirect("/login");
+    }
+});
 
 
 
