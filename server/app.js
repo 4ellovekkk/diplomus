@@ -24,8 +24,6 @@ app.use(session({
 }));
 
 
-
-
 const privateKey = fs.readFileSync("server.key", "utf8");
 const certificate = fs.readFileSync("server.pem", "utf8");
 const ca = fs.readFileSync("server.pem", "utf8");
@@ -39,11 +37,9 @@ const credentials = {
 };
 
 
-
 //set view engine
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
-
 
 
 //middleware
@@ -80,53 +76,163 @@ app.use("/api", authRouter);
 app.use("/api", cartRoutes);
 app.use("/api", userRoutes);
 //basic routes
-app.get("/", (req, res) => {
-    res.render("index",);
+app.get("/", async (req, res) => {
+    try {
+        // Check if token exists
+        if (!req.cookies.token) {
+            return res.render("index", {user: null});
+        }
+
+        // Verify token
+        const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+
+        // Find user in database
+        const user = await prisma.users.findUnique({
+            where: {id: decoded.userId},
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                role: true
+                // Only select necessary fields
+            }
+        });
+
+        // Render with user data
+        res.render("index", {user});
+    } catch (error) {
+        console.error("Error in root route:", error);
+
+        // Clear invalid token
+        res.clearCookie("token");
+
+        // Render without user data
+        res.render("index", {user: null});
+    }
 });
 app.get(
     "/auth/google",
     passport.authenticate("google", {scope: ["profile", "email"]})
 );
+// Admin route with authentication and authorization check
 app.get("/admin", async (req, res) => {
-    const users = await prisma.users.findMany();
-    res.render("admin", {users});
+    try {
+        // Check authentication
+        if (!req.cookies?.token) {
+            return res.redirect("/login");
+        }
+
+        // Verify token and get user
+        const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+        const currentUser = await prisma.users.findUnique({
+            where: {id: decoded.userId},
+            select: {
+                id: true,
+                role: true
+            }
+        });
+
+        // Check authorization (admin only)
+        if (currentUser.role !== 'admin') {
+            return res.status(403).render("error", {
+                message: "Forbidden: Admin access required"
+            });
+        }
+
+        // Get all users for admin panel
+        const users = await prisma.users.findMany({
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                role: true,
+                is_locked: true,
+                created_at: true
+            }
+        });
+
+        res.render("admin", {users, user: currentUser});
+    } catch (error) {
+        console.error("Admin route error:", error);
+        res.clearCookie("token");
+        res.redirect("/login");
+    }
 });
-app.get("/about", (req, res) => {
-    res.render("about");
-})
-app.get("/services", (req, res) => {
-    res.render("services");
-})
+
+// About route with optional user data
+app.get("/about", async (req, res) => {
+    try {
+        let user = null;
+        if (req.cookies?.token) {
+            const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+            user = await prisma.users.findUnique({
+                where: {id: decoded.userId},
+                select: {
+                    id: true,
+                    username: true
+                }
+            });
+        }
+        res.render("about", {user});
+    } catch (error) {
+        console.error("About route error:", error);
+        res.clearCookie("token");
+        res.render("about", {user: null});
+    }
+});
+
+// Services route with optional user data
+app.get("/services", async (req, res) => {
+    try {
+        let user = null;
+        if (req.cookies?.token) {
+            const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+            user = await prisma.users.findUnique({
+                where: {id: decoded.userId},
+                select: {
+                    id: true,
+                    username: true
+                }
+            });
+        }
+        res.render("services", {user});
+    } catch (error) {
+        console.error("Services route error:", error);
+        res.clearCookie("token");
+        res.render("services", {user: null});
+    }
+});
+
+
 app.get("/profile", verifyTokenExceptLogin, async (req, res) => {
     try {
         const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
         const user = await prisma.users.findUnique({
-            where: { id: decoded.userId },
-            include: { orders: true } // Include user's orders
+            where: {id: decoded.userId},
+            include: {orders: true} // Include user's orders
         });
 
         if (!user) {
-            return res.status(404).json({ message: "User not found." });
+            return res.status(404).json({message: "User not found."});
         }
 
         // Retrieve cart from session (ensure it exists)
         const cart = req.session.cart || [];
 
-        res.render("profile", { user, cart }); // Pass 'cart' to the template
+        res.render("profile", {user, cart}); // Pass 'cart' to the template
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ message: "Internal server error." });
+        return res.status(500).json({message: "Internal server error."});
     }
 });
-
-app.get("/auth/google/callback", passport.authenticate("google", { failureRedirect: "/login" }), async (req, res) => {
+app.get("/auth/google/callback", passport.authenticate("google", {failureRedirect: "/login"}), async (req, res) => {
     try {
-        const { displayName, emails } = req.user;
+        const {displayName, emails} = req.user;
         const email = emails[0].value;
 
         // Check if the user already exists in the database
         let user = await prisma.users.findUnique({
-            where: { email },
+            where: {email},
         });
 
         // If user does not exist, create a new user
@@ -143,23 +249,21 @@ app.get("/auth/google/callback", passport.authenticate("google", { failureRedire
         }
 
         // Generate a JWT token
-        const token = jwt.sign({ userId: user.id, role: user.role }, "lexa", { expiresIn: "1h" });
 
-        console.log(token);
-        // Set token in a cookie
+        const token = jwt.sign({userId: user.id, role: user.role}, "lexa", {expiresIn: "1h"});
+
         res.cookie("token", token, {
             httpOnly: true,
             maxAge: 3600000,
-            sameSite: "strict",
+            sameSite: "none",  // Change from "strict" if cross-site
+            secure: true       // Required if sameSite is none
         });
-
-        res.redirect("/profile");
+        res.redirect(301, "/profile");
     } catch (error) {
         console.error("Google OAuth error:", error);
         res.redirect("/login");
     }
 });
-
 
 
 https.createServer(credentials, app).listen(3000, () => {

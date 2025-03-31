@@ -91,3 +91,5 @@ GO
 
 alter table users add goodleId varchar(max)
 alter table users add is_locked bit;
+
+alter table users drop column goodleId

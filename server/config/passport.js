@@ -14,12 +14,11 @@ passport.use(
         },
         async function (accessToken, refreshToken, profile, done) {
             try {
-                console.log(profile);
 
                 // Check if the user already exists in the database using googleId
                 let user = await prisma.users.findUnique({
                     where: {
-                        goodleId: profile.id, // Use the googleId field from the Prisma schema
+                        email: profile.email, // Use the googleId field from the Prisma schema
                     },
                 });
 
@@ -51,10 +50,10 @@ passport.serializeUser(function (user, done) {
 });
 
 /* How to retrieve the user from the session */
-passport.deserializeUser(async function (id, done) {
+passport.deserializeUser(async function (email, done) {
     try {
         const user = await prisma.users.findUnique({
-            where: {   goodleId: id, // Find the user by ID
+            where: {   email: email, // Find the user by ID
             },
         });
         done(null, user); // Return the user object

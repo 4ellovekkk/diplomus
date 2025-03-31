@@ -1,10 +1,19 @@
 const jwt = require("jsonwebtoken");
 const {PrismaClient} = require("@prisma/client");
 const prisma = new PrismaClient();
+const allowedPaths = [
+    "/api/login",
+    "/auth/google",
+    "/",
+    "/api/register",
+    "/auth/google/callback",
+    "/services",
+    "/about"
+];
 
 const verifyTokenExceptLogin = (req, res, next) => {
     // Skip token verification for /api/login
-    if ((req.path === "/api/login") || (req.path === "/auth/google") || (req.path === "/") || (req.path === "/api/register") || (req.path === "/auth/google/callback")) {
+    if (allowedPaths.includes(req.path)) {
         return next();
     }
     // Get the token from the request headers, cookies, or query parameters
