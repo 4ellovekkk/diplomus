@@ -93,3 +93,9 @@ alter table users add goodleId varchar(max)
 alter table users add is_locked bit;
 
 alter table users drop column goodleId
+
+
+SELECT OBJECT_NAME(OBJECT_ID) AS TableName, last_user_update
+FROM sys.dm_db_index_usage_stats
+WHERE database_id = DB_ID('print_center')
+  AND OBJECT_ID = OBJECT_ID('users');

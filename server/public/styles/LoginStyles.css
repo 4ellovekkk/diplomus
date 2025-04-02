@@ -94,3 +94,39 @@ button:hover {
 .footer a:hover {
     text-decoration: underline;
 }
+
+
+/* Language Selector */
+.language-selector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.language-label {
+    font-size: 1.2rem;
+    margin-right: 0.5rem;
+    cursor: pointer;
+}
+
+#language-select {
+    padding: 0.5rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background: white;
+    color: #333;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+#language-select:focus {
+    border-color: #ff8c00;
+    outline: none;
+}
+
+#language-select:hover {
+    border-color: #e07b00;
+}

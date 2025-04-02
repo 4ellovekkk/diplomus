@@ -1,55 +1,64 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= locale %>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Print Center</title>
+    <%- include('./partials/favicon') %>
     <link rel="stylesheet" href="/styles/Index.css">
     <link rel="stylesheet" href="/styles/Header.css">
     <link rel="stylesheet" href="/styles/Buttons.css">
     <link rel="stylesheet" href="/styles/Footer.css">
 </head>
 <body>
+
 <!-- Navigation Bar -->
 <%- include('./partials/header'); %>
 
 <!-- Hero Section -->
 <section class="hero">
-    <h1>Fast & Reliable Printing Services</h1>
-    <p>Get high-quality prints at affordable prices. Order online today!</p>
-    <%- include('./partials/button', { href: '/services', text: 'Explore Services' }); %>
+    <h1><%= __('hero_title') %></h1>
+    <p><%= __('hero_description') %></p>
+    <%- include('./partials/button', { href: '/services', text: __('explore_services') }); %>
 </section>
 
 <!-- Services Section -->
 <section class="services">
-    <h2>Our Services</h2>
+    <h2><%= __('our_services') %></h2>
     <div class="service-container">
         <div class="service">
             <i class="fas fa-print"></i>
-            <h3>Document Printing</h3>
-            <p>High-quality prints for all your documents in any sizes and parameters.</p>
-            <%- include('./partials/button', { href: '/services/document-printing', text: 'Learn More' }); %>
+            <h3><%= __('document_printing') %></h3>
+            <p><%= __('document_printing_desc') %></p>
+            <%- include('./partials/button', { href: '/services/document-printing', text: __('learn_more') }); %>
         </div>
         <div class="service">
             <i class="fas fa-copy"></i>
-            <h3>Copy & Scanning</h3>
-            <p>Fast and precise scanning and copying services.</p>
-            <%- include('./partials/button', { href: '/services/copy-scanning', text: 'Learn More' }); %>
+            <h3><%= __('copy_scanning') %></h3>
+            <p><%= __('copy_scanning_desc') %></p>
+            <%- include('./partials/button', { href: '/services/copy-scanning', text: __('learn_more') }); %>
         </div>
         <div class="service">
             <i class="fas fa-paint-brush"></i>
-            <h3>Graphic Design</h3>
-            <p>Custom design solutions for your printing needs.</p>
-            <%- include('./partials/button', { href: '/services/graphic-design', text: 'Learn More' }); %>
+            <h3><%= __('graphic_design') %></h3>
+            <p><%= __('graphic_design_desc') %></p>
+            <%- include('./partials/button', { href: '/services/graphic-design', text: __('learn_more') }); %>
         </div>
         <div class="service">
-            <i class="fas fa-paint-brush"></i>
-            <h3>Merch Design</h3>
-            <p>Custom design solutions for your merch, such as T-shirts, cups, etc.</p>
-            <%- include('./partials/button', { href: '/services/merch-design', text: 'Learn More' }); %>
+            <i class="fas fa-tshirt"></i>
+            <h3><%= __('merch_design') %></h3>
+            <p><%= __('merch_design_desc') %></p>
+            <%- include('./partials/button', { href: '/services/merch-design', text: __('learn_more') }); %>
         </div>
     </div>
 </section>
+
 <%- include('./partials/footer') %>
+
+<script>
+    function changeLanguage(lang) {
+        window.location.search = '?lang=' + lang;
+    }
+</script>
 </body>
 </html>

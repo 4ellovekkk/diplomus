@@ -4,19 +4,27 @@
             <div class="logo">Print Center</div>
         </a>
         <ul>
-            <li><a href="/">Home</a></li>
-            <li><a href="/services">Services</a></li>
-            <li><a href="/about">About</a></li>
-            <% if (locals.user) { %>
-                <li><a href="/api/logout" class="btn">Logout</a></li>
+            <li><a href="/"><%= __('home') %></a></li>
+            <li><a href="/services"><%= __('services') %></a></li>
+            <li><a href="/about"><%= __('about') %></a></li>
 
+            <% if (locals.user) { %>
+                <li><a href="/api/logout" class="btn"><%= __('logout') %></a></li>
             <% } else { %>
-                <li><a href="/api/login" class="btn">Login</a></li>
+                <li><a href="/api/login" class="btn"><%= __('login') %></a></li>
             <% } %>
-            <select id="languageSwitcher">
-                <option value="en">English</option>
-                <option value="ru">Русский</option>
+
+            <!-- Language Switch Dropdown -->
+            <select id="language-select" class="languageSwitcher" onchange="changeLanguage(this.value)">
+                <option value="en" <%= locale === 'en' ? 'selected' : '' %>>English</option>
+                <option value="ru" <%= locale === 'ru' ? 'selected' : '' %>>Русский</option>
             </select>
         </ul>
     </nav>
 </header>
+
+<script>
+    function changeLanguage(lang) {
+        window.location.search = '?lang=' + lang;
+    }
+</script>

@@ -1,43 +1,54 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= locale %>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Page</title>
-    <link rel="stylesheet" href="/styles/LoginStyles.css"> <!-- Link to your CSS file -->
+    <%- include('./partials/favicon') %>
+    <link rel="stylesheet" href="/styles/LoginStyles.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="login-container">
     <div class="login-box">
-        <h1>Welcome Back!</h1>
-        <p>Please log in to continue</p>
+        <h1><%= __('welcome') %></h1>
+        <p><%= __('login_prompt') %></p>
 
-        <!-- Regular Login Form -->
+        <!-- Language Switch Links -->
+        <div class="language-selector">
+            <select id="language-select" onchange="changeLanguage(this.value)">
+                <option value="en" <%= locale === 'en' ? 'selected' : '' %>>English</option>
+                <option value="ru" <%= locale === 'ru' ? 'selected' : '' %>>Русский</option>
+            </select>
+        </div>        <!-- Regular Login Form -->
         <form action="/api/login" method="POST">
             <div class="input-group">
-                <label for="email">Email or username</label>
+                <label for="email"><%= __('email_label') %></label>
                 <input type="text" id="identifier" name="identifier" required>
             </div>
             <div class="input-group">
-                <label for="password">Password</label>
+                <label for="password"><%= __('password_label') %></label>
                 <input type="password" id="password" name="password" required>
             </div>
-            <button type="submit">Log In</button>
+            <button type="submit"><%= __('login_button') %></button>
         </form>
 
         <!-- Google Login Button -->
         <div class="google-login">
-            <p>Or login with</p>
+            <p><%= __('google_login') %></p>
             <a href="/auth/google" class="google-btn">
                 <img src="/images/google-logo.png" width="20%" height="20%" alt="Google Logo">
             </a>
         </div>
 
         <div class="footer">
-            <p>Don't have an account? <a href="/api/register">Sign Up</a></p>
+            <p><%= __('no_account') %> <a href="/api/register"><%= __('sign_up') %></a></p>
         </div>
     </div>
 </div>
+<script>
+    function changeLanguage(lang) {
+        window.location.search = '?lang=' + lang;
+    }</script>
 </body>
 </html>

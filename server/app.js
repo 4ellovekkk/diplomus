@@ -9,11 +9,13 @@ const passport = require('./config/passport');
 const session = require('express-session');
 const verifyTokenExceptLogin = require("./middleware/authMiddleware")
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const i18n = require('i18n');
 require("dotenv").config();
 //routes import
 const authRouter = require("./routes/authRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const userRoutes = require("./routes/userRoutes");
+const serviceRoutes = require("./routes/serviceRoutes");
 const app = express();
 const prisma = new PrismaClient();
 
@@ -22,6 +24,19 @@ app.use(session({
     resave: false,
     saveUninitialized: true
 }));
+
+// Configure i18n
+i18n.configure({
+    locales: ['en', 'ru'], // Supported languages
+    directory: path.join(__dirname, 'public/locales'), // Folder for translation files
+    defaultLocale: 'en',
+    queryParameter: 'lang', // Allow language switching via query param
+    cookie: 'locale', // Store user preference in cookies
+    autoReload: true
+});
+
+// Use i18n in Express
+app.use(i18n.init);
 
 
 const privateKey = fs.readFileSync("server.key", "utf8");
@@ -55,7 +70,12 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(verifyTokenExceptLogin);
-
+app.use((req, res, next) => {
+    let lang = req.query.lang || req.cookies.locale || 'en';
+    req.setLocale(lang);
+    res.locals.__ = req.__; // Make translations available in templates
+    next();
+});
 
 passport.use(
     new GoogleStrategy(
@@ -75,6 +95,7 @@ app.use("/api", authRouter);
 // app.use("/api", orderRoutes);
 app.use("/api", cartRoutes);
 app.use("/api", userRoutes);
+app.use("/", serviceRoutes);
 //basic routes
 app.get("/", async (req, res) => {
     try {
@@ -182,26 +203,6 @@ app.get("/about", async (req, res) => {
 });
 
 // Services route with optional user data
-app.get("/services", async (req, res) => {
-    try {
-        let user = null;
-        if (req.cookies?.token) {
-            const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
-            user = await prisma.users.findUnique({
-                where: {id: decoded.userId},
-                select: {
-                    id: true,
-                    username: true
-                }
-            });
-        }
-        res.render("services", {user});
-    } catch (error) {
-        console.error("Services route error:", error);
-        res.clearCookie("token");
-        res.render("services", {user: null});
-    }
-});
 
 
 app.get("/profile", verifyTokenExceptLogin, async (req, res) => {

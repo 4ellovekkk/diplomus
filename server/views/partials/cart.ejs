@@ -1,11 +1,11 @@
-<h2>Shopping Cart</h2>
+<h2><%= __('shopping_cart') %></h2>
 <table>
     <tr>
-        <th>Service</th>
-        <th>Quantity</th>
-        <th>Price</th>
-        <th>Total</th>
-        <th>Action</th>
+        <th><%= __('service') %></th>
+        <th><%= __('quantity') %></th>
+        <th><%= __('price') %></th>
+        <th><%= __('total') %></th>
+        <th><%= __('action') %></th>
     </tr>
     <% cart.forEach(item => { %>
         <tr>
@@ -16,7 +16,7 @@
             <td>
                 <form action="/cart/remove" method="POST">
                     <input type="hidden" name="service_id" value="<%= item.service_id %>">
-                    <button type="submit">Remove</button>
+                    <button type="submit"><%= __('remove') %></button>
                 </form>
             </td>
         </tr>
@@ -24,5 +24,5 @@
 </table>
 
 <form action="/cart/checkout" method="POST">
-    <button type="submit">Checkout</button>
+    <button type="submit"><%= __('checkout') %></button>
 </form>

@@ -11,8 +11,10 @@ nav {
     padding: 0 50px;
     height: 4vh;
 }
-
-nav .logo {
+nav a{
+    text-decoration: none;
+}
+nav a .logo {
     font-size: 24px;
     font-weight: bold;
     color: white;
@@ -40,7 +42,7 @@ nav ul li a:hover {
 }
 
 /* Language Switcher Styles */
-#languageSwitcher {
+.languageSwitcher {
     background: #333;
     color: white;
     border: 1px solid #444;
@@ -51,11 +53,11 @@ nav ul li a:hover {
     outline: none;
 }
 
-#languageSwitcher:hover {
+.languageSwitcher:hover {
     background: #444;
 }
 
-#languageSwitcher:focus {
+.languageSwitcher:focus {
     border-color: #ff5722;
 }
 

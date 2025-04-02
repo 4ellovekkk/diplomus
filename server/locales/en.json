@@ -1,0 +1,10 @@
+{
+	"welcome": "welcome",
+	"login_prompt": "login_prompt",
+	"email_label": "email_label",
+	"password_label": "password_label",
+	"login_button": "login_button",
+	"google_login": "google_login",
+	"no_account": "no_account",
+	"sign_up": "sign_up"
+}
