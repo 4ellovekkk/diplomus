@@ -3,6 +3,12 @@ const verifyTokenExceptLogin = require("../middleware/authMiddleware")
 const passport = require("../config/passport");
 const express = require("express");
 const router = express.Router();
+
+
+const handleError = (res, error, message = "An error occurred", status = 500) => {
+    console.error(message, error);
+    res.status(status).json({message, error: error.message});
+};
 router.post('/cart/add', verifyTokenExceptLogin, async (req, res) => {
     const {service_id, quantity} = req.body;
     const prisma = require('@prisma/client').PrismaClient;

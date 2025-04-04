@@ -4,14 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>T-Shirt Constructor</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/styles/Merch.css">
+    <link rel="stylesheet" href="/styles/Header.css">
+    <link rel="stylesheet" href="/styles/Footer.css">
+    <link rel="stylesheet" href="/styles/Buttons.css">
 </head>
 <body>
+<%- include('./partials/header') %>
 <div class="container">
-    <h1>Fancy T-Shirt Constructor</h1>
+    <h1>T-Shirt Constructor</h1>
     <div class="tshirt-container">
         <div id="tshirt-model" class="tshirt-model">
-            <img src="t-shirt-template.png" alt="T-Shirt Model" class="tshirt-template">
+            <img src="/images/t-shirt-template.png" alt="T-Shirt Model" class="tshirt-template">
             <div id="text-overlay" class="text-overlay" draggable="true">Your Text Here</div>
             <div id="image-wrapper" class="image-wrapper">
                 <img id="custom-image" class="custom-image" src="" alt="Custom Image" style="display: none;">
@@ -21,18 +25,19 @@
     </div>
     <div class="controls">
         <label for="text-input">Text:</label>
-        <input type="text" id="text-input" placeholder="Enter your text">
+        <input type="text" id="text-input" placeholder="Enter your text" value="<%= text || '' %>">
 
         <label for="text-color-picker">Text Color:</label>
-        <input type="color" id="text-color-picker" value="#000000">
+        <input type="color" id="text-color-picker" value="<%= textColor || '#000000' %>">
 
         <label for="font-size">Font Size:</label>
-        <input type="range" id="font-size" min="10" max="50" value="20">
+        <input type="range" id="font-size" min="10" max="50" value="<%= fontSize || 20 %>">
 
         <label for="image-upload">Upload Image:</label>
         <input type="file" id="image-upload" accept="image/*">
     </div>
 </div>
-<script src="script.js"></script>
+<%- include('./partials/footer') %>
+<script src="/scripts/merch.js"></script>
 </body>
 </html>

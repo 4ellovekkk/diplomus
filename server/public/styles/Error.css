@@ -1,0 +1,37 @@
+.error-container {
+    text-align: center;
+    padding: 50px;
+    font-family: Arial, sans-serif;
+}
+
+h1 {
+    font-size: 50px;
+    color: #ff4d4d;
+}
+
+.error-message {
+    font-size: 20px;
+    color: #333;
+}
+
+.error-stack {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f4f4f4;
+    border-left: 5px solid #ff4d4d;
+    white-space: pre-wrap;
+}
+
+.btn-home {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    color: white;
+    background: #333;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.btn-home:hover {
+    background: #555;
+}

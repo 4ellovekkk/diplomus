@@ -1,0 +1,112 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    width: 90%;
+    max-width: 600px;  /* Reduced from 800px */
+    margin: 1rem auto;  /* Reduced margin */
+    background: white;
+    padding: 1.5rem;   /* Reduced padding */
+    border-radius: 8px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    flex: 1;
+}
+
+h1 {
+    text-align: center;
+    color: #222;
+    margin-bottom: 1rem;  /* Reduced */
+    font-size: 1.5rem;    /* Slightly smaller */
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    /*gap: 0.75rem;        !* Reduced gap *!*/
+    width: 90%;
+    margin: 10px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;         /* Tightened gap */
+}
+
+label {
+    font-weight: bold;
+    font-size: 0.85rem;  /* Smaller labels */
+    color: #444;
+}
+
+input, select {
+    padding: 0.6rem;     /* Reduced padding */
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;   /* Slightly smaller font */
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #ff5722;
+    box-shadow: 0 0 0 2px rgba(255, 87, 34, 0.2);
+}
+
+input[type="file"] {
+    padding: 0.3rem;     /* Reduced padding */
+    border: 1px dashed #ccc;
+    background-color: #f9f9f9;
+    font-size: 0.85rem;
+}
+
+input[type="checkbox"] {
+    width: auto;
+    align-self: flex-start;
+    transform: scale(1.2);  /* Slightly smaller */
+    margin-top: 0.2rem;
+}
+
+button {
+    background-color: #ff5722;
+    color: white;
+    padding: 0.7rem;     /* Reduced padding */
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9rem;   /* Smaller font */
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-weight: 600;
+    margin-top: 0.3rem;
+    max-width: 300px;
+        /* Reduced margin */
+}
+
+button:hover {
+    background-color: #e64a19;
+}
+
+#fileInfo {
+    font-style: italic;
+    color: #666;
+    font-size: 0.8rem;   /* Smaller info text */
+    margin-top: -0.3rem;  /* Tighter spacing */
+    margin-bottom: 0.3rem;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;   /* Even more compact on mobile */
+    }
+
+    form {
+        gap: 0.6rem;     /* Tighter gaps */
+    }
+}

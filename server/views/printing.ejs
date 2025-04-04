@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Printing</title>
+    <link rel="stylesheet" href="/styles/Print.css">
+    <link rel="stylesheet" href="/styles/Header.css">
+    <link rel="stylesheet" href="/styles/Footer.css">
+    <link rel="stylesheet" href="/styles/Buttons.css">
+    <script>
+        function updateFileInfo() {
+            const fileInput = document.getElementById('document');
+            const fileInfo = document.getElementById('fileInfo');
+            const pagesInput = document.getElementById('pages');
+
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                fileInfo.textContent = `File Name: ${file.name}, Size: ${(file.size / 1024).toFixed(2)} KB`;
+
+                // Simulating page count retrieval (actual processing required on backend)
+                pagesInput.value = "Detecting...";
+                fetch('/get-file-info', {
+                    method: 'POST',
+                    body: new FormData(document.getElementById('printForm'))
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        pagesInput.value = data.pages || "Unknown";
+                    })
+                    .catch(() => {
+                        pagesInput.value = "Error retrieving pages";
+                    });
+            } else {
+                fileInfo.textContent = '';
+                pagesInput.value = '';
+            }
+        }
+    </script>
+    <%- include('./partials/favicon') %>
+    <title>Print your docunment</title>
+</head>
+<body>
+<%- include('./partials/header')%>
+<h1>Print Document</h1>
+<form id="printForm" action="/print" method="POST" enctype="multipart/form-data">
+    <label for="document">Upload Document:</label>
+    <input type="file" id="document" name="document" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required onchange="updateFileInfo()"><br><br>
+    <p id="fileInfo"></p>
+
+    <label for="pages">Number of Pages:</label>
+    <input type="text" id="pages" name="pages" readonly><br><br>
+
+    <label for="print_pages">Pages to Print:</label>
+    <input type="text" id="print_pages" name="print_pages" placeholder="e.g., 1-5, 2,4,7, odd, even"><br><br>
+
+    <label for="copies">Number of Copies:</label>
+    <input type="number" id="copies" name="copies" min="1" value="1" required><br><br>
+
+    <label for="color">Color Mode:</label>
+    <select id="color" name="color">
+        <option value="black_white">Black & White</option>
+        <option value="color">Color</option>
+    </select><br><br>
+
+    <label for="paper_size">Paper Size:</label>
+    <select id="paper_size" name="paper_size">
+        <option value="A4">A4</option>
+        <option value="A3">A3</option>
+        <option value="Letter">Letter</option>
+    </select><br><br>
+
+    <label for="double_sided">Double-Sided Printing:</label>
+    <input type="checkbox" id="double_sided" name="double_sided"><br><br>
+
+    <button type="submit">Print</button>
+</form>
+<%- include('./partials/footer') %>
+</body>
+</html>
