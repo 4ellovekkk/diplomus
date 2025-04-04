@@ -207,25 +207,38 @@ app.get("/about", async (req, res) => {
 
 app.get("/profile", verifyTokenExceptLogin, async (req, res) => {
     try {
+        // Decode the JWT token to get the user ID
         const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
-        const user = await prisma.users.findUnique({
-            where: {id: decoded.userId},
-            include: {orders: true} // Include user's orders
-        });
 
+        // Fetch the user and include their orders
+        const user = await prisma.users.findUnique({
+            where: { id: decoded.userId },
+            include: { orders: true } // Include user's orders
+        });
+        console.log(user);
+        // If no user is found, respond with an error
         if (!user) {
-            return res.status(404).json({message: "User not found."});
+            return res.status(404).json({ message: "User not found." });
         }
 
-        // Retrieve cart from session (ensure it exists)
+        // Retrieve the cart from the session, default to an empty array if not present
         const cart = req.session.cart || [];
 
-        res.render("profile", {user, cart}); // Pass 'cart' to the template
+        // Render the profile page and pass user and cart to the template
+        res.render("profile", { user, cart });
+
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({message: "Internal server error."});
+        // Handle JWT errors (expired or invalid token)
+        if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+            return res.status(401).json({ message: "Unauthorized: Invalid or expired token." });
+        }
+
+        // Log the error and return a generic server error response
+        console.error("Error retrieving user profile:", error);
+        return res.status(500).json({ message: "Internal server error." });
     }
 });
+
 app.get("/auth/google/callback", passport.authenticate("google", {failureRedirect: "/login"}), async (req, res) => {
     try {
         const {displayName, emails} = req.user;
