@@ -34,6 +34,7 @@ WORKDIR /app
 # Copy built application from build stage
 COPY --from=build /app /app
 
+RUN mkdir /app/uploads
 # Set environment variables
 ENV NODE_ENV=production
 ENV MSSQL_HOST=sql1
