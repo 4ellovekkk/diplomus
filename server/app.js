@@ -281,5 +281,5 @@ app.get("/auth/google/callback", passport.authenticate("google", {failureRedirec
 
 
 https.createServer(credentials, app).listen(3000, () => {
-    console.log('HTTPS Server running on port 443');
+    console.log('HTTPS Server running on port 3000');
 });

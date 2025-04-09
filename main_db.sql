@@ -91,7 +91,9 @@ GO
 
 alter table users add goodleId varchar(max)
 alter table users add is_locked bit;
-
+alter tabel users add name
+alter tabel users add surname
+alter tabel users add adress
 alter table users drop column goodleId
 
 

@@ -1,84 +1,50 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f0f0f0;
-    color: #222;
+.profile-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border-radius: 8px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
-
-/* Profile Container */
-.profile-container {
-    max-width: 800px;
-    margin: 40px auto;
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
-    border: 2px solid #ff9800;
-}
-
-h2 {
-    color: #ff9800;
-    border-bottom: 2px solid #ff9800;
-    padding-bottom: 5px;
-}
-
-/* Buttons */
-button {
-    background-color: #ff9800;
-    color: #ffffff;
-    border: none;
-    padding: 10px 15px;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background 0.3s, transform 0.2s;
-}
-
-button:hover {
-    background-color: #e68900;
-    transform: scale(1.05);
-}
-
-/* Form Styling */
-#edit-profile-form {
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 10px;
-    border: 2px solid #ff9800;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin: 20px auto;
+.profile-header {
     display: flex;
-    flex-direction: column;
-    gap: 15px;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+}
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #666;
+}
+.nav-tabs .nav-link.active {
+    background-color: #fff;
+    border-color: #ddd #ddd #fff;
+}
+.nav-tabs .nav-link:hover {
+    background-color: #f8f9fa;
+}
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+:root {
+    --bs-nav-link-color: #ff5722;
 }
 
-#edit-profile-form label {
-    font-weight: bold;
-    color: #222;
+.nav-link {
+    color: var(--bs-nav-link-color) !important;
 }
 
-#edit-profile-form input {
-    width: 100%;
-    padding: 10px;
-    border: 2px solid #ccc;
-    border-radius: 5px;
-    transition: border 0.3s;
-    font-size: 16px;
-}
-
-#edit-profile-form input:focus {
-    border-color: #ff9800;
-    outline: none;
-}
-
-#edit-profile-form button {
-    align-self: center;
-    width: 50%;
-    font-size: 16px;
-    margin: 10px;
-    background: #4CAF50;
-}
-
-#cancel-edit {
-    background: #cc0000;
+.nav-link:hover {
+    color: var(--bs-nav-link-hover-color) !important;
 }

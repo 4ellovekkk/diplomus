@@ -7,14 +7,12 @@
             <li><a href="/"><%= __('home') %></a></li>
             <li><a href="/services"><%= __('services') %></a></li>
             <li><a href="/about"><%= __('about') %></a></li>
-
+            <li><a href="/profile"><%= __('profile') %></a></li>
             <% if (locals.user) { %>
                 <li><a href="/api/logout" class="btn"><%= __('logout') %></a></li>
             <% } else { %>
                 <li><a href="/api/login" class="btn"><%= __('login') %></a></li>
             <% } %>
-
-            <!-- Language Switch Dropdown -->
             <select id="language-select" class="languageSwitcher" onchange="changeLanguage(this.value)">
                 <option value="en" <%= locale === 'en' ? 'selected' : '' %>>English</option>
                 <option value="ru" <%= locale === 'ru' ? 'selected' : '' %>>Русский</option>

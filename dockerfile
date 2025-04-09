@@ -1,5 +1,5 @@
 
-# Use a minimal base image for building
+# Build Stage
 FROM node:18-alpine AS build
 
 # Set working directory
@@ -11,10 +11,10 @@ RUN apk add --no-cache \
   ca-certificates \
   vim
 
-# Copy package.json and package-lock.json first (leveraging Docker cache)
+# Copy package.json and package-lock.json first to leverage Docker cache
 COPY server/package*.json ./
 
-# Install only production dependencies (exclude devDependencies)
+# Install only production dependencies
 RUN npm install --omit=dev
 
 # Copy the rest of the application
@@ -26,10 +26,11 @@ RUN npx prisma generate
 # Set proper permissions
 RUN chown -R node:node /app && chmod -R 755 /app
 
-# Use a lightweight runtime image for production
+# Runtime Stage
 FROM node:18-alpine AS runtime
 
 WORKDIR /app
+RUN mkdir -p /app/uploads
 
 # Copy built application from build stage
 COPY --from=build /app /app
@@ -37,11 +38,12 @@ COPY --from=build /app /app
 RUN mkdir /app/uploads
 # Set environment variables
 ENV NODE_ENV=production
-ENV MSSQL_HOST=sql1
-ENV MSSQL_PORT=1433
-ENV MONGO_URI=mongodb://test-mongo:27017/princenter
-ENV STRIPE_API_KEY=""
-ENV YANDEX_MAPS_API_KEY=""
+ENV DB_HOST_MSSQL=mssql
+ENV DB_USER_MSSQL=sa
+ENV DB_PASS_MSSQL="MyPassword123#"
+ENV DB_HOST_MONGO=mongodb
+ENV DB_USER_MONGO=root
+ENV DB_PASS_MONGO=toor
 
 # Expose port
 EXPOSE 3000
