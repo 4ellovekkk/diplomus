@@ -1,7 +1,10 @@
 footer {
-    background: #222;
-    color: white;
+    background: var(--bs-light);
+    color: black;
     padding: 20px;
     margin-top: 30px;
     max-height: 6vh;
+}
+footer p {
+    text-align:center;
 }

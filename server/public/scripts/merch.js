@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const tshirtModel = document.getElementById('tshirt-model');
+    let tshirtModel = document.getElementById('tshirt-model');
     const textOverlay = document.getElementById('text-overlay');
     const textInput = document.getElementById('text-input');
     const textColorPicker = document.getElementById('text-color-picker');
@@ -104,4 +104,37 @@ document.addEventListener('DOMContentLoaded', function () {
     document.addEventListener('mouseup', function () {
         isResizing = false;
     });
+
+    tshirtModel = document.getElementById('tshirt-model');
+    const tshirtSize = document.getElementById('tshirt-size');
+
+    // Function to update T-shirt size
+    function updateTshirtSize(size) {
+        switch (size) {
+            case 'small':
+                tshirtModel.style.width = '250px';
+                tshirtModel.style.height = '350px';
+                break;
+            case 'medium':
+                tshirtModel.style.width = '300px';
+                tshirtModel.style.height = '400px';
+                break;
+            case 'large':
+                tshirtModel.style.width = '350px';
+                tshirtModel.style.height = '450px';
+                break;
+            case 'xl':
+                tshirtModel.style.width = '400px';
+                tshirtModel.style.height = '500px';
+                break;
+        }
+    }
+
+    // Listen for size selection changes
+    tshirtSize.addEventListener('change', function () {
+        updateTshirtSize(this.value);
+    });
+
+    // Initialize default size
+    updateTshirtSize(tshirtSize.value);
 });

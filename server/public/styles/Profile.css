@@ -37,14 +37,9 @@
         text-align: center;
     }
 }
-:root {
-    --bs-nav-link-color: #ff5722;
-}
+:root{
+    --bs-link-color:black;
+    --bs-link-hover-color:#ff5722;
+    --bs-emphasis-color:#ff5722;
 
-.nav-link {
-    color: var(--bs-nav-link-color) !important;
-}
-
-.nav-link:hover {
-    color: var(--bs-nav-link-hover-color) !important;
 }

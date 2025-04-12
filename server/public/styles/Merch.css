@@ -12,72 +12,6 @@ body {
     margin: 0 auto;
     padding: 20px;
 }
-
-/* Header Styles */
-header {
-    background: #222;
-    padding: 15px 0;
-    width: 100%;
-}
-
-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 50px;
-    height: 4vh;
-}
-
-nav a {
-    text-decoration: none;
-}
-
-nav a .logo {
-    font-size: 24px;
-    font-weight: bold;
-    color: white;
-}
-
-nav ul {
-    list-style: none;
-    display: flex;
-    align-items: center;
-}
-
-nav ul li {
-    align-content: center;
-    margin: 0 15px;
-}
-
-nav ul li a {
-    color: white;
-    text-decoration: none !important;
-}
-
-nav ul li a:hover {
-    color: #ff5722;
-    text-decoration: none !important;
-}
-
-.languageSwitcher {
-    background: #333;
-    color: white;
-    border: 1px solid #444;
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    outline: none;
-}
-
-.languageSwitcher:hover {
-    background: #444;
-}
-
-.languageSwitcher:focus {
-    border-color: #ff5722;
-}
-
 /* T-shirt Constructor Styles */
 .tshirt-container {
     display: flex;
@@ -130,9 +64,11 @@ nav ul li a:hover {
     position: absolute;
     bottom: 5px;
     right: 5px;
-    width: 20px;
-    height: 20px;
-    background-color: #ff5722;
+    width: 60px;
+    height: 60px;
+    background-image:url('/images/resize.svg');
+    background-size:contain;
+    background-repeat: no-repeat;
     cursor: se-resize;
     border-radius: 50%;
 }
@@ -160,12 +96,13 @@ nav ul li a:hover {
     padding: 10px;
     border-radius: 5px;
     border: 1px solid #ccc;
-    width: 100%;
+    width: 95%;
     font-size: 16px;
 }
 
 .controls input[type="text"] {
     font-size: 18px;
+    height:2vh;
 }
 
 .controls input[type="color"],
@@ -192,3 +129,51 @@ button {
 button:hover {
     background-color: #e64a19;
 }
+.tshirt-model {
+    position: relative;
+    margin: auto;
+    transition: width 0.3s ease, height 0.3s ease;
+}
+
+
+/* Dropdown Container */
+.controls select {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    color: #333;
+    cursor: pointer;
+    transition: border-color 0.3s, background-color 0.3s;
+}
+
+/* Hover and Focus Effect */
+.controls select:hover,
+.controls select:focus {
+    border-color: #ff5722;
+    outline: none;
+}
+
+/* Custom Arrow for Dropdown */
+.controls select {
+    appearance: none; /* Removes default dropdown arrow */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('/images/dropdown-arrow.svg'); /* Add a custom arrow */
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+    padding-right: 30px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .controls select {
+        font-size: 14px;
+        padding: 8px;
+    }
+}
+
+

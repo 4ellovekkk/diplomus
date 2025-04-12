@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="/styles/Header.css">
     <link rel="stylesheet" href="/styles/Footer.css">
     <link rel="stylesheet" href="/styles/Buttons.css">
+    <%- include('./partials/favicon') %>
 </head>
 <body>
 <%- include('./partials/header') %>
@@ -24,20 +26,33 @@
         </div>
     </div>
     <div class="controls">
+        <label for="tshirt-size">T-Shirt Size:</label>
+        <select id="tshirt-size">
+            <option value="small">Small</option>
+            <option value="medium" selected>Medium</option>
+            <option value="large">Large</option>
+            <option value="xl">XL</option>
+        </select>
+        <div>
         <label for="text-input">Text:</label>
         <input type="text" id="text-input" placeholder="Enter your text" value="<%= text || '' %>">
-
+        </div>
+        <div>
         <label for="text-color-picker">Text Color:</label>
         <input type="color" id="text-color-picker" value="<%= textColor || '#000000' %>">
-
+        </div>
+        <div>
         <label for="font-size">Font Size:</label>
         <input type="range" id="font-size" min="10" max="50" value="<%= fontSize || 20 %>">
-
+        </div>
+        <div>
         <label for="image-upload">Upload Image:</label>
         <input type="file" id="image-upload" accept="image/*">
+        </div> 
     </div>
 </div>
 <%- include('./partials/footer') %>
 <script src="/scripts/merch.js"></script>
 </body>
 </html>
+
