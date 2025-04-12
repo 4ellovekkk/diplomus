@@ -1,46 +1,67 @@
 const jwt = require("jsonwebtoken");
-const {PrismaClient} = require("@prisma/client");
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
+
 const allowedPaths = [
-    "/api/login",
-    "/auth/google",
-    "/",
-    "/api/register",
-    "/auth/google/callback",
-    "/services",
-    "/about"
+  "/api/login",
+  "/auth/google",
+  "/",
+  "/api/register",
+  "/auth/google/callback",
+  "/services",
+  "/about",
 ];
 
 const verifyTokenExceptLogin = (req, res, next) => {
-    // Skip token verification for /api/login
-    if (allowedPaths.includes(req.path)) {
-        return next();
-    }
-    // Get the token from the request headers, cookies, or query parameters
-    const token = req.headers["authorization"] || req.cookies.token || req.query.token;
+  if (allowedPaths.includes(req.path)) {
+    return next();
+  }
 
-    if (!token) {
-        return res.status(401).json({message: "Access denied. No token provided."});
-    }
+  const token =
+    req.headers["authorization"] || req.cookies.token || req.query.token;
 
-    try {
-        // Verify the token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded;
-        // Optionally, you can check if the user exists in the database
-        prisma.users.findUnique({where: {id: decoded.userId}})
-            .then(user => {
-                if (!user) {
-                    return res.status(401).json({message: "User not found."});
-                }
-                next();
-            })
-            .catch(err => {
-                return res.status(500).json({message: "Internal server error."});
-            });
-    } catch (err) {
-        console.log(err);
-        return res.status(400).json({message: "Invalid token."});
-    }
+  if (!token) {
+    return res.status(400).render("error", {
+      errorTitle: "No Authorization Token",
+      errorMessage:
+        "There is no JWT token found in cookies, headers, or query. Are you authorized?",
+      errorDetails: { code: 400, info: "Missing JWT token" },
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+
+    prisma.users
+      .findUnique({ where: { id: decoded.userId } })
+      .then((user) => {
+        if (!user) {
+          return res.status(401).render("error", {
+            errorTitle: "User Not Found",
+            errorMessage: "No user associated with this token.",
+            errorDetails: { code: 401, userId: decoded.userId },
+          });
+        }
+        next();
+      })
+      .catch((err) => {
+        console.error("Database error:", err);
+        return res.status(500).render("error", {
+          errorTitle: "Internal Server Error",
+          errorMessage: "Could not validate user from token.",
+          errorDetails: { code: 500, error: err.message },
+        });
+      });
+  } catch (err) {
+    console.error("JWT verification error:", err);
+    return res.status(400).render("error", {
+      errorTitle: "Invalid Token",
+      errorMessage: "JWT token could not be verified.",
+      errorDetails: { code: 400, error: err.message },
+    });
+  }
 };
+
 module.exports = verifyTokenExceptLogin;
+

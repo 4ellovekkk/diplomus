@@ -1,0 +1,21 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Error</title>
+  <link rel="stylesheet" href="/styles/Error.css">
+</head>
+<body>
+  <div class="error-container">
+    <h1> <%= errorTitle || "Something went wrong" %></h1>
+    <% if (errorMessage) { %>
+      <p><%= errorMessage %></p>
+    <% } %>
+    <% if (errorDetails) { %>
+      <pre><%= JSON.stringify(errorDetails, null, 2) %></pre>
+    <% } %>
+    <a href="/">← Go back to Home</a>
+  </div>
+</body>
+</html>
