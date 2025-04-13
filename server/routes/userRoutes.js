@@ -2,10 +2,13 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcryptjs");
-
+const Avatar = require("../models_mongo/avatar.js");
 const prisma = new PrismaClient();
 const router = express.Router();
 const verifyTokenExceptLogin = require("../middleware/authMiddleware");
+
+const multer = require("multer");
+const upload = multer(); // using memoryStorage for buffer access
 
 const handleError = (
   req,
@@ -176,7 +179,6 @@ router.get("/users/:id", verifyTokenExceptLogin, async (req, res) => {
     }
 
     const user = await prisma.users.findUnique({ where: { id } });
-
     if (!user) {
       return handleError(
         req,
@@ -194,34 +196,68 @@ router.get("/users/:id", verifyTokenExceptLogin, async (req, res) => {
 });
 
 // Update a user by ID
-router.put("/users", verifyTokenExceptLogin, async (req, res) => {
-  try {
-    // Decode the JWT token to get the user ID
-    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
+router.put(
+  "/users",
+  verifyTokenExceptLogin,
+  upload.single("avatar"),
+  async (req, res) => {
+    try {
+      const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+      const userId = decoded.userId;
 
-    const { username, email, password, role, name, phone, adress, goodleId } =
-      req.body;
-    const updateData = { username, email, role, name, phone, adress, goodleId };
+      const { username, email, password, role, name, phone, adress, goodleId } =
+        req.body;
 
-    // If a password is provided, hash it before updating
-    if (password) {
-      updateData.password_hash = await bcrypt.hash(password, 10);
+      console.log(req.body);
+      const updateData = {
+        username,
+        email,
+        role,
+        name,
+        phone,
+        adress,
+        goodleId,
+      };
+
+      // Hash password if provided
+      if (password) {
+        updateData.password_hash = await bcrypt.hash(password, 10);
+      }
+
+      // 🌐 Update user info in SQL (Prisma)
+      const updatedUser = await prisma.users.update({
+        where: { id: userId },
+        data: updateData,
+      });
+
+      // 🖼️ Update avatar in MongoDB if file is uploaded
+      if (req.file) {
+        const existingAvatar = await Avatar.findOne({ userId });
+
+        if (existingAvatar) {
+          existingAvatar.filename = req.file.originalname;
+          existingAvatar.contentType = req.file.mimetype;
+          existingAvatar.data = req.file.buffer;
+          existingAvatar.uploadedAt = new Date();
+          await existingAvatar.save();
+        } else {
+          await Avatar.create({
+            userId,
+            filename: req.file.originalname,
+            contentType: req.file.mimetype,
+            data: req.file.buffer,
+          });
+        }
+      }
+
+      res.json({ success: true, user: updatedUser });
+    } catch (error) {
+      console.error("Error updating user:", error);
+      handleError(req, res, error, "Error updating user");
     }
+  },
+); // Lock or unlock a user
 
-    // Update the user in the database
-    const updatedUser = await prisma.users.update({
-      where: { id: userId },
-      data: updateData,
-    });
-
-    res.json({ success: true, user: updatedUser });
-  } catch (error) {
-    handleError(res, error, "Error updating user");
-  }
-});
-
-// Lock or unlock a user
 router.patch("/users/:id/lock", verifyTokenExceptLogin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);

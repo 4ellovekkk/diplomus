@@ -127,7 +127,7 @@ router.post("/login", async (req, res) => {
       maxAge: 3600000,
       sameSite: "strict",
     });
-    res.redirect(301, "/profile");
+    res.redirect(301, "/");
   } catch (error) {
     handleError(res, error, "Login Failed", "Error logging in");
   }

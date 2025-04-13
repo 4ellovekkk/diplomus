@@ -16,8 +16,14 @@ const authRouter = require("./routes/authRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const userRoutes = require("./routes/userRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
+const profileRoutes = require("./routes/profileRoutes.js");
+
+//additional imports
 const app = express();
 const prisma = new PrismaClient();
+const Avatar = require("./models_mongo/avatar.js");
+const mongoose = require("mongoose");
+mongoose.connect("mongodb://localhost:27017/print_center");
 
 app.use(
   session({
@@ -96,6 +102,7 @@ app.use("/api", authRouter);
 app.use("/api", cartRoutes);
 app.use("/api", userRoutes);
 app.use("/", serviceRoutes);
+app.use("/", profileRoutes);
 //basic routes
 app.get("/", async (req, res) => {
   try {
@@ -203,50 +210,6 @@ app.get("/about", async (req, res) => {
 });
 
 // Services route with optional user data
-
-app.get("/profile", verifyTokenExceptLogin, async (req, res) => {
-  try {
-    // Decode the JWT token to get the user ID
-    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
-
-    // Fetch the user and include their orders
-    const user = await prisma.users.findUnique({
-      where: { id: decoded.userId },
-      include: { orders: true }, // Include user's orders
-    });
-    console.log(user);
-    // If no user is found, respond with an error
-    if (!user) {
-      const errorInfo = {
-        errorTitle: "User not found",
-        errorMessage: "Check if user credentials you provided are correct",
-        errorDetails: { code: 404, info: "Not found" },
-      };
-      return res.status(404).render("error", errorInfo);
-    }
-
-    // Retrieve the cart from the session, default to an empty array if not present
-    const cart = req.session.cart || [];
-
-    // Render the profile page and pass user and cart to the template
-    res.render("profile", { user, cart });
-  } catch (error) {
-    // Handle JWT errors (expired or invalid token)
-    if (
-      error.name === "JsonWebTokenError" ||
-      error.name === "TokenExpiredError"
-    ) {
-      return res
-        .status(401)
-        .json({ message: "Unauthorized: Invalid or expired token." });
-    }
-
-    // Log the error and return a generic server error response
-    console.error("Error retrieving user profile:", error);
-    return res.status(500).json({ message: "Internal server error." });
-  }
-});
-
 app.get(
   "/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
