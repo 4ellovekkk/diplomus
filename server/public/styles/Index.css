@@ -1,48 +1,59 @@
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
 }
 
 body {
-    background: #f4f4f4;
-    text-align: center;
-    height: 100vh;
+  background: #f4f4f4;
+  text-align: center;
+  height: 100vh;
 }
 
 .hero {
-    background: url('../images/bg.jpeg') no-repeat center center/cover;
-    height: 30vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: white;
+  background: none;
+  height: 30vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: black;
 }
 
 .hero h1 {
-    font-size: 36px;
-    margin-bottom: 10px;
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+
+.hero p {
+  margin: 10px;
 }
 
 .services {
-    padding: 50px;
+  padding: 50px;
+}
+
+.services h2 {
+  margin-bottom: 10px;
 }
 
 .service-container {
-    display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
 }
 
 .service {
-    width: 20%;
-    background: white;
-    padding: 10px;
-    margin: 10px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    align-content: center;
-    justify-content: center;
+  width: 20%;
+  background: white;
+  padding: 10px;
+  margin: 10px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  align-content: center;
+  justify-content: center;
+}
+.service p {
+  margin: 10px;
 }
