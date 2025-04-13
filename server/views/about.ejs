@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= locale %>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="/styles/Footer.css">
     <link rel="stylesheet" href="/styles/Buttons.css">
 
-    <title>About</title>
+    <title><%= __('about_title') %></title>
 </head>
 <body>
 <%- include('./partials/header'); %>
@@ -22,9 +22,9 @@
         <!-- Address & Map in the Same Card -->
         <div class="col-md-12">
             <div class="card p-4 shadow">
-                <h2>Our Address</h2>
-                <p>123 Print Center Street, Cityname, Country</p>
-                
+                <h2><%= __('our_address') %></h2>
+                <p><%= __('address_line') %></p>
+
                 <div id="map" class="rounded shadow" style="width: 100%; height: 400px;"></div>
             </div>
         </div>
@@ -32,19 +32,19 @@
         <!-- Working Hours -->
         <div class="col-md-6">
             <div class="card p-4 shadow">
-                <h2>Working Hours</h2>
-                <p>Monday - Friday: 9:00 AM - 6:00 PM</p>
-                <p>Saturday: 10:00 AM - 4:00 PM</p>
-                <p>Sunday: Closed</p>
+                <h2><%= __('working_hours') %></h2>
+                <p><%= __('monday_friday') %>: 9:00 AM – 6:00 PM</p>
+                <p><%= __('saturday') %>: 10:00 AM – 4:00 PM</p>
+                <p><%= __('sunday') %>: <%= __('closed') %></p>
             </div>
         </div>
 
         <!-- Contact Information -->
         <div class="col-md-6">
             <div class="card p-4 shadow">
-                <h2>Contact Information</h2>
-                <p>Email: <a href="mailto:contact@printcenter.com" class="text-decoration-none">contact@printcenter.com</a></p>
-                <p>Phone: <a href="tel:+1234567890" class="text-decoration-none">+1 234 567 890</a></p>
+                <h2><%= __('contact_info') %></h2>
+                <p><%= __('email') %>: <a href="mailto:contact@printcenter.com" class="text-decoration-none">contact@printcenter.com</a></p>
+                <p><%= __('phone') %>: <a href="tel:+1234567890" class="text-decoration-none">+1 234 567 890</a></p>
             </div>
         </div>
     </section>
@@ -52,21 +52,20 @@
 
 <%- include('./partials/footer'); %>
 
-<script src="https://api-maps.yandex.ru/2.1/?lang=en_RU&apikey=fbdc0972-5e05-434e-bb16-6236571a6f3b"
+<script src="https://api-maps.yandex.ru/2.1/?lang=<%= locale === 'ru' ? 'ru_RU' : 'en_US' %>&apikey=fbdc0972-5e05-434e-bb16-6236571a6f3b"
         type="text/javascript"></script>
 <script>
     ymaps.ready(init);
-
     function init() {
         const map = new ymaps.Map("map", {
-            center: [55.7558, 37.6176],  // Example coordinates
+            center: [55.7558, 37.6176],
             zoom: 15,
-            type: 'yandex#map',  
+            type: 'yandex#map',
         });
 
         const placemark = new ymaps.Placemark([55.7558, 37.6176], {
-            hintContent: 'Print Center',
-            balloonContent: 'Our print center is located here.'
+            hintContent: '<%= __('map_hint') %>',
+            balloonContent: '<%= __('map_balloon') %>'
         });
 
         map.geoObjects.add(placemark);

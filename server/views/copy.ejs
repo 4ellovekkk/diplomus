@@ -1,57 +1,61 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= locale %>">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xerox Copy Service</title>
-    <link rel="stylesheet" href="/styles/Copy.css">
-    <link rel="stylesheet" href="/styles/Header.css">
-    <link rel="stylesheet" href="/styles/Footer.css">
-    <link rel="stylesheet" href="/styles/Buttons.css">
-    <%- include('./partials/favicon')%>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= __('xerox_title') %></title>
+  <link rel="stylesheet" href="/styles/Copy.css">
+  <link rel="stylesheet" href="/styles/Header.css">
+  <link rel="stylesheet" href="/styles/Footer.css">
+  <link rel="stylesheet" href="/styles/Buttons.css">
+  <%- include('./partials/favicon') %>
 </head>
 <body>
 <%- include('./partials/header') %>
+
 <div class="container">
-    <h1>Photocopy service</h1>
-    <p>Welcome to our professional xerox copy service! We offer high-quality black & white and color photocopies at affordable prices.</p>
+  <h1><%= __('xerox_heading') %></h1>
+  <p><%= __('xerox_intro') %></p>
 
-    <h2>Why Choose Us?</h2>
-    <ul>
-        <li>Fast and reliable service</li>
-        <li>Affordable pricing for bulk orders</li>
-        <li>High-resolution color and black & white copies</li>
-        <li>Various paper sizes: A4, A3, Letter</li>
-        <li>Double-sided and single-sided printing available</li>
-    </ul>
+  <h2><%= __('why_choose_us') %></h2>
+  <ul>
+    <li><%= __('feature_fast') %></li>
+    <li><%= __('feature_affordable') %></li>
+    <li><%= __('feature_high_quality') %></li>
+    <li><%= __('feature_sizes') %></li>
+    <li><%= __('feature_sided') %></li>
+  </ul>
 
-    <h2>Pricing</h2>
-    <table>
-        <tr>
-            <th>Type</th>
-            <th>Price per Page</th>
-        </tr>
-        <tr>
-            <td>Black & White (A4)</td>
-            <td>$0.10</td>
-        </tr>
-        <tr>
-            <td>Color (A4)</td>
-            <td>$0.25</td>
-        </tr>
-        <tr>
-            <td>Black & White (A3)</td>
-            <td>$0.20</td>
-        </tr>
-        <tr>
-            <td>Color (A3)</td>
-            <td>$0.50</td>
-        </tr>
-    </table>
+  <h2><%= __('pricing') %></h2>
+  <table>
+    <tr>
+      <th><%= __('type') %></th>
+      <th><%= __('price_per_page') %></th>
+    </tr>
+    <tr>
+      <td><%= __('bw_a4') %></td>
+      <td>$0.10</td>
+    </tr>
+    <tr>
+      <td><%= __('color_a4') %></td>
+      <td>$0.25</td>
+    </tr>
+    <tr>
+      <td><%= __('bw_a3') %></td>
+      <td>$0.20</td>
+    </tr>
+    <tr>
+      <td><%= __('color_a3') %></td>
+      <td>$0.50</td>
+    </tr>
+  </table>
 
-    <h2>How to Order</h2>
-    <p>Visit our print center or upload your documents online for quick and easy printing.</p>
+  <h2><%= __('how_to_order') %></h2>
+  <p><%= __('order_instructions') %></p>
 </div>
+
 <%- include('./partials/footer') %>
 </body>
 </html>
+

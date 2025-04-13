@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= locale %>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document Printing</title>
+    <title><%= __('print_title') %></title>
     <link rel="stylesheet" href="/styles/Print.css">
     <link rel="stylesheet" href="/styles/Header.css">
     <link rel="stylesheet" href="/styles/Footer.css">
@@ -16,20 +17,19 @@
 
             if (fileInput.files.length > 0) {
                 const file = fileInput.files[0];
-                fileInfo.textContent = `File Name: ${file.name}, Size: ${(file.size / 1024).toFixed(2)} KB`;
+                fileInfo.textContent = `<%= __('file_name') %>: ${file.name}, <%= __('file_size') %>: ${(file.size / 1024).toFixed(2)} KB`;
 
-                // Simulating page count retrieval (actual processing required on backend)
-                pagesInput.value = "Detecting...";
+                pagesInput.value = "<%= __('detecting') %>";
                 fetch('/get-file-info', {
                     method: 'POST',
                     body: new FormData(document.getElementById('printForm'))
                 })
                     .then(response => response.json())
                     .then(data => {
-                        pagesInput.value = data.pages || "Unknown";
+                        pagesInput.value = data.pages || "<%= __('unknown') %>";
                     })
                     .catch(() => {
-                        pagesInput.value = "Error retrieving pages";
+                        pagesInput.value = "<%= __('error_retrieving_pages') %>";
                     });
             } else {
                 fileInfo.textContent = '';
@@ -38,43 +38,45 @@
         }
     </script>
     <%- include('./partials/favicon') %>
-    <title>Print your docunment</title>
 </head>
 <body>
 <%- include('./partials/header')%>
-<h1>Print Document</h1>
+
+<h1><%= __('print_heading') %></h1>
 <form id="printForm" action="/print" method="POST" enctype="multipart/form-data">
-    <label for="document">Upload Document:</label>
+    <label for="document"><%= __('upload_document') %>:</label>
     <input type="file" id="document" name="document" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required onchange="updateFileInfo()"><br><br>
     <p id="fileInfo"></p>
 
-    <label for="pages">Number of Pages:</label>
+    <label for="pages"><%= __('number_of_pages') %>:</label>
     <input type="text" id="pages" name="pages" readonly><br><br>
 
-    <label for="print_pages">Pages to Print:</label>
-    <input type="text" id="print_pages" name="print_pages" placeholder="e.g., 1-5, 2,4,7, odd, even"><br><br>
+    <label for="print_pages"><%= __('pages_to_print') %>:</label>
+    <input type="text" id="print_pages" name="print_pages" placeholder="<%= __('print_pages_placeholder') %>"><br><br>
 
-    <label for="copies">Number of Copies:</label>
+    <label for="copies"><%= __('number_of_copies') %>:</label>
     <input type="number" id="copies" name="copies" min="1" value="1" required><br><br>
 
-    <label for="color">Color Mode:</label>
+    <label for="color"><%= __('color_mode') %>:</label>
     <select id="color" name="color">
-        <option value="black_white">Black & White</option>
-        <option value="color">Color</option>
+        <option value="black_white"><%= __('black_white') %></option>
+        <option value="color"><%= __('color') %></option>
     </select><br><br>
 
-    <label for="paper_size">Paper Size:</label>
+    <label for="paper_size"><%= __('paper_size') %>:</label>
     <select id="paper_size" name="paper_size">
         <option value="A4">A4</option>
         <option value="A3">A3</option>
         <option value="Letter">Letter</option>
     </select><br><br>
 
-    <label for="double_sided">Double-Sided Printing:</label>
+    <label for="double_sided"><%= __('double_sided_printing') %>:</label>
     <input type="checkbox" id="double_sided" name="double_sided"><br><br>
 
-    <button type="submit">Print</button>
+    <button type="submit"><%= __('print_button') %></button>
 </form>
+
 <%- include('./partials/footer') %>
 </body>
 </html>
+

@@ -1,10 +1,10 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= locale %>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>T-Shirt Constructor</title>
+    <title><%= __('tshirt_constructor_title') %></title>
     <link rel="stylesheet" href="/styles/Merch.css">
     <link rel="stylesheet" href="/styles/Header.css">
     <link rel="stylesheet" href="/styles/Footer.css">
@@ -14,40 +14,40 @@
 <body>
 <%- include('./partials/header') %>
 <div class="container">
-    <h1>T-Shirt Constructor</h1>
+    <h1><%= __('tshirt_constructor_heading') %></h1>
     <div class="tshirt-container">
         <div id="tshirt-model" class="tshirt-model">
-            <img src="/images/t-shirt-template.png" alt="T-Shirt Model" class="tshirt-template">
-            <div id="text-overlay" class="text-overlay" draggable="true">Your Text Here</div>
+            <img src="/images/t-shirt-template.png" alt="<%= __('tshirt_model_alt') %>" class="tshirt-template">
+            <div id="text-overlay" class="text-overlay" draggable="true"><%= __('default_text') %></div>
             <div id="image-wrapper" class="image-wrapper">
-                <img id="custom-image" class="custom-image" src="" alt="Custom Image" style="display: none;">
+                <img id="custom-image" class="custom-image" src="" alt="<%= __('custom_image_alt') %>" style="display: none;">
                 <div class="resize-handle"></div>
             </div>
         </div>
     </div>
     <div class="controls">
-        <label for="tshirt-size">T-Shirt Size:</label>
+        <label for="tshirt-size"><%= __('tshirt_size_label') %>:</label>
         <select id="tshirt-size">
-            <option value="small">Small</option>
-            <option value="medium" selected>Medium</option>
-            <option value="large">Large</option>
-            <option value="xl">XL</option>
+            <option value="small"><%= __('size_small') %></option>
+            <option value="medium" selected><%= __('size_medium') %></option>
+            <option value="large"><%= __('size_large') %></option>
+            <option value="xl"><%= __('size_xl') %></option>
         </select>
         <div>
-        <label for="text-input">Text:</label>
-        <input type="text" id="text-input" placeholder="Enter your text" value="<%= text || '' %>">
+            <label for="text-input"><%= __('text_label') %>:</label>
+            <input type="text" id="text-input" placeholder="<%= __('text_placeholder') %>" value="<%= text || '' %>">
         </div>
         <div>
-        <label for="text-color-picker">Text Color:</label>
-        <input type="color" id="text-color-picker" value="<%= textColor || '#000000' %>">
+            <label for="text-color-picker"><%= __('text_color_label') %>:</label>
+            <input type="color" id="text-color-picker" value="<%= textColor || '#000000' %>">
         </div>
         <div>
-        <label for="font-size">Font Size:</label>
-        <input type="range" id="font-size" min="10" max="50" value="<%= fontSize || 20 %>">
+            <label for="font-size"><%= __('font_size_label') %>:</label>
+            <input type="range" id="font-size" min="10" max="50" value="<%= fontSize || 20 %>">
         </div>
         <div>
-        <label for="image-upload">Upload Image:</label>
-        <input type="file" id="image-upload" accept="image/*">
+            <label for="image-upload"><%= __('image_upload_label') %>:</label>
+            <input type="file" id="image-upload" accept="image/*">
         </div> 
     </div>
 </div>
