@@ -61,7 +61,7 @@
                   </div>
                   <div class="col-md-6">
                     <label class="form-label"><%= __('address') %></label>
-                    <input type="text" name="address" class="form-control editable-input" value="<%= user.adress %>" readonly>
+                    <input type="text" name="adress" class="form-control editable-input" value="<%= user.adress %>" readonly>
                   </div>
                   <div class="col-md-6">
                     <label for="avatar" class="form-label"><%= __('change_avatar') %></label>
@@ -86,10 +86,92 @@
 
   <%- include('./partials/footer'); %>
 
-<script>
-  // Language switch and profile logic remains unchanged
-</script>
 
+<script>
+  function changeLanguage(lang) {
+    window.location.search = '?lang=' + lang;
+  }
+
+  let originalValues = {};
+
+  function enableEdit() {
+    const inputs = document.querySelectorAll(".editable-input");
+    originalValues = {};
+
+    inputs.forEach(input => {
+      originalValues[input.name] = input.value;
+      input.removeAttribute("readonly");
+    });
+
+    document.getElementById("editBtn").classList.add("d-none");
+    document.getElementById("saveBtn").classList.remove("d-none");
+    document.getElementById("cancelBtn").classList.remove("d-none");
+  }
+
+  function cancelEdit() {
+    const inputs = document.querySelectorAll(".editable-input");
+
+    inputs.forEach(input => {
+      input.value = originalValues[input.name];
+      input.setAttribute("readonly", true);
+    });
+
+    document.getElementById("editBtn").classList.remove("d-none");
+    document.getElementById("saveBtn").classList.add("d-none");
+    document.getElementById("cancelBtn").classList.add("d-none");
+  }
+
+  function showStatusMessage(message, isSuccess = true) {
+    const statusDiv = document.getElementById("statusMessage");
+    statusDiv.classList.remove("d-none", "alert-success", "alert-danger");
+    statusDiv.classList.add(isSuccess ? "alert-success" : "alert-danger");
+    statusDiv.textContent = message;
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("profileForm");
+
+    // Show Edit button only when profile tab is active
+    const tabs = document.querySelectorAll('[data-bs-toggle="tab"]');
+    tabs.forEach(tab => {
+      tab.addEventListener("shown.bs.tab", function (event) {
+        const activeTab = event.target.getAttribute("href");
+        const editBtn = document.getElementById("editBtn");
+        if (activeTab === "#profile") {
+          editBtn.classList.remove("d-none");
+        } else {
+          editBtn.classList.add("d-none");
+          cancelEdit(); // Automatically cancel edit if user navigates away
+        }
+      });
+    });
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch("/api/users", {
+          method: "PUT",
+          body: formData,
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          showStatusMessage("Profile updated successfully!", true);
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          showStatusMessage(result.error || "An error occurred.", false);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        showStatusMessage("An error occurred while updating your profile.", false);
+      }
+    });
+  });
+</script>
 </body>
 </html>
 

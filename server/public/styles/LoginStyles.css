@@ -1,132 +1,132 @@
 /* General Styles */
 body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Poppins', sans-serif;
-    display: flex;
-    background: gray;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    color: #333;
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", sans-serif;
+  display: flex;
+  background: gray;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: #333;
 }
 
 /* Login Container */
 .login-container {
-    background: rgba(255, 255, 255, 0.9);
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    width: 100%;
-    max-width: 400px;
-    text-align: center;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
 }
 
 /* Login Box */
 .login-box h1 {
-    margin-bottom: 1rem;
-    font-size: 2rem;
-    color: #ff8c00;
+  margin-bottom: 1rem;
+  font-size: 2rem;
+  color: #ff5722;
 }
 
 .login-box p {
-    margin-bottom: 2rem;
-    color: #666;
+  margin-bottom: 2rem;
+  color: #666;
 }
 
 /* Input Groups */
 .input-group {
-    margin-bottom: 1.5rem;
-    text-align: center;
+  margin-bottom: 1.5rem;
+  text-align: center;
 }
 
 .input-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-    color: #444;
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #444;
 }
 
 .input-group input {
-    width: 90%;
-    padding: 0.75rem;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    font-size: 1rem;
-    outline: none;
-    transition: border-color 0.3s ease;
+  width: 90%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.3s ease;
 }
 
 .input-group input:focus {
-    border-color: #ff8c00;
+  border-color: #ff5722;
 }
 
 /* Button */
 button {
-    width: 100%;
-    padding: 0.75rem;
-    background: #ff8c00;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background 0.3s ease;
+  width: 100%;
+  padding: 0.75rem;
+  background: #ff5722;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
 }
 
 button:hover {
-    background: #e07b00;
+  background: white;
+  color: black;
 }
 
 /* Footer */
 .footer {
-    margin-top: 1.5rem;
-    font-size: 0.9rem;
-    color: #666;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: #666;
 }
 
 .footer a {
-    color: coral;
-    text-decoration: none;
-    font-weight: 600;
+  color: coral;
+  text-decoration: none;
+  font-weight: 600;
 }
 
 .footer a:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
-
 
 /* Language Selector */
 .language-selector {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 1rem;
-    position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+  position: relative;
 }
 
 .language-label {
-    font-size: 1.2rem;
-    margin-right: 0.5rem;
-    cursor: pointer;
+  font-size: 1.2rem;
+  margin-right: 0.5rem;
+  cursor: pointer;
 }
 
 #language-select {
-    padding: 0.5rem;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background: white;
-    color: #333;
-    cursor: pointer;
-    transition: border-color 0.3s ease;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
 }
 
 #language-select:focus {
-    border-color: #ff8c00;
-    outline: none;
+  border-color: #ff5722;
+  outline: none;
 }
 
 #language-select:hover {
-    border-color: #e07b00;
+  border-color: #e07b00;
 }

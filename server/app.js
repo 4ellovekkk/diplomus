@@ -163,7 +163,9 @@ app.get("/admin", async (req, res) => {
     // Check authorization (admin only)
     if (currentUser.role !== "admin") {
       return res.status(403).render("error", {
-        message: "Forbidden: Admin access required",
+        errorTitle: "Access Denied",
+        errorMessage: "Forbidden: Admin access required",
+        errorDetails: "You are not permited to access this page",
       });
     }
 
@@ -259,4 +261,3 @@ app.get(
 https.createServer(credentials, app).listen(3000, () => {
   console.log("HTTPS Server running on port 3000");
 });
-
