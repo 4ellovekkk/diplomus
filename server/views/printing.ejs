@@ -5,78 +5,140 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= __('print_title') %></title>
-    <link rel="stylesheet" href="/styles/Print.css">
-    <link rel="stylesheet" href="/styles/Header.css">
-    <link rel="stylesheet" href="/styles/Footer.css">
-    <link rel="stylesheet" href="/styles/Buttons.css">
-    <script>
-        function updateFileInfo() {
-            const fileInput = document.getElementById('document');
-            const fileInfo = document.getElementById('fileInfo');
-            const pagesInput = document.getElementById('pages');
-
-            if (fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                fileInfo.textContent = `<%= __('file_name') %>: ${file.name}, <%= __('file_size') %>: ${(file.size / 1024).toFixed(2)} KB`;
-
-                pagesInput.value = "<%= __('detecting') %>";
-                fetch('/get-file-info', {
-                    method: 'POST',
-                    body: new FormData(document.getElementById('printForm'))
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        pagesInput.value = data.pages || "<%= __('unknown') %>";
-                    })
-                    .catch(() => {
-                        pagesInput.value = "<%= __('error_retrieving_pages') %>";
-                    });
-            } else {
-                fileInfo.textContent = '';
-                pagesInput.value = '';
-            }
-        }
-    </script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/Header.css"/>
+    <link rel="stylesheet" href="/styles/Footer.css"/>
+    <link rel="stylesheet" href="/styles/Buttons.css"/>
     <%- include('./partials/favicon') %>
+<script>
+    let totalPages = 0;
+
+    function updateFileInfo() {
+        const fileInput = document.getElementById('document');
+        const fileInfo = document.getElementById('fileInfo');
+        const pagesInput = document.getElementById('pages');
+
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            fileInfo.textContent = "<%= __('file_name') %>: " + file.name + ", <%= __('file_size') %>: " + (file.size / 1024).toFixed(2) + " KB";
+
+            pagesInput.value = "<%= __('detecting') %>";
+            fetch('/get-file-info', {
+                method: 'POST',
+                body: new FormData(document.getElementById('printForm'))
+            })
+            .then(response => response.json())
+            .then(data => {
+                totalPages = data.pages || 0;
+                pagesInput.value = totalPages || "<%= __('unknown') %>";
+            })
+            .catch(() => {
+                totalPages = 0;
+                pagesInput.value = "<%= __('error_retrieving_pages') %>";
+            });
+        } else {
+            fileInfo.textContent = '';
+            pagesInput.value = '';
+            totalPages = 0;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('printForm').addEventListener('submit', function(e) {
+            const pagesField = document.getElementById('print_pages').value.trim();
+
+            if (pagesField && totalPages > 0) {
+                const ranges = pagesField.split(',').map(part => part.trim());
+                const valid = ranges.every(range => {
+                    if (/^\d+$/.test(range)) {
+                        const page = parseInt(range);
+                        return page >= 1 && page <= totalPages;
+                    } else if (/^\d+-\d+$/.test(range)) {
+                        const [start, end] = range.split('-').map(Number);
+                        return start >= 1 && end <= totalPages && start <= end;
+                    }
+                    return false;
+                });
+
+               const printPagesInput = document.getElementById('print_pages');
+const errorDiv = document.getElementById('print_pages_error');
+printPagesInput.classList.remove('is-invalid');
+errorDiv.textContent = '';
+
+if (!valid) {
+    e.preventDefault();
+    printPagesInput.classList.add('is-invalid');
+
+
+errorDiv.textContent = "<%= __('invalid_page_range') %> (<%= __('max_pages') %> " + totalPages + ")";
+}            }
+        });
+    });
+</script>
 </head>
 <body>
-<%- include('./partials/header')%>
+<%- include('./partials/header') %>
 
-<h1><%= __('print_heading') %></h1>
-<form id="printForm" action="/print" method="POST" enctype="multipart/form-data">
-    <label for="document"><%= __('upload_document') %>:</label>
-    <input type="file" id="document" name="document" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required onchange="updateFileInfo()"><br><br>
-    <p id="fileInfo"></p>
+<div class="container py-5">
+    <h1 class="text-center mb-4"><%= __('print_heading') %></h1>
 
-    <label for="pages"><%= __('number_of_pages') %>:</label>
-    <input type="text" id="pages" name="pages" readonly><br><br>
+    <form id="printForm" action="/print" method="POST" enctype="multipart/form-data" class="mx-auto" style="max-width: 600px;">
+        <div class="mb-3">
+            <label for="document" class="form-label"><%= __('upload_document') %>:</label>
+            <input type="file" class="form-control" id="document" name="document" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required onchange="updateFileInfo()">
+            <small id="fileInfo" class="form-text text-muted mt-1"></small>
+        </div>
 
-    <label for="print_pages"><%= __('pages_to_print') %>:</label>
-    <input type="text" id="print_pages" name="print_pages" placeholder="<%= __('print_pages_placeholder') %>"><br><br>
+        <div class="mb-3">
+            <label for="pages" class="form-label"><%= __('number_of_pages') %>:</label>
+            <input type="text" class="form-control" id="pages" name="pages" readonly>
+        </div>
 
-    <label for="copies"><%= __('number_of_copies') %>:</label>
-    <input type="number" id="copies" name="copies" min="1" value="1" required><br><br>
+        <div class="mb-3">
+            <label for="print_pages" class="form-label"><%= __('pages_to_print') %>:</label>
+            <input type="text" class="form-control" id="print_pages" name="print_pages" placeholder="<%= __('print_pages_placeholder') %>">
+            <div id="print_pages_error" class="invalid-feedback"></div>
+        </div>
 
-    <label for="color"><%= __('color_mode') %>:</label>
-    <select id="color" name="color">
-        <option value="black_white"><%= __('black_white') %></option>
-        <option value="color"><%= __('color') %></option>
-    </select><br><br>
+        <div class="mb-3">
+            <label for="copies" class="form-label"><%= __('number_of_copies') %>:</label>
+            <input type="number" class="form-control" id="copies" name="copies" min="1" value="1" required>
+        </div>
 
-    <label for="paper_size"><%= __('paper_size') %>:</label>
-    <select id="paper_size" name="paper_size">
-        <option value="A4">A4</option>
-        <option value="A3">A3</option>
-        <option value="Letter">Letter</option>
-    </select><br><br>
+        <div class="mb-3">
+            <label for="color" class="form-label"><%= __('color_mode') %>:</label>
+            <select id="color" name="color" class="form-select">
+                <option value="black_white"><%= __('black_white') %></option>
+                <option value="color"><%= __('color') %></option>
+            </select>
+        </div>
 
-    <label for="double_sided"><%= __('double_sided_printing') %>:</label>
-    <input type="checkbox" id="double_sided" name="double_sided"><br><br>
+        <div class="mb-3">
+            <label for="paper_size" class="form-label"><%= __('paper_size') %>:</label>
+            <select id="paper_size" name="paper_size" class="form-select">
+                <option value="A4">A4</option>
+                <option value="A3">A3</option>
+                <option value="Letter">Letter</option>
+            </select>
+        </div>
 
-    <button type="submit"><%= __('print_button') %></button>
-</form>
+        <div class="form-check mb-4">
+            <input class="form-check-input" type="checkbox" id="double_sided" name="double_sided">
+            <label class="form-check-label" for="double_sided">
+                <%= __('double_sided_printing') %>
+            </label>
+        </div>
+
+        <button type="submit" class="btn w-100">
+            <%= __('print_button') %>
+        </button>
+    </form>
+</div>
 
 <%- include('./partials/footer') %>
+
+<!-- Bootstrap JS (optional for dropdowns, modals, etc.) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
 

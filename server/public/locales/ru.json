@@ -120,6 +120,7 @@
   "text_placeholder": "Введите ваш текст",
   "text_color_label": "Цвет текста",
   "font_size_label": "Размер шрифта",
-  "image_upload_label": "Загрузить изображение"
+  "image_upload_label": "Загрузить изображение",
+  "invalid_page_range": "Неверный диапазон страниц",
+  "max_pages": "Максимальное кол-во страниц::"
 }
-

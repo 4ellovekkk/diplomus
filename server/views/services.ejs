@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="<%= locale %>">
 <head>
@@ -6,47 +7,73 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= __('services_title') %> - Print Center</title>
     <%- include('./partials/favicon') %>
-    <link rel="stylesheet" href="/styles/Services.css">
-    <link rel="stylesheet" href="/styles/Header.css">
-    <link rel="stylesheet" href="/styles/Buttons.css">
-    <link rel="stylesheet" href="/styles/Footer.css">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/styles/Header.css"/>
+    <link rel="stylesheet" href="/styles/Footer.css"/>
+    <link rel="stylesheet" href="/styles/Buttons.css"/>
 </head>
 <body>
 
 <%- include('./partials/header'); %>
 
-<section class="hero">
-    <div class="hero-content">
-        <h1><%= __('services_heading') %></h1>
-        <p><%= __('services_subheading') %></p>
+<!-- Hero Section -->
+<section class="text-black py-5 text-center">
+    <div class="container">
+        <h1 class="display-5 mb-3"><%= __('services_heading') %></h1>
+        <p class="lead"><%= __('services_subheading') %></p>
     </div>
 </section>
 
-<section class="services">
-    <a href="/copy">
-        <div class="service">
-            <img src="/images/photocopy.jpg" alt="<%= __('photocopy_alt') %>">
-            <h2><%= __('photocopy_title') %></h2>
-            <p><%= __('photocopy_description') %></p>
+<!-- Services Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
+
+            <div class="col-md-6 col-lg-4">
+                <a href="/copy" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm">
+                        <img src="/images/photocopy.jpg" class="card-img-top" alt="<%= __('photocopy_alt') %>">
+                        <div class="card-body">
+                            <h5 class="card-title"><%= __('photocopy_title') %></h5>
+                            <p class="card-text"><%= __('photocopy_description') %></p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <a href="/print" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm">
+                        <img src="/images/printing.jpg" class="card-img-top" alt="<%= __('printing_alt') %>">
+                        <div class="card-body">
+                            <h5 class="card-title"><%= __('printing_title') %></h5>
+                            <p class="card-text"><%= __('printing_description') %></p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <a href="/merch" class="text-decoration-none text-dark">
+                    <div class="card h-100 shadow-sm">
+                        <img src="/images/merch.jpg" class="card-img-top" alt="<%= __('merch_alt') %>">
+                        <div class="card-body">
+                            <h5 class="card-title"><%= __('merch_title') %></h5>
+                            <p class="card-text"><%= __('merch_description') %></p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
         </div>
-    </a>
-    <a href="/print">
-        <div class="service">
-            <img src="/images/printing.jpg" alt="<%= __('printing_alt') %>">
-            <h2><%= __('printing_title') %></h2>
-            <p><%= __('printing_description') %></p>
-        </div>
-    </a>
-    <a href="/merch">
-        <div class="service">
-            <img src="/images/merch.jpg" alt="<%= __('merch_alt') %>">
-            <h2><%= __('merch_title') %></h2>
-            <p><%= __('merch_description') %></p>
-        </div>
-    </a>
+    </div>
 </section>
 
 <%- include('./partials/footer'); %>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
 
