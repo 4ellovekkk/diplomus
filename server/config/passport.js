@@ -2,8 +2,9 @@
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const {PrismaClient} = require("@prisma/client"); // Import PrismaClient
+const { console } = require("node:inspector/promises");
 const prisma = new PrismaClient(); // Initialize PrismaClient
-
+require('dotenv').config();
 /* Passport Middleware */
 passport.use(
     new GoogleStrategy(

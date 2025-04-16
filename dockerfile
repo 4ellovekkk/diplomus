@@ -30,7 +30,6 @@ RUN chown -R node:node /app && chmod -R 755 /app
 FROM node:18-alpine AS runtime
 
 WORKDIR /app
-RUN mkdir -p /app/uploads
 
 # Copy built application from build stage
 COPY --from=build /app /app
