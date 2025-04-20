@@ -10,6 +10,7 @@ const allowedPaths = [
   "/auth/google/callback",
   "/services",
   "/about",
+  "/set-locale",
 ];
 
 const verifyTokenExceptLogin = (req, res, next) => {
@@ -64,4 +65,3 @@ const verifyTokenExceptLogin = (req, res, next) => {
 };
 
 module.exports = verifyTokenExceptLogin;
-

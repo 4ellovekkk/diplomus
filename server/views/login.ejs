@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="<%= locale %>">
 <head>
@@ -5,50 +6,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Page</title>
     <%- include('./partials/favicon') %>
-    <link rel="stylesheet" href="/styles/LoginStyles.css">
+    <link rel="stylesheet" href="/styles/LoginStyles.css"> <!-- Optional for custom tweaks -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/Buttons.css">
 </head>
 <body>
-<div class="login-container">
-    <div class="login-box">
-        <h1><%= __('welcome') %></h1>
-        <p><%= __('login_prompt') %></p>
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+    <div class="login-box p-4 border rounded shadow-sm">
+        <h1 class="text-center mb-3"><%= __('welcome') %></h1>
+        <p class="text-center mb-4"><%= __('login_prompt') %></p>
 
         <!-- Language Switch Links -->
-        <div class="language-selector">
-            <select id="language-select" onchange="changeLanguage(this.value)">
+        <div class="mb-4">
+            <select id="language-select" class="form-select" onchange="changeLanguage(this.value)">
                 <option value="en" <%= locale === 'en' ? 'selected' : '' %>>English</option>
                 <option value="ru" <%= locale === 'ru' ? 'selected' : '' %>>Русский</option>
             </select>
-        </div>        <!-- Regular Login Form -->
+        </div>
+
+        <!-- Regular Login Form -->
         <form action="/api/login" method="POST">
-            <div class="input-group">
-                <label for="email"><%= __('email_label') %></label>
-                <input type="text" id="identifier" name="identifier" required>
+            <div class="mb-3">
+                <label for="identifier" class="form-label"><%= __('email_label') %></label>
+                <input type="text" id="identifier" name="identifier" class="form-control" required>
             </div>
-            <div class="input-group">
-                <label for="password"><%= __('password_label') %></label>
-                <input type="password" id="password" name="password" required>
+            <div class="mb-3">
+                <label for="password" class="form-label"><%= __('password_label') %></label>
+                <input type="password" id="password" name="password" class="form-control" required>
             </div>
-            <button type="submit"><%= __('login_button') %></button>
+            <button type="submit" class="btn w-100"><%= __('login_button') %></button>
         </form>
 
         <!-- Google Login Button -->
-        <div class="google-login">
+        <div class="mt-4 text-center">
             <p><%= __('google_login') %></p>
             <a href="/auth/google" class="google-btn">
                 <img src="/images/google-logo.png" width="20%" height="20%" alt="Google Logo">
             </a>
         </div>
 
-        <div class="footer">
+        <div class="footer text-center mt-3">
             <p><%= __('no_account') %> <a href="/api/register"><%= __('sign_up') %></a></p>
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     function changeLanguage(lang) {
-        window.location.search = '?lang=' + lang;
-    }</script>
+        const redirectTo = window.location.pathname + window.location.search;
+        const url = `/set-locale?lang=${lang}&redirectTo=${encodeURIComponent(redirectTo)}`;
+        window.location.href = url;
+    }
+</script>
 </body>
 </html>
+

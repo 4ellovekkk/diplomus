@@ -166,7 +166,7 @@ router.get("/users", verifyTokenExceptLogin, async (req, res) => {
 router.get("/users/:id", verifyTokenExceptLogin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-
+    console.log(req.params);
     if (isNaN(id)) {
       return handleError(
         req,
@@ -179,6 +179,7 @@ router.get("/users/:id", verifyTokenExceptLogin, async (req, res) => {
     }
 
     const user = await prisma.users.findUnique({ where: { id } });
+    console.log(user);
     if (!user) {
       return handleError(
         req,
@@ -256,28 +257,127 @@ router.put(
       handleError(req, res, error, "Error updating user");
     }
   },
-); // Lock or unlock a user
+);
+
+router.put(
+  "/users/:id",
+  verifyTokenExceptLogin,
+  upload.single("avatar"),
+  async (req, res) => {
+    try {
+      const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+      const userId = parseInt(req.params.id);
+
+      const { username, email, password, role, name, phone, adress, goodleId } =
+        req.body;
+
+      console.log(req.body);
+      const updateData = {
+        username,
+        email,
+        role,
+        name,
+        phone,
+        adress,
+        goodleId,
+      };
+
+      // Hash password if provided
+      if (password) {
+        updateData.password_hash = await bcrypt.hash(password, 10);
+      }
+
+      // 🌐 Update user info in SQL (Prisma)
+      const updatedUser = await prisma.users.update({
+        where: { id: userId },
+        data: updateData,
+      });
+
+      // 🖼️ Update avatar in MongoDB if file is uploaded
+      if (req.file) {
+        const existingAvatar = await Avatar.findOne({ userId });
+
+        if (existingAvatar) {
+          existingAvatar.filename = req.file.originalname;
+          existingAvatar.contentType = req.file.mimetype;
+          existingAvatar.data = req.file.buffer;
+          existingAvatar.uploadedAt = new Date();
+          await existingAvatar.save();
+        } else {
+          await Avatar.create({
+            userId,
+            filename: req.file.originalname,
+            contentType: req.file.mimetype,
+            data: req.file.buffer,
+          });
+        }
+      }
+
+      res.json({ success: true, user: updatedUser });
+    } catch (error) {
+      console.error("Error updating user:", error);
+      handleError(req, res, error, "Error updating user");
+    }
+  },
+);
 
 router.patch("/users/:id/lock", verifyTokenExceptLogin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ message: "Invalid user ID" });
-
     const { is_locked } = req.body;
-    if (typeof is_locked !== "boolean") {
-      return res.status(400).json({ message: "is_locked must be a boolean" });
-    }
-
+    console.log(is_locked);
     const updatedUser = await prisma.users.update({
       where: { id },
       data: { is_locked },
     });
-
+    console.log(updatedUser);
     res.json({ success: true, user: updatedUser });
   } catch (error) {
     handleError(res, error, "Error updating lock status");
   }
 });
+
+router.patch(
+  "/users/:id/toggle-lock",
+  verifyTokenExceptLogin,
+  async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      // First get the current lock status
+      const user = await prisma.users.findUnique({
+        where: { id },
+        select: { is_locked: true },
+      });
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Toggle the lock status
+      const updatedUser = await prisma.users.update({
+        where: { id },
+        data: { is_locked: !user.is_locked },
+      });
+      console.log(updatedUser);
+      res.json({
+        success: true,
+        user: updatedUser,
+        message: `User account ${updatedUser.is_locked ? "locked" : "unlocked"} successfully`,
+      });
+    } catch (error) {
+      console.error("Error toggling user lock:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error toggling user lock status",
+      });
+    }
+  },
+);
 
 // Delete a user
 router.delete("/users/:id", verifyTokenExceptLogin, async (req, res) => {

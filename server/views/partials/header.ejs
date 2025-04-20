@@ -1,4 +1,3 @@
-
 <header>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
@@ -47,8 +46,10 @@
 </header>
 
 <script>
-    function changeLanguage(lang) {
-        window.location.search = '?lang=' + lang;
-    }
+ function changeLanguage(lang) {
+    const redirectTo = window.location.pathname + window.location.search;
+    const url = `/set-locale?lang=${lang}&redirectTo=${encodeURIComponent(redirectTo)}`;
+    window.location.href = url;
+  }
 </script>
 

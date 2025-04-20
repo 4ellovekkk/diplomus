@@ -41,6 +41,7 @@ i18n.configure({
   queryParameter: "lang", // Allow language switching via query param
   cookie: "locale", // Store user preference in cookies
   autoReload: true,
+  updateFiles: false,
 });
 
 // Use i18n in Express
@@ -77,9 +78,10 @@ app.use(passport.session());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(verifyTokenExceptLogin);
 app.use((req, res, next) => {
-  let lang = req.query.lang || req.cookies.locale || "en";
+  const lang = req.cookies.locale || "en"; // Prefer cookie over query param
   req.setLocale(lang);
-  res.locals.__ = req.__; // Make translations available in templates
+  res.locals.__ = req.__; // Make translation function available in views
+  res.locals.locale = lang; // Make locale value available in views (for <html lang=""> and dropdowns)
   next();
 });
 
@@ -104,11 +106,14 @@ app.use("/api", userRoutes);
 app.use("/", serviceRoutes);
 app.use("/", profileRoutes);
 //basic routes
+
 app.get("/", async (req, res) => {
   try {
+    const locale = req.cookies.locale || "en"; // fallback to 'en'
+
     // Check if token exists
     if (!req.cookies.token) {
-      return res.render("index", { user: null });
+      return res.render("index", { user: null, locale });
     }
 
     // Verify token
@@ -122,20 +127,20 @@ app.get("/", async (req, res) => {
         username: true,
         email: true,
         role: true,
-        // Only select necessary fields
       },
     });
 
-    // Render with user data
-    res.render("index", { user });
+    // Render with user and locale
+    res.render("index", { user, locale });
   } catch (error) {
     console.error("Error in root route:", error);
 
     // Clear invalid token
     res.clearCookie("token");
 
-    // Render without user data
-    res.render("index", { user: null });
+    // Render without user, but still pass locale
+    const locale = req.cookies.locale || "en";
+    res.render("index", { user: null, locale });
   }
 });
 app.get(
@@ -181,7 +186,11 @@ app.get("/admin", async (req, res) => {
       },
     });
 
-    res.render("admin", { users, user: currentUser });
+    res.render("admin", {
+      users,
+      user: currentUser,
+      locale: res.locals.locale,
+    });
   } catch (error) {
     console.error("Admin route error:", error);
     res.clearCookie("token");
@@ -257,6 +266,26 @@ app.get(
     }
   },
 );
+// Set user locale and redirect back
+app.get("/set-locale", (req, res) => {
+  const { lang, redirectTo } = req.query;
+
+  // Validate language
+  if (!lang || !["en", "ru"].includes(lang)) {
+    return res.status(400).send("Invalid language");
+  }
+
+  // Set locale cookie
+  res.cookie("locale", lang, {
+    maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+    httpOnly: false,
+    sameSite: "strict",
+  });
+
+  // Redirect back to previous page or home
+  const redirectUrl = redirectTo || "/";
+  res.redirect(redirectUrl);
+});
 
 https.createServer(credentials, app).listen(3000, () => {
   console.log("HTTPS Server running on port 3000");

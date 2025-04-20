@@ -45,6 +45,7 @@ router.get("/profile", verifyTokenExceptLogin, async (req, res) => {
       user,
       cart,
       avatar: avatarBase64,
+      locale: res.locals.locale,
     });
   } catch (error) {
     if (
