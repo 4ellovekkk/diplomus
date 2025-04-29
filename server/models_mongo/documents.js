@@ -9,4 +9,5 @@ const Document = new mongoose.Schema({
   userId: { type: Number, required: true },
 });
 
-module.exports = mongoose.model("Document", Document);
+module.exports = mongoose.models.Document || mongoose.model('Document', DocumentSchema);
+

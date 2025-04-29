@@ -79,16 +79,21 @@ function updateUserTable(users) {
                 <td>${user.role}</td>
                 <td>${user.is_locked ? "Locked" : "Active"}</td>
                 <td>${formattedDate}</td>
-                <td>
-                    <button class="view" onclick="viewUser(${user.id})">View</button>
-                    <button class="edit" onclick="editUser(${user.id})">Edit</button>
-                    <button class="delete" onclick="deleteUser(${user.id})">Delete</button>
-                    ${
-                      user.is_locked
-                        ? `<button class="unlock" onclick="toggleUserLock(${user.id})">Unlock</button>`
-                        : `<button class="lock" onclick="toggleUserLock(${user.id})">Lock</button>`
-                    }
-                </td>
+
+<td>
+    <button class="btn btn-sm btn-outline-primary me-1" title="View" onclick="viewUser(${user.id})">
+        <i class="bi bi-eye"></i>
+    </button>
+    <button class="btn btn-sm btn-outline-secondary me-1" title="Edit" onclick="editUser(${user.id})">
+        <i class="bi bi-pencil"></i>
+    </button>
+    <button class="btn btn-sm btn-outline-danger me-1" title="Delete" onclick="deleteUser(${user.id})">
+        <i class="bi bi-trash"></i>
+    </button>
+    <button class="btn btn-sm btn-outline-warning" title="${user.is_locked ? "Unlock" : "Lock"}" onclick="toggleUserLock(${user.id})">
+        <i class="bi ${user.is_locked ? "bi-unlock" : "bi-lock"}"></i>
+    </button>
+</td>
             `;
 
     tableBody.appendChild(row);

@@ -8,4 +8,5 @@ const Avatar = new mongoose.Schema({
   userId: { type: Number, required: true },
 });
 
-module.exports = mongoose.model("Document", Avatar);
+module.exports = mongoose.models.Document || mongoose.model('Document', Avatar);
+

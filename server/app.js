@@ -23,9 +23,20 @@ const printRoutes = require("./routes/printRoutes.js");
 const app = express();
 const prisma = new PrismaClient();
 const Avatar = require("./models_mongo/avatar.js");
+const Document = require("./models_mongo/documents.js");
 const mongoose = require("mongoose");
-mongoose.connect("mongodb://localhost:27017/print_center");
-
+async function connectToMongo() {
+  try {
+    await mongoose.connect("mongodb://localhost:27017/print_center", {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log("✅ MongoDB connected successfully");
+  } catch (err) {
+    console.error("❌ MongoDB connection failed:", err.message);
+    process.exit(1); // Stop the app if DB fails
+  }
+}
 app.use(
   session({
     secret: "lexa",
@@ -109,6 +120,7 @@ app.use("/", profileRoutes);
 app.use("/", printRoutes);
 //basic routes
 
+connectToMongo();
 app.get("/", async (req, res) => {
   try {
     const locale = req.cookies.locale || "en"; // fallback to 'en'

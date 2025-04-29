@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const DocumentModel = require("../models_mongo/Document");
+const DocumentModel = require("../models_mongo/documents.js");
 
 // Setup multer for memory storage
 const storage = multer.memoryStorage();
@@ -31,3 +31,6 @@ router.post("/print", upload.single("document"), async (req, res) => {
     res.status(500).send("Error uploading document");
   }
 });
+
+module.exports = router;
+
