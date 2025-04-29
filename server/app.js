@@ -17,6 +17,7 @@ const cartRoutes = require("./routes/cartRoutes");
 const userRoutes = require("./routes/userRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
 const profileRoutes = require("./routes/profileRoutes.js");
+const printRoutes = require("./routes/printRoutes.js");
 
 //additional imports
 const app = express();
@@ -105,6 +106,7 @@ app.use("/api", cartRoutes);
 app.use("/api", userRoutes);
 app.use("/", serviceRoutes);
 app.use("/", profileRoutes);
+app.use("/", printRoutes);
 //basic routes
 
 app.get("/", async (req, res) => {
