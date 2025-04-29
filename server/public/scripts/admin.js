@@ -101,6 +101,7 @@ function updateUserTable(users) {
 }
 
 // Function to update pagination controls
+
 function updatePaginationControls(pagination) {
   const paginationDiv = document.getElementById("paginationControls");
   paginationDiv.innerHTML = "";
@@ -110,6 +111,7 @@ function updatePaginationControls(pagination) {
   // Previous button
   const prevButton = document.createElement("button");
   prevButton.textContent = "Previous";
+  prevButton.classList.add("btn", "btn-outline-primary");
   prevButton.disabled = currentPage === 1;
   prevButton.onclick = () => fetchUsers(currentPage - 1);
   paginationDiv.appendChild(prevButton);
@@ -117,16 +119,17 @@ function updatePaginationControls(pagination) {
   // Page info
   const pageInfo = document.createElement("span");
   pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+  pageInfo.classList.add("align-self-center");
   paginationDiv.appendChild(pageInfo);
 
   // Next button
   const nextButton = document.createElement("button");
   nextButton.textContent = "Next";
+  nextButton.classList.add("btn", "btn-outline-primary");
   nextButton.disabled = currentPage >= totalPages;
   nextButton.onclick = () => fetchUsers(currentPage + 1);
   paginationDiv.appendChild(nextButton);
 }
-
 function setFormReadOnly(isReadOnly) {
   const formFields = document.querySelectorAll("#viewUserModal input");
 
