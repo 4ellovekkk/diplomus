@@ -123,6 +123,7 @@
   "image_upload_label": "Upload Image",
   "adress": "adress",
   "invalid_page_range": "Invalid page range",
-  "max_pages": "Maximum number of pages:"
+  "max_pages": "Maximum number of pages:",
+  "upload": "Upload",
+  "admin_panel": "Admin panel"
 }
-

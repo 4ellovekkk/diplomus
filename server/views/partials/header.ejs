@@ -1,3 +1,4 @@
+
 <header>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
@@ -22,7 +23,13 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/profile"><%= __('profile') %></a>
                     </li>
+
                     <% if (locals.user) { %>
+                        <% if (user.role === 'admin') { %>
+                            <li class="nav-item">
+                                <a class="nav-link ms-2" href="/admin"><%= __('admin_panel') %></a>
+                            </li>
+                        <% } %>
                         <li class="nav-item">
                             <a class="nav-link btn btn-outline-secondary ms-2" href="/api/logout"><%= __('logout') %></a>
                         </li>
@@ -31,22 +38,23 @@
                             <a class="nav-link btn btn-outline-primary ms-2" href="/api/login"><%= __('login') %></a>
                         </li>
                     <% } %>
-                    <li>
-                      <form class="d-flex">
-                    <select id="language-select" class="form-select" onchange="changeLanguage(this.value)">
-                        <option value="en" <%= locale === 'en' ? 'selected' : '' %>>English</option>
-                        <option value="ru" <%= locale === 'ru' ? 'selected' : '' %>>Русский</option>
-                    </select>
 
+                    <li>
+                        <form class="d-flex">
+                            <select id="language-select" class="form-select" onchange="changeLanguage(this.value)">
+                                <option value="en" <%= locale === 'en' ? 'selected' : '' %>>English</option>
+                                <option value="ru" <%= locale === 'ru' ? 'selected' : '' %>>Русский</option>
+                            </select>
+                        </form>
                     </li>
                 </ul>
-           </div>
+            </div>
         </div>
     </nav>
 </header>
 
 <script>
- function changeLanguage(lang) {
+  function changeLanguage(lang) {
     const redirectTo = window.location.pathname + window.location.search;
     const url = `/set-locale?lang=${lang}&redirectTo=${encodeURIComponent(redirectTo)}`;
     window.location.href = url;

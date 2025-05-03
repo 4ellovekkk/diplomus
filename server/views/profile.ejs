@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="<%= locale %>">
 <head>
@@ -63,10 +62,16 @@
                     <label class="form-label"><%= __('address') %></label>
                     <input type="text" name="adress" class="form-control editable-input" value="<%= user.adress %>" readonly>
                   </div>
-                  <div class="col-md-6">
-                    <label for="avatar" class="form-label"><%= __('change_avatar') %></label>
-                    <input type="file" name="avatar" id="avatar" accept="image/*" class="form-control mb-2">
-                  </div>
+<div class="col-md-6">
+  <label for="avatar" class="form-label"><%= __('change_avatar') %></label>
+    <input type="file" name="avatar" id="avatar" accept="image/*" class="form-control ">
+    <button type="button" id="uploadAvatarBtn" class="btn ">
+      <%= __('upload') %>
+    </button>
+  <div class="progress d-none" id="avatarUploadProgress">
+    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+  </div>
+</div>
                 </div>
 
                 <div class="d-flex gap-2 mt-3">
@@ -201,7 +206,51 @@
       }
     });
   });
-</script>
+
+
+// Avatar upload handling
+document.getElementById('uploadAvatarBtn').addEventListener('click', async function() {
+  const fileInput = document.getElementById('avatar');
+  const file = fileInput.files[0];
+  const progressBar = document.getElementById('avatarUploadProgress');
+  const progressBarInner = progressBar.querySelector('.progress-bar');
+  
+  if (!file) {
+    showStatusMessage('Please select a file first', false);
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('avatar', file);
+
+  try {
+    // Show progress bar
+    progressBar.classList.remove('d-none');
+    progressBarInner.style.width = '0%';
+
+    const response = await fetch('/upload-avatar', {
+      method: 'POST',
+      body: formData,
+      credentials: 'include' // Important for cookies/session
+    });
+
+    // Since the backend redirects, we need to handle it differently
+    if (response.redirected) {
+      // If we get redirected, just reload the page to show the new avatar
+      window.location.href = response.url;
+    } else {
+      // If not redirected (in case of error)
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || 'Upload failed');
+      }
+    }
+  } catch (error) {
+    progressBar.classList.add('d-none');
+    showStatusMessage(error.message || 'Avatar upload failed', false);
+    console.error('Upload error:', error);
+  }
+});</script>
 </body>
 </html>
 
