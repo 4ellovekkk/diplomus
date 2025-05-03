@@ -258,7 +258,6 @@ router.put(
     }
   },
 );
-
 router.put(
   "/users/:id",
   verifyTokenExceptLogin,
@@ -266,12 +265,12 @@ router.put(
   async (req, res) => {
     try {
       const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+      const changerId = decoded.userId; // who is making the change
       const userId = parseInt(req.params.id);
 
       const { username, email, password, role, name, phone, adress, goodleId } =
         req.body;
 
-      console.log(req.body);
       const updateData = {
         username,
         email,
@@ -282,18 +281,47 @@ router.put(
         goodleId,
       };
 
-      // Hash password if provided
+      // Get original user from DB
+      const originalUser = await prisma.users.findUnique({
+        where: { id: userId },
+      });
+
+      // If password provided, hash it
       if (password) {
         updateData.password_hash = await bcrypt.hash(password, 10);
       }
 
-      // 🌐 Update user info in SQL (Prisma)
+      // Update user
       const updatedUser = await prisma.users.update({
         where: { id: userId },
         data: updateData,
       });
 
-      // 🖼️ Update avatar in MongoDB if file is uploaded
+      // Compare and log changes
+      const changeLogs = [];
+
+      for (const key in updateData) {
+        const oldValue = originalUser[key];
+        const newValue = updateData[key];
+
+        // Only log if value has changed and isn't null/undefined
+        if (oldValue != newValue && newValue !== undefined) {
+          changeLogs.push({
+            userId: userId,
+            field: key,
+            oldValue: oldValue ? String(oldValue) : "",
+            newValue: String(newValue),
+            changedBy: changerId,
+          });
+        }
+      }
+      console.log(changeLogs);
+      // Save change logs
+      if (changeLogs.length > 0) {
+        await prisma.Changelog.createMany({ data: changeLogs });
+      }
+
+      // Save avatar if uploaded
       if (req.file) {
         const existingAvatar = await Avatar.findOne({ userId });
 
@@ -320,7 +348,6 @@ router.put(
     }
   },
 );
-
 router.patch("/users/:id/lock", verifyTokenExceptLogin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);

@@ -125,5 +125,6 @@
   "invalid_page_range": "Invalid page range",
   "max_pages": "Maximum number of pages:",
   "upload": "Upload",
-  "admin_panel": "Admin panel"
+  "admin_panel": "Admin panel",
+  "your_cart_is_empty": "Your cart is empty"
 }

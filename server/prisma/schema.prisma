@@ -7,6 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Changelog {
+  id                               Int       @id(map: "Changelog_pk") @default(autoincrement())
+  userId                           Int?
+  field                            String?   @db.NVarChar(Max)
+  oldValue                         String?   @db.NVarChar(Max)
+  newValue                         String?   @db.NVarChar(Max)
+  changedAt                        DateTime? @default(dbgenerated("sysdatetime()"), map: "DF__Changelog__chang__5CD6CB2B") @db.DateTime
+  changedBy                        Int?
+  users_Changelog_changedByTousers users?    @relation("Changelog_changedByTousers", fields: [changedBy], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Changelog__chang__5DCAEF64")
+  users_Changelog_userIdTousers    users?    @relation("Changelog_userIdTousers", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Changelog__userI__5BE2A6F2")
+}
+
 model order_items {
   id         Int      @id(map: "PK__order_it__3213E83FEA75D3F2") @default(autoincrement())
   order_id   Int
@@ -56,16 +68,18 @@ model services {
 }
 
 model users {
-  id            Int       @id(map: "PK__users__3213E83F330722C6") @default(autoincrement())
-  username      String    @unique(map: "UQ__users__F3DBC5729B67007B") @db.NVarChar(50)
-  email         String    @unique(map: "UQ__users__AB6E6164CEB82026") @db.NVarChar(100)
-  password_hash String    @db.NVarChar(255)
-  role          String    @default("customer", map: "DF__users__role__3A81B327") @db.NVarChar(10)
-  created_at    DateTime? @default(now(), map: "DF__users__created_a__3B75D760")
-  is_locked     Boolean?
-  goodleId      String?   @db.VarChar(Max)
-  name          String?   @db.NVarChar(Max)
-  phone         String?   @db.VarChar(13)
-  adress        String?   @db.NVarChar(Max)
-  orders        orders[]
+  id                                   Int         @id(map: "PK__users__3213E83F330722C6") @default(autoincrement())
+  username                             String      @unique(map: "UQ__users__F3DBC5729B67007B") @db.NVarChar(50)
+  email                                String      @unique(map: "UQ__users__AB6E6164CEB82026") @db.NVarChar(100)
+  password_hash                        String      @db.NVarChar(255)
+  role                                 String      @default("customer", map: "DF__users__role__3A81B327") @db.NVarChar(10)
+  created_at                           DateTime?   @default(now(), map: "DF__users__created_a__3B75D760")
+  is_locked                            Boolean?
+  goodleId                             String?     @db.VarChar(Max)
+  name                                 String?     @db.NVarChar(Max)
+  phone                                String?     @db.VarChar(13)
+  adress                               String?     @db.NVarChar(Max)
+  Changelog_Changelog_changedByTousers Changelog[] @relation("Changelog_changedByTousers")
+  Changelog_Changelog_userIdTousers    Changelog[] @relation("Changelog_userIdTousers")
+  orders                               orders[]
 }
