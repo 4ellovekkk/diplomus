@@ -347,3 +347,44 @@ document.addEventListener("DOMContentLoaded", function () {
   fetchUsers();
 });
 
+/////////////////////////////////
+
+let changelogTimeout;
+
+function debouncedFetchChangelog() {
+  clearTimeout(changelogTimeout);
+  changelogTimeout = setTimeout(fetchChangelog, 300);
+}
+
+async function fetchChangelog() {
+  const search = document.getElementById("logSearch").value.trim();
+  const sortField = document.getElementById("logSortField").value;
+  const sortOrder = document.getElementById("logSortOrder").value;
+
+  try {
+    const res = await fetch(
+      `/api/changelog?search=${encodeURIComponent(search)}&sortField=${sortField}&sortOrder=${sortOrder}`,
+    );
+    const data = await res.json();
+
+    const tbody = document.getElementById("changelogTableBody");
+    tbody.innerHTML = "";
+
+    data.forEach((entry) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${entry.id}</td>
+        <td>${entry.userId}</td>
+        <td>${entry.field}</td>
+        <td>${entry.changedAt}</td>
+        <td>${entry.changedBy}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  } catch (err) {
+    console.error("Error loading changelog:", err);
+  }
+}
+
+// Optional: fetch once on load
+document.addEventListener("DOMContentLoaded", fetchChangelog);

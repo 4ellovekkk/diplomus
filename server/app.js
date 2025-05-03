@@ -212,6 +212,52 @@ app.get("/admin", async (req, res) => {
   }
 });
 
+app.get("/api/changelog", async (req, res) => {
+  const { search = "", sortField = "id", sortOrder = "desc" } = req.query;
+  const { sort = "id", order = "asc", page = 1, limit = 10 } = req.query;
+
+  const validSortFields = ["id", "userId", "field", "changedAt", "changedBy"];
+
+  try {
+    const changelog = await prisma.changelog.findMany({
+      where: {
+        OR: [
+          {
+            action: {
+              contains: search,
+            },
+          },
+          {
+            table_name: {
+              contains: search,
+            },
+          },
+          {
+            details: {
+              contains: search,
+            },
+          },
+        ],
+      },
+      orderBy: {
+        [sortField]: sortOrder === "asc" ? "asc" : "desc",
+      },
+      select: {
+        id: true,
+        user_id: true,
+        action: true,
+        table_name: true,
+        details: true,
+        timestamp: true,
+      },
+    });
+
+    res.json(changelog);
+  } catch (err) {
+    console.error("Error fetching changelog:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 // About route with optional user data
 app.get("/about", async (req, res) => {
   try {
