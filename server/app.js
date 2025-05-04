@@ -213,46 +213,79 @@ app.get("/admin", async (req, res) => {
 });
 
 app.get("/api/changelog", async (req, res) => {
-  const { search = "", sortField = "id", sortOrder = "desc" } = req.query;
-  const { sort = "id", order = "asc", page = 1, limit = 10 } = req.query;
-
-  const validSortFields = ["id", "userId", "field", "changedAt", "changedBy"];
-
   try {
+    const {
+      search = "",
+      sort = "id",
+      order = "desc",
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    const validSortFields = [
+      "id",
+      "userId",
+      "field",
+      "oldValue",
+      "newValue",
+      "changedBy",
+      "changedAt",
+    ];
+    const sortBy = validSortFields.includes(sort) ? sort : "id";
+    const orderBy = order.toLowerCase() === "asc" ? "asc" : "desc";
+    console.log(page);
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+    const skip = (pageNumber - 1) * limitNumber;
+    const whereCondition = search
+      ? {
+          OR: [
+            { field: { contains: search } },
+            { oldValue: { contains: search } },
+            { newValue: { contains: search } },
+            { userId: { contains: search } },
+            { changedBy: { contains: search } },
+            { changedAt: { contains: search } },
+            { details: { contains: search } },
+          ],
+        }
+      : {};
+
+    const totalEntries = await prisma.changelog.count({
+      where: whereCondition,
+    });
+
     const changelog = await prisma.changelog.findMany({
-      where: {
-        OR: [
-          {
-            action: {
-              contains: search,
-            },
-          },
-          {
-            table_name: {
-              contains: search,
-            },
-          },
-          {
-            details: {
-              contains: search,
-            },
-          },
-        ],
-      },
-      orderBy: {
-        [sortField]: sortOrder === "asc" ? "asc" : "desc",
-      },
+      where: whereCondition,
+      orderBy: { [sortBy]: orderBy },
+      skip,
+      take: limitNumber,
       select: {
         id: true,
-        user_id: true,
-        action: true,
-        table_name: true,
-        details: true,
-        timestamp: true,
+        userId: true,
+        field: true,
+        oldValue: true,
+        newValue: true,
+        changedBy: true,
+        changedAt: true,
+        users_Changelog_changedByTousers: {
+          select: {
+            username: true,
+          },
+        },
       },
     });
 
-    res.json(changelog);
+    res.json({
+      success: true,
+      data: changelog,
+      pagination: {
+        total: totalEntries,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages: Math.ceil(totalEntries / limitNumber),
+      },
+    });
   } catch (err) {
     console.error("Error fetching changelog:", err);
     res.status(500).json({ error: "Internal server error" });

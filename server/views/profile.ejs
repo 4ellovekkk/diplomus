@@ -127,6 +127,29 @@
 
 
 <script>
+
+// Save user data when the page loads
+let userData = <%= JSON.stringify(user) %>;
+
+// When switching tabs, ensure the data is still accessible
+document.addEventListener("DOMContentLoaded", function () {
+    // Whenever the profile tab becomes active again, restore the data
+    const tabs = document.querySelectorAll('[data-bs-toggle="tab"]');
+    tabs.forEach(tab => {
+        tab.addEventListener("shown.bs.tab", function (event) {
+            const activeTab = event.target.getAttribute("href");
+            if (activeTab === "#profile") {
+                // Restore the user data if it's not already restored
+                if (!document.querySelector('[name="email"]').value) {
+                    document.querySelector('[name="email"]').value = userData.email;
+                    document.querySelector('[name="phone"]').value = userData.phone;
+                    document.querySelector('[name="address"]').value = userData.address;
+                    // More fields can be added as needed
+                }
+            }
+        });
+    });
+});
   let originalValues = {};
 
   function enableEdit() {

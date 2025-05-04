@@ -350,39 +350,70 @@ document.addEventListener("DOMContentLoaded", function () {
 /////////////////////////////////
 
 let changelogTimeout;
+let currentPageChangeLog = 1;
 
 function debouncedFetchChangelog() {
   clearTimeout(changelogTimeout);
-  changelogTimeout = setTimeout(fetchChangelog, 300);
+  changelogTimeout = setTimeout(() => fetchChangelog(1), 300); // Reset to page 1 on search
 }
 
-async function fetchChangelog() {
+async function fetchChangelog(page = 1) {
+  let currentPageLog = page;
   const search = document.getElementById("logSearch").value.trim();
   const sortField = document.getElementById("logSortField").value;
   const sortOrder = document.getElementById("logSortOrder").value;
-
+  const limit = document.getElementById("logLimit").value;
   try {
     const res = await fetch(
-      `/api/changelog?search=${encodeURIComponent(search)}&sortField=${sortField}&sortOrder=${sortOrder}`,
+      `/api/changelog?search=${encodeURIComponent(search)}&sort=${sortField}&order=${sortOrder}&page=${currentPageChangeLog}&limit=${limit}`,
     );
-    const data = await res.json();
 
+    const result = await res.json();
+
+    if (!result.success || !Array.isArray(result.data)) {
+      throw new Error("Invalid data format from server");
+    }
+
+    const data = result.data;
+    const pagination = result.pagination;
     const tbody = document.getElementById("changelogTableBody");
     tbody.innerHTML = "";
 
-    data.forEach((entry) => {
+    if (data.length === 0) {
       const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${entry.id}</td>
-        <td>${entry.userId}</td>
-        <td>${entry.field}</td>
-        <td>${entry.changedAt}</td>
-        <td>${entry.changedBy}</td>
-      `;
+      row.innerHTML = `<td colspan="7">No results found</td>`;
       tbody.appendChild(row);
-    });
+    } else {
+      data.forEach((entry) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${entry.id}</td>
+          <td>${entry.userId}</td>
+          <td>${entry.field}</td>
+          <td>${entry.changedAt}</td>
+          <td>${entry.users_Changelog_changedByTousers?.username || "N/A"}</td>
+          <td>${entry.oldValue}</td>
+          <td>${entry.newValue}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    renderPagination(pagination.totalPages, pagination.page);
   } catch (err) {
     console.error("Error loading changelog:", err);
+  }
+}
+function renderPagination(totalPages, currentPage) {
+  const paginationContainer = document.getElementById("changelogPagination");
+  paginationContainer.innerHTML = "";
+
+  for (let page = 1; page <= totalPages; page++) {
+    const btn = document.createElement("button");
+    btn.className = `btn btn-sm mx-1 ${page === currentPage ? "btn-primary" : "btn-outline-primary"}`;
+    btn.textContent = page;
+    btn.onclick = () => fetchChangelog(page);
+    paginationContainer.appendChild(btn);
   }
 }
 
