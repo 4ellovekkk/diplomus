@@ -31,9 +31,8 @@ async function connectToMongo() {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log("✅ MongoDB connected successfully");
   } catch (err) {
-    console.error("❌ MongoDB connection failed:", err.message);
+    console.error("MongoDB connection failed:", err.message);
     process.exit(1); // Stop the app if DB fails
   }
 }
@@ -233,7 +232,6 @@ app.get("/api/changelog", async (req, res) => {
     ];
     const sortBy = validSortFields.includes(sort) ? sort : "id";
     const orderBy = order.toLowerCase() === "asc" ? "asc" : "desc";
-    console.log(page);
     const pageNumber = parseInt(page);
     const limitNumber = parseInt(limit);
     const skip = (pageNumber - 1) * limitNumber;

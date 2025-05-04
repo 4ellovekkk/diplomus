@@ -1,11 +1,38 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const DocumentModel = require("../models_mongo/documents.js");
 
 // Setup multer for memory storage
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
+
+function calculatePrice({
+  copies,
+  print_pages,
+  color,
+  double_sided,
+  paper_size,
+}) {
+  const basePricePerPage = 0.1; // base price per page (black & white, A4, single-sided)
+
+  // Convert input values to numbers
+  const pages = parseInt(print_pages) || 1;
+  const numCopies = parseInt(copies) || 1;
+
+  // Adjustments
+  const colorMultiplier = color === "true" ? 1.5 : 1; // color prints cost more
+  const doubleSidedMultiplier = double_sided === "true" ? 0.75 : 1; // slight discount for double-sided
+  const paperSizeMultiplier = paper_size === "A3" ? 1.25 : 1; // larger paper costs more
+
+  const pricePerPage =
+    basePricePerPage *
+    colorMultiplier *
+    doubleSidedMultiplier *
+    paperSizeMultiplier;
+  const total = pages * numCopies * pricePerPage;
+
+  return parseFloat(total.toFixed(2)); // round to 2 decimal places
+}
 router.post("/print", upload.single("document"), async (req, res) => {
   try {
     if (!req.file) {
@@ -14,23 +41,36 @@ router.post("/print", upload.single("document"), async (req, res) => {
 
     const { print_pages, copies, color, paper_size, double_sided } = req.body;
 
-    const newDocument = new DocumentModel({
+    // Construct item for cart
+    const cartItem = {
       filename: req.file.originalname,
-      contentType: req.file.mimetype,
-      data: req.file.buffer,
-      // Replace with your actual logic for orderId and userId
-      orderId: 1234,
-      userId: 5678,
-    });
+      mimetype: req.file.mimetype,
+      buffer: req.file.buffer,
+      print_pages,
+      copies,
+      color,
+      paper_size,
+      double_sided,
+      price: calculatePrice({
+        copies,
+        print_pages,
+        color,
+        double_sided,
+        paper_size,
+      }),
+    };
 
-    await newDocument.save();
+    // Initialize cart if not present
+    if (!req.session.cart) {
+      req.session.cart = [];
+    }
 
-    res.redirect("/cart"); // or wherever you want to redirect after successful upload
+    req.session.cart.push(cartItem);
+
+    res.redirect("/profile#cart"); // Redirect to cart tab on profile page
   } catch (err) {
     console.error(err);
-    res.status(500).send("Error uploading document");
+    res.status(500).send("Error processing document");
   }
 });
-
 module.exports = router;
-

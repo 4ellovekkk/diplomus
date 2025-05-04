@@ -47,14 +47,14 @@ router.post("/cart/add", verifyTokenExceptLogin, async (req, res) => {
     });
   }
 
-  res.redirect("/cart");
+  res.redirect("/profile#cart");
 });
 router.get("/cart", verifyTokenExceptLogin, (req, res) => {
   res.render("cart", { cart: req.session.cart || [] });
 });
 router.post("/cart/checkout", verifyTokenExceptLogin, async (req, res) => {
   if (!req.session.cart || req.session.cart.length === 0) {
-    return res.redirect("/cart");
+    return res.redirect("/profile");
   }
 
   const userId = req.session.userId; // Ensure the user is logged in
@@ -87,7 +87,6 @@ router.post("/cart/checkout", verifyTokenExceptLogin, async (req, res) => {
   // Clear cart session
   req.session.cart = [];
 
-  res.redirect("/orders/" + order.id);
+  res.redirect("/profile" + order.id);
 });
 module.exports = router;
-

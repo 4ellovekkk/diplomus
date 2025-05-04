@@ -174,5 +174,7 @@ router.get("/merch", verifyTokenExceptLogin, async (req, res) => {
     );
   }
 });
+router.get("/graphic-design", verifyTokenExceptLogin, async (req, res) => {
+  res.render("designer");
+});
 module.exports = router;
-
