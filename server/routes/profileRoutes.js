@@ -72,7 +72,10 @@ router.post(
       const userId = decoded.userId;
 
       if (!req.file) {
-        return res.status(400).json({ message: "No file uploaded." });
+        return res.status(400).json({
+          success: false,
+          message: "No file uploaded.",
+        });
       }
 
       // Check if avatar already exists → update or create
@@ -93,12 +96,34 @@ router.post(
         });
       }
 
-      return res.redirect("/profile"); // or res.json({ success: true });
+      // Return JSON response with avatar URL
+      return res.json({
+        success: true,
+        message: "Avatar uploaded successfully",
+        avatarUrl: `/avatars/${userId}?t=${Date.now()}`, // Cache-busting URL
+      });
     } catch (error) {
       console.error("Error uploading avatar:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
     }
   },
 );
 
+router.get("/avatars/:userId", async (req, res) => {
+  try {
+    const avatar = await Avatar.findOne({ userId: req.params.userId });
+    if (!avatar || !avatar.data) {
+      return res.status(404).send("Avatar not found");
+    }
+
+    res.set("Content-Type", avatar.contentType);
+    res.send(avatar.data);
+  } catch (error) {
+    console.error("Error serving avatar:", error);
+    res.status(500).send("Internal server error");
+  }
+});
 module.exports = router;

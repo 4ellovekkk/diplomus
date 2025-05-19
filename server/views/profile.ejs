@@ -62,62 +62,64 @@
                     <label class="form-label"><%= __('address') %></label>
                     <input type="text" name="adress" class="form-control editable-input" value="<%= user.adress %>" readonly>
                   </div>
-<div class="col-md-6">
-  <label for="avatar" class="form-label"><%= __('change_avatar') %></label>
-    <input type="file" name="avatar" id="avatar" accept="image/*" class="form-control ">
-    <button type="button" id="uploadAvatarBtn" class="btn ">
-      <%= __('upload') %>
-    </button>
-  <div class="progress d-none" id="avatarUploadProgress">
-    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
-  </div>
-</div>
+                  <div class="col-md-6">
+                    <label for="avatar" class="form-label"><%= __('change_avatar') %></label>
+                      <input type="file" name="avatar" id="avatar" accept="image/*" class="form-control">
+                      <button type="button" id="uploadAvatarBtn" class="btn">
+                        <%= __('upload') %>
+                      </button>
+                    <div class="progress d-none mt-2" id="avatarUploadProgress">
+                      <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                  </div>
                 </div>
 
                 <div class="d-flex gap-2 mt-3">
-                  <button id="editBtn" class="btn" type="button" onclick="enableEdit()"><%= __('edit') %></button>
-                  <button type="submit" id="saveBtn" class="btn d-none"><%= __('save') %></button>
-                  <button type="button" id="cancelBtn" class="btn d-none" onclick="cancelEdit()"><%= __('cancel') %></button>
+                  <button id="editBtn" class="btn" type="button"><%= __('edit') %></button>
+                  <button type="submit" id="saveBtn" class="btn btn-success d-none"><%= __('save') %></button>
+                  <button type="button" id="cancelBtn" class="btn btn-secondary d-none"><%= __('cancel') %></button>
                 </div>
               </form>
             </div>
+            
+            <div id="cart" class="tab-pane fade">
+              <% if (cart.length === 0) { %>
+                <p class="mt-3"><%= __('your_cart_is_empty') %></p>
+              <% } else { %>
+                <table class="table mt-3">
+                  <thead>
+                    <tr>
+                      <th><%= __('service') %></th>
+                      <th><%= __('quantity') %></th>
+                      <th><%= __('price') %></th>
+                      <th><%= __('total') %></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% cart.forEach(item => { %>
+                      <tr>
+                        <td><%= item.name %></td>
+                        <td><%= item.quantity %></td>
+                        <td>$<%= item.price.toFixed(2) %></td>
+                        <td>$<%= (item.quantity * item.price).toFixed(2) %></td>
+                      </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+
+                <div class="text-end">
+                  <strong><%= __('total_price') %>:</strong>
+                  $<%= cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2) %>
+                </div>
+
+                <form action="/cart/checkout" method="POST" class="mt-3 text-end">
+                  <button type="submit" class="btn btn-success"><%= __('checkout') %></button>
+                </form>
+              <% } %>
+            </div>
           </div>
-<div id="cart" class="tab-pane fade">
-  <% if (cart.length === 0) { %>
-    <p class="mt-3"><%= __('your_cart_is_empty') %></p>
-  <% } else { %>
-    <table class="table mt-3">
-      <thead>
-        <tr>
-          <th><%= __('service') %></th>
-          <th><%= __('quantity') %></th>
-          <th><%= __('price') %></th>
-          <th><%= __('total') %></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% cart.forEach(item => { %>
-          <tr>
-            <td><%= item.name %></td>
-            <td><%= item.quantity %></td>
-            <td>$<%= item.price.toFixed(2) %></td>
-            <td>$<%= (item.quantity * item.price).toFixed(2) %></td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
-
-    <div class="text-end">
-      <strong><%= __('total_price') %>:</strong>
-      $<%= cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2) %>
-    </div>
-
-    <form action="/cart/checkout" method="POST" class="mt-3 text-end">
-      <button type="submit" class="btn btn-success"><%= __('checkout') %></button>
-    </form>
-  <% } %>
-</div>
-          <div id="statusMessage" class="alert d-none" role="alert"></div>
+          
+          <div id="statusMessage" class="alert d-none mt-3" role="alert"></div>
         </div>
       </div>
     </div>
@@ -125,114 +127,83 @@
 
   <%- include('./partials/footer'); %>
 
+  <script>
+    // Save user data when the page loads
+    let userData = <%- JSON.stringify(user) %>;
+    let originalValues = {};
 
-<script>
+    function enableEdit() {
+      const inputs = document.querySelectorAll(".editable-input");
+      originalValues = {};
 
-// Save user data when the page loads
-let userData = <%= JSON.stringify(user) %>;
+      inputs.forEach(input => {
+        originalValues[input.name] = input.value;
+        input.removeAttribute("readonly");
+      });
 
-// When switching tabs, ensure the data is still accessible
-document.addEventListener("DOMContentLoaded", function () {
-    // Whenever the profile tab becomes active again, restore the data
-    const tabs = document.querySelectorAll('[data-bs-toggle="tab"]');
-    tabs.forEach(tab => {
-        tab.addEventListener("shown.bs.tab", function (event) {
-            const activeTab = event.target.getAttribute("href");
-            if (activeTab === "#profile") {
-                // Restore the user data if it's not already restored
-                if (!document.querySelector('[name="email"]').value) {
-                    document.querySelector('[name="email"]').value = userData.email;
-                    document.querySelector('[name="phone"]').value = userData.phone;
-                    document.querySelector('[name="address"]').value = userData.address;
-                    // More fields can be added as needed
-                }
-            }
-        });
-    });
-});
-  let originalValues = {};
+      document.getElementById("editBtn").classList.add("d-none");
+      document.getElementById("saveBtn").classList.remove("d-none");
+      document.getElementById("cancelBtn").classList.remove("d-none");
+    }
 
-  function enableEdit() {
-    const inputs = document.querySelectorAll(".editable-input");
-    originalValues = {};
+    function cancelEdit() {
+      const inputs = document.querySelectorAll(".editable-input");
 
-    inputs.forEach(input => {
-      originalValues[input.name] = input.value;
-      input.removeAttribute("readonly");
-    });
+      inputs.forEach(input => {
+        input.value = originalValues[input.name];
+        input.setAttribute("readonly", true);
+      });
 
-    document.getElementById("editBtn").classList.add("d-none");
-    document.getElementById("saveBtn").classList.remove("d-none");
-    document.getElementById("cancelBtn").classList.remove("d-none");
-  }
+      document.getElementById("editBtn").classList.remove("d-none");
+      document.getElementById("saveBtn").classList.add("d-none");
+      document.getElementById("cancelBtn").classList.add("d-none");
+    }
 
-  function cancelEdit() {
-    const inputs = document.querySelectorAll(".editable-input");
+    function showStatusMessage(message, isSuccess = true) {
+      const statusDiv = document.getElementById("statusMessage");
+      statusDiv.classList.remove("d-none", "alert-success", "alert-danger");
+      statusDiv.classList.add(isSuccess ? "alert-success" : "alert-danger");
+      statusDiv.textContent = message;
+      
+      // Hide the message after 5 seconds
+      setTimeout(() => {
+        statusDiv.classList.add("d-none");
+      }, 5000);
+    }
 
-    inputs.forEach(input => {
-      input.value = originalValues[input.name];
-      input.setAttribute("readonly", true);
-    });
+    document.addEventListener("DOMContentLoaded", function () {
+      // Initialize event listeners
+      document.getElementById("editBtn").addEventListener("click", enableEdit);
+      document.getElementById("cancelBtn").addEventListener("click", cancelEdit);
 
-    document.getElementById("editBtn").classList.remove("d-none");
-    document.getElementById("saveBtn").classList.add("d-none");
-    document.getElementById("cancelBtn").classList.add("d-none");
-  }
+      const form = document.getElementById("profileForm");
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
 
-  function showStatusMessage(message, isSuccess = true) {
-    const statusDiv = document.getElementById("statusMessage");
-    statusDiv.classList.remove("d-none", "alert-success", "alert-danger");
-    statusDiv.classList.add(isSuccess ? "alert-success" : "alert-danger");
-    statusDiv.textContent = message;
-  }
+        const formData = new FormData(form);
 
-  document.addEventListener("DOMContentLoaded", function () {
-    const form = document.getElementById("profileForm");
+        try {
+          const response = await fetch("/api/users", {
+            method: "PUT",
+            body: formData,
+          });
 
-    // Show Edit button only when profile tab is active
-    const tabs = document.querySelectorAll('[data-bs-toggle="tab"]');
-    tabs.forEach(tab => {
-      tab.addEventListener("shown.bs.tab", function (event) {
-        const activeTab = event.target.getAttribute("href");
-        const editBtn = document.getElementById("editBtn");
-        if (activeTab === "#profile") {
-          editBtn.classList.remove("d-none");
-        } else {
-          editBtn.classList.add("d-none");
-          cancelEdit(); // Automatically cancel edit if user navigates away
+          const result = await response.json();
+
+          if (response.ok) {
+            showStatusMessage("Profile updated successfully!", true);
+            setTimeout(() => location.reload(), 1500);
+          } else {
+            showStatusMessage(result.error || "An error occurred.", false);
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          showStatusMessage("An error occurred while updating your profile.", false);
         }
       });
-    });
 
-    form.addEventListener("submit", async function (e) {
-      e.preventDefault();
-
-      const formData = new FormData(form);
-
-      try {
-        const response = await fetch("/api/users", {
-          method: "PUT",
-          body: formData,
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-          showStatusMessage("Profile updated successfully!", true);
-          setTimeout(() => location.reload(), 1500);
-        } else {
-          showStatusMessage(result.error || "An error occurred.", false);
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        showStatusMessage("An error occurred while updating your profile.", false);
-      }
-    });
-  });
-
-
-// Avatar upload handling
-document.getElementById('uploadAvatarBtn').addEventListener('click', async function() {
+      // Avatar upload handling
+      document.getElementById('uploadAvatarBtn').addEventListener('click', async function() {
   const fileInput = document.getElementById('avatar');
   const file = fileInput.files[0];
   const progressBar = document.getElementById('avatarUploadProgress');
@@ -254,27 +225,56 @@ document.getElementById('uploadAvatarBtn').addEventListener('click', async funct
     const response = await fetch('/upload-avatar', {
       method: 'POST',
       body: formData,
-      credentials: 'include' // Important for cookies/session
+      credentials: 'include'
     });
 
-    // Since the backend redirects, we need to handle it differently
-    if (response.redirected) {
-      // If we get redirected, just reload the page to show the new avatar
-      window.location.href = response.url;
-    } else {
-      // If not redirected (in case of error)
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.message || 'Upload failed');
-      }
+    // First check if response is JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Server returned unexpected response');
     }
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Upload failed');
+    }
+
+    progressBarInner.style.width = '100%';
+    showStatusMessage('Avatar updated successfully! Page will refresh in 2 seconds...', true);
+  setTimeout(() => {
+    location.reload();
+  }, 2000);
+    
+    // Update avatar preview without page reload
+    const avatarImg = document.querySelector('.profile-avatar img');
+    if (avatarImg) {
+      avatarImg.src = result.avatarUrl + '?' + new Date().getTime(); // Cache bust
+    } else {
+      // Handle case where fallback avatar is shown
+      location.reload();
+    }
+    
   } catch (error) {
     progressBar.classList.add('d-none');
     showStatusMessage(error.message || 'Avatar upload failed', false);
     console.error('Upload error:', error);
   }
-});
-</script>
+});      // Tab switching behavior
+      const tabs = document.querySelectorAll('[data-bs-toggle="tab"]');
+      tabs.forEach(tab => {
+        tab.addEventListener("shown.bs.tab", function (event) {
+          const activeTab = event.target.getAttribute("href");
+          const editBtn = document.getElementById("editBtn");
+          if (activeTab === "#profile") {
+            editBtn.classList.remove("d-none");
+          } else {
+            editBtn.classList.add("d-none");
+            cancelEdit(); // Automatically cancel edit if user navigates away
+          }
+        });
+      });
+    });
+  </script>
 </body>
 </html>
-
