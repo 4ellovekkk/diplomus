@@ -1,0 +1,76 @@
+<%- include('partials/header') %>
+
+<div class="container">
+  <h1>Shopping Cart</h1>
+
+  <% if (success) { %>
+    <div class="alert alert-success">
+      <%= success %>
+    </div>
+  <% } %>
+
+  <% if (error) { %>
+    <div class="alert alert-danger">
+      <%= error %>
+    </div>
+  <% } %>
+  
+  <% if (cart && cart.length > 0) { %>
+    <div id="cart-items">
+      <% cart.forEach((item, index) => { %>
+        <div class="cart-item" data-index="<%= index %>">
+          <div class="item-details">
+            <h3><%= item.name %></h3>
+            <p><%= item.service_description || '' %></p>
+            <% if (item.options) { %>
+              <% Object.entries(item.options).forEach(([key, value]) => { %>
+                <span class="option-tag"><%= key %>: <%= value %></span>
+              <% }) %>
+            <% } %>
+          </div>
+          <div class="item-quantity">
+            <form action="/api/cart/update" method="POST" style="display: inline;">
+              <input type="hidden" name="index" value="<%= index %>">
+              <input type="hidden" name="quantity" value="<%= item.quantity - 1 %>">
+              <button type="submit" class="quantity-btn" <%= item.quantity <= 1 ? 'disabled' : '' %>>-</button>
+            </form>
+            <span><%= item.quantity %></span>
+            <form action="/api/cart/update" method="POST" style="display: inline;">
+              <input type="hidden" name="index" value="<%= index %>">
+              <input type="hidden" name="quantity" value="<%= item.quantity + 1 %>">
+              <button type="submit" class="quantity-btn">+</button>
+            </form>
+          </div>
+          <div class="item-price">
+            <p>Price: $<%= (item.price * item.quantity).toFixed(2) %></p>
+            <form action="/api/cart/remove" method="POST">
+              <input type="hidden" name="index" value="<%= index %>">
+              <button type="submit" class="remove-btn">Remove</button>
+            </form>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+    <div id="cart-total-container">
+      <h2>Total: <span id="cart-total">$<%= cartTotal.toFixed(2) %></span></h2>
+    </div>
+
+    <div class="cart-actions">
+      <form action="/api/cart/clear" method="POST" style="display: inline;">
+        <button type="submit" class="clear-cart">Clear Cart</button>
+      </form>
+      <button class="checkout-btn" onclick="window.location.href='/checkout'">Proceed to Checkout</button>
+    </div>
+  <% } else { %>
+    <div class="cart-empty">
+      <p>Your cart is empty</p>
+      <a href="/services" class="btn btn-primary">Browse Services</a>
+    </div>
+  <% } %>
+</div>
+
+<!-- Include cart.js and its dependencies -->
+<script src="/js/cart.js"></script>
+
+<%- include('partials/footer') %> 

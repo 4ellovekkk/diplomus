@@ -10,6 +10,14 @@ const upload = multer({ storage });
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
+// Helper function to calculate cart totals
+const calculateCartTotals = (cart) => {
+  return cart.reduce((totals, item) => ({
+    total: totals.total + (item.price * item.quantity),
+    itemCount: totals.itemCount + item.quantity
+  }), { total: 0, itemCount: 0 });
+};
+
 router.get("/profile", verifyTokenExceptLogin, async (req, res) => {
   try {
     // Decode the JWT token to get the user ID
@@ -37,25 +45,46 @@ router.get("/profile", verifyTokenExceptLogin, async (req, res) => {
       avatarBase64 = `data:${avatarDoc.contentType};base64,${avatarDoc.data.toString("base64")}`;
     }
 
-    // Retrieve the cart from session (fallback to empty array)
+    // Get cart data and fetch service details
     const cart = req.session.cart || [];
+    const cartWithDetails = await Promise.all(
+      cart.map(async (item) => {
+        const service = await prisma.services.findUnique({
+          where: { id: item.service_id },
+        });
+        return {
+          ...item,
+          service_description: service ? service.description : null
+        };
+      })
+    );
 
-    // Render the profile template with user, cart, and avatar image
+    const { total: cartTotal, itemCount } = calculateCartTotals(cartWithDetails);
+
+    // Get cart messages from session and clear them
+    const cartSuccess = req.session.cartSuccess;
+    const cartError = req.session.cartError;
+    delete req.session.cartSuccess;
+    delete req.session.cartError;
+
+    // If there's a cart hash parameter, switch to cart tab
+    const activeTab = req.query.tab || (req.url.includes('#cart') ? 'cart' : 'profile');
+
+    // Render the profile template with all data
     res.render("profile", {
       user,
-      cart,
+      cart: cartWithDetails,
+      cartTotal,
+      itemCount,
+      cartSuccess,
+      cartError,
       avatar: avatarBase64,
       locale: res.locals.locale,
+      activeTab
     });
-    console.log(req.session.cart);
   } catch (error) {
-    if (
-      error.name === "JsonWebTokenError" ||
-      error.name === "TokenExpiredError"
-    ) {
-      return res
-        .status(401)
-        .json({ message: "Unauthorized: Invalid or expired token." });
+    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+      return res.status(401).json({ message: "Unauthorized: Invalid or expired token." });
     }
 
     console.error("Error retrieving user profile:", error);

@@ -83,69 +83,12 @@
             </div>
             
 <div id="cart" class="tab-pane fade">
-  <% if (cart && cart.length === 0) { %>
-    <p class="mt-3"><%= __('your_cart_is_empty') %></p>
-  <% } else { %>
-    <table class="table mt-3">
-      <thead>
-        <tr>
-          <th><%= __('service') %></th>
-          <th><%= __('quantity') %></th>
-          <th><%= __('price') %></th>
-          <th><%= __('total') %></th>
-          <th><%= __('actions') %></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% cart.forEach((item, index) => { %>
-          <tr>
-            <td>
-              <% if (item.filename) { %>
-                <%= item.filename %> (Custom Print)
-              <% } else { %>
-                <%= item.name %>
-              <% } %>
-            </td>
-            <td>
-              <form action="/cart/update" method="POST" class="d-inline">
-                <input type="hidden" name="index" value="<%= index %>">
-                <input type="number" name="quantity" value="<%= item.quantity || item.copies || 1 %>" min="1" class="form-control form-control-sm d-inline" style="width: 70px;">
-                <button type="submit" class="btn btn-sm btn-outline-primary ms-2">Update</button>
-              </form>
-            </td>
-            <td>$<%= item.price.toFixed(2) %></td>
-            <td>$<%= ((item.quantity || item.copies || 1) * item.price).toFixed(2) %></td>
-            <td>
-              <form action="/cart/remove" method="POST" class="d-inline">
-                <input type="hidden" name="index" value="<%= index %>">
-                <button type="submit" class="btn btn-sm btn-danger">
-                  <%= __('remove') %>
-                </button>
-              </form>
-            </td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
-
-    <div class="text-end">
-      <strong><%= __('total_price') %>:</strong>
-      $<%= cart.reduce((sum, item) => sum + (item.price * (item.quantity || item.copies || 1)), 0).toFixed(2) %>
+  <div id="cartMessages"></div>
+  <div id="cartContent">
+    <div class="text-center mt-4">
+      <p class="mb-3"><%= __('loading_cart') %></p>
     </div>
-
-    <div class="d-flex justify-content-between mt-3">
-      <form action="/cart/clear" method="POST">
-        <button type="submit" class="btn btn-outline-danger">
-          <%= __('clear_cart') %>
-        </button>
-      </form>
-      <form action="/cart/checkout" method="POST">
-        <button type="submit" class="btn btn-success">
-          <%= __('checkout') %>
-        </button>
-      </form>
-    </div>
-  <% } %>
+  </div>
 </div>         </div>
           
           <div id="statusMessage" class="alert d-none mt-3" role="alert"></div>
@@ -304,8 +247,278 @@
         });
       });
     });
-//------------------------------------------------------------------------------
 
+    // Handle cart tab activation
+    document.addEventListener('DOMContentLoaded', function() {
+      // Get all tab links
+      const tabLinks = document.querySelectorAll('.nav-link');
+      
+      // Function to activate a specific tab
+      function activateTab(tabId) {
+        // Remove active class from all tabs
+        tabLinks.forEach(link => {
+          link.classList.remove('active');
+          const pane = document.querySelector(link.getAttribute('href'));
+          if (pane) {
+            pane.classList.remove('show', 'active');
+          }
+        });
+
+        // Activate the specified tab
+        const targetLink = document.querySelector(`a[href="#${tabId}"]`);
+        if (targetLink) {
+          targetLink.classList.add('active');
+          const targetPane = document.querySelector(`#${tabId}`);
+          if (targetPane) {
+            targetPane.classList.add('show', 'active');
+          }
+        }
+      }
+
+      // Check if we need to activate the cart tab
+      if (window.location.hash === '#cart' || '<%= activeTab %>' === 'cart') {
+        activateTab('cart');
+      }
+
+      // Handle tab clicks
+      tabLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const tabId = this.getAttribute('href').substring(1);
+          activateTab(tabId);
+          // Update URL hash without scrolling
+          history.pushState(null, null, `#${tabId}`);
+        });
+      });
+
+      // Handle browser back/forward
+      window.addEventListener('hashchange', function() {
+        const tabId = window.location.hash.substring(1) || 'profile';
+        activateTab(tabId);
+      });
+    });
+
+    // Cart functionality
+    async function loadCartData() {
+      try {
+        const response = await fetch('/api/cart/data');
+        const data = await response.json();
+        
+        // Update messages
+        const messagesDiv = document.getElementById('cartMessages');
+        messagesDiv.innerHTML = '';
+        
+        if (data.error) {
+          messagesDiv.innerHTML = `
+            <div class="alert alert-danger mt-3">
+              ${data.error}
+            </div>
+          `;
+        }
+        
+        if (data.success) {
+          messagesDiv.innerHTML = `
+            <div class="alert alert-success mt-3">
+              ${data.success}
+            </div>
+          `;
+        }
+
+        // Update cart content
+        const cartContentDiv = document.getElementById('cartContent');
+        
+        if (!data.cart || data.cart.length === 0) {
+          cartContentDiv.innerHTML = `
+            <div class="text-center mt-4">
+              <p class="mb-3"><%= __('your_cart_is_empty') %></p>
+              <a href="/services" class="btn btn-primary"><%= __('browse_services') %></a>
+            </div>
+          `;
+          return;
+        }
+
+        cartContentDiv.innerHTML = `
+          <div class="table-responsive mt-3">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th><%= __('service') %></th>
+                  <th><%= __('quantity') %></th>
+                  <th><%= __('price') %></th>
+                  <th><%= __('total') %></th>
+                  <th><%= __('actions') %></th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.cart.map((item, index) => `
+                  <tr>
+                    <td>
+                      <div class="d-flex flex-column">
+                        <strong>${item.name}</strong>
+                        ${item.service_description ? `
+                          <small class="text-muted">${item.service_description}</small>
+                        ` : ''}
+                        ${item.options && Object.keys(item.options).length > 0 ? `
+                          <div class="mt-1">
+                            ${Object.entries(item.options).map(([key, value]) => {
+                              if (key !== 'file') {
+                                return `<span class="badge bg-light text-dark me-1">${key}: ${value}</span>`;
+                              }
+                              return '';
+                            }).join('')}
+                          </div>
+                        ` : ''}
+                      </div>
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center" style="gap: 0.5rem;">
+                        <input type="number" class="form-control form-control-sm quantity-input" 
+                               data-index="${index}" value="${item.quantity}" min="1" 
+                               style="width: 70px;">
+                        <button class="btn btn-sm btn-outline-primary update-quantity" data-index="${index}">
+                          <%= __('update') %>
+                        </button>
+                      </div>
+                    </td>
+                    <td>$${item.price.toFixed(2)}</td>
+                    <td>$${(item.quantity * item.price).toFixed(2)}</td>
+                    <td>
+                      <button class="btn btn-sm btn-danger remove-item" data-index="${index}">
+                        <%= __('remove') %>
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="3" class="text-end"><strong><%= __('total') %>:</strong></td>
+                  <td colspan="2">
+                    <strong>$${data.cartTotal.toFixed(2)}</strong>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div class="d-flex justify-content-between mt-4">
+            <button class="btn btn-outline-danger clear-cart">
+              <%= __('clear_cart') %>
+            </button>
+            <a href="/checkout" class="btn btn-success">
+              <%= __('proceed_to_checkout') %>
+            </a>
+          </div>
+        `;
+
+        // Add event listeners after content is loaded
+        attachCartEventListeners();
+      } catch (error) {
+        console.error('Error loading cart:', error);
+        document.getElementById('cartContent').innerHTML = `
+          <div class="alert alert-danger mt-3">
+            <%= __('error_loading_cart') %>
+          </div>
+        `;
+      }
+    }
+
+    // Function to attach event listeners to cart elements
+    function attachCartEventListeners() {
+      // Update quantity buttons
+      document.querySelectorAll('.update-quantity').forEach(button => {
+        button.addEventListener('click', async function() {
+          const index = this.dataset.index;
+          const quantityInput = document.querySelector(`.quantity-input[data-index="${index}"]`);
+          const quantity = quantityInput.value;
+
+          try {
+            const response = await fetch('/api/cart/update', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ index, quantity })
+            });
+
+            if (!response.ok) {
+              throw new Error('Failed to update quantity');
+            }
+
+            // Reload cart data after successful update
+            loadCartData();
+          } catch (error) {
+            console.error('Error updating quantity:', error);
+          }
+        });
+      });
+
+      // Remove item buttons
+      document.querySelectorAll('.remove-item').forEach(button => {
+        button.addEventListener('click', async function() {
+          const index = this.dataset.index;
+
+          try {
+            const response = await fetch('/api/cart/remove', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ index })
+            });
+
+            if (!response.ok) {
+              throw new Error('Failed to remove item');
+            }
+
+            // Reload cart data after successful removal
+            loadCartData();
+          } catch (error) {
+            console.error('Error removing item:', error);
+          }
+        });
+      });
+
+      // Clear cart button
+      document.querySelector('.clear-cart')?.addEventListener('click', async function() {
+        if (!confirm('<%= __('confirm_clear_cart') %>')) {
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/cart/clear', {
+            method: 'POST'
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to clear cart');
+          }
+
+          // Reload cart data after successful clear
+          loadCartData();
+        } catch (error) {
+          console.error('Error clearing cart:', error);
+        }
+      });
+    }
+
+    // Load cart data when switching to cart tab
+    document.addEventListener('DOMContentLoaded', function() {
+      const tabLinks = document.querySelectorAll('.nav-link');
+      
+      tabLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          if (this.getAttribute('href') === '#cart') {
+            loadCartData();
+          }
+        });
+      });
+      
+      // Load cart data if cart tab is active on page load
+      if (window.location.hash === '#cart') {
+        loadCartData();
+      }
+    });
   </script>
 </body>
 </html>

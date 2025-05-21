@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
 // Setup multer for memory storage
 const storage = multer.memoryStorage();
@@ -33,6 +35,7 @@ function calculatePrice({
 
   return parseFloat(total.toFixed(2)); // round to 2 decimal places
 }
+
 router.post("/print", upload.single("document"), async (req, res) => {
   try {
     if (!req.file) {
@@ -41,23 +44,41 @@ router.post("/print", upload.single("document"), async (req, res) => {
 
     const { print_pages, copies, color, paper_size, double_sided } = req.body;
 
+    // Get the document printing service
+    const service = await prisma.services.findUnique({
+      where: { name: "Document Printing" }
+    });
+
+    if (!service) {
+      return res.status(400).send("Document printing service not found");
+    }
+
+    // Calculate price based on options
+    const price = calculatePrice({
+      copies,
+      print_pages,
+      color,
+      double_sided,
+      paper_size,
+    });
+
     // Construct item for cart
     const cartItem = {
-      filename: req.file.originalname,
-      mimetype: req.file.mimetype,
-      buffer: req.file.buffer,
-      print_pages,
-      copies,
-      color,
-      paper_size,
-      double_sided,
-      price: calculatePrice({
-        copies,
-        print_pages,
-        color,
-        double_sided,
+      service_id: service.id,
+      name: service.name,
+      price: price,
+      quantity: parseInt(copies) || 1,
+      options: {
+        filename: req.file.originalname,
+        pages: print_pages,
+        color: color === "true" ? "Color" : "Black & White",
         paper_size,
-      }),
+        double_sided: double_sided === "true" ? "Yes" : "No",
+        file: {
+          mimetype: req.file.mimetype,
+          buffer: req.file.buffer
+        }
+      }
     };
 
     // Initialize cart if not present
@@ -66,11 +87,14 @@ router.post("/print", upload.single("document"), async (req, res) => {
     }
 
     req.session.cart.push(cartItem);
+    req.session.cartSuccess = "Document added to cart successfully";
 
     res.redirect("/profile#cart"); // Redirect to cart tab on profile page
   } catch (err) {
-    console.error(err);
-    res.status(500).send("Error processing document");
+    console.error("Error processing document:", err);
+    req.session.cartError = "Error adding document to cart";
+    res.redirect("/profile#cart");
   }
 });
+
 module.exports = router;
