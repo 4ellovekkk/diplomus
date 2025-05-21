@@ -47,6 +47,7 @@ router.get("/profile", verifyTokenExceptLogin, async (req, res) => {
       avatar: avatarBase64,
       locale: res.locals.locale,
     });
+    console.log(req.session.cart);
   } catch (error) {
     if (
       error.name === "JsonWebTokenError" ||
