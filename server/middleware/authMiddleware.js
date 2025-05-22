@@ -8,14 +8,18 @@ const allowedPaths = [
   "/",
   "/api/register",
   "/auth/google/callback",
-  "/services",
+  "/api/services",
   "/about",
   "/set-locale",
   "/print",
   "/copy",
   "/graphic-design",
   "/merch",
-  "/get-file-info"
+  "/api/print",
+  "/api/copy",
+  "/api/graphic-design",
+  "/api/merch",
+  "/api/get-file-info"
 ];
 
 const verifyTokenExceptLogin = (req, res, next) => {

@@ -47,15 +47,43 @@ router.get("/profile", verifyTokenExceptLogin, async (req, res) => {
 
     // Get cart data and fetch service details
     const cart = req.session.cart || [];
+    
+    // Create a display version of the cart without design data
+    const displayCart = cart.map((item, index) => {
+      if (item.type === 'merch' && item.options) {
+        const displayItem = { ...item };
+        displayItem.options = { ...item.options };
+        // Replace design data with a view button
+        if (displayItem.options.design) {
+          displayItem.options.viewButton = `<button onclick="window.open('/cart-design/${index}', '_blank', 'width=600,height=600')">View Design</button>`;
+          delete displayItem.options.design;
+        }
+        return displayItem;
+      }
+      return item;
+    });
+    
+    console.log('Display Cart:', displayCart);
     const cartWithDetails = await Promise.all(
-      cart.map(async (item) => {
-        const service = await prisma.services.findUnique({
-          where: { id: item.service_id },
-        });
-        return {
-          ...item,
-          service_description: service ? service.description : null
-        };
+      displayCart.map(async (item) => {
+        // For merchandise items, return as is since it's already filtered
+        if (item.type === 'merch') {
+          return item;
+        }
+        
+        // For service items, fetch additional details
+        if (item.service_id) {
+          const service = await prisma.services.findUnique({
+            where: { id: item.service_id },
+          });
+          return {
+            ...item,
+            service_description: service ? service.description : null
+          };
+        }
+        
+        // Default case - return item as is
+        return item;
       })
     );
 
@@ -70,10 +98,21 @@ router.get("/profile", verifyTokenExceptLogin, async (req, res) => {
     // If there's a cart hash parameter, switch to cart tab
     const activeTab = req.query.tab || (req.url.includes('#cart') ? 'cart' : 'profile');
 
+    // Final cleanup of cart data before rendering
+    const cleanCart = cartWithDetails.map(item => {
+      if (item.type === 'merch' && item.options) {
+        const cleanItem = { ...item };
+        cleanItem.options = { ...item.options };
+        delete cleanItem.options.design;
+        return cleanItem;
+      }
+      return item;
+    });
+
     // Render the profile template with all data
     res.render("profile", {
       user,
-      cart: cartWithDetails,
+      cart: cleanCart,
       cartTotal,
       itemCount,
       cartSuccess,
@@ -156,4 +195,37 @@ router.get("/avatars/:userId", async (req, res) => {
     res.status(500).send("Internal server error");
   }
 });
+
+// Add new endpoint to view design
+router.get("/cart-design/:index", verifyTokenExceptLogin, (req, res) => {
+  try {
+    const cart = req.session.cart || [];
+    const index = parseInt(req.params.index);
+    
+    if (!cart[index] || !cart[index].options || !cart[index].options.design) {
+      return res.status(404).send("Design not found");
+    }
+
+    // Get the base64 data
+    const designData = cart[index].options.design;
+    
+    // Extract the content type and base64 data
+    const matches = designData.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+    
+    if (!matches || matches.length !== 3) {
+      return res.status(400).send("Invalid design data");
+    }
+
+    const contentType = matches[1];
+    const base64Data = matches[2];
+
+    // Set the content type and send the image
+    res.set('Content-Type', contentType);
+    res.send(Buffer.from(base64Data, 'base64'));
+  } catch (error) {
+    console.error("Error serving design:", error);
+    res.status(500).send("Internal server error");
+  }
+});
+
 module.exports = router;
