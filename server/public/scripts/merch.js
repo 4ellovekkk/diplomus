@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const imageWrapper = document.getElementById('image-wrapper');
     const resizeHandle = imageWrapper.querySelector('.resize-handle');
     const tshirtSize = document.getElementById('tshirt-size');
+    const addToCartBtn = document.getElementById('addToCartBtn');
+    const unauthorizedMessage = document.getElementById('unauthorized-message');
 
     // Initialize positions
     textOverlay.style.left = '50%';
@@ -187,4 +189,96 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Initialize default size
     updateTshirtSize(tshirtSize.value);
+
+    async function captureDesign() {
+        // Create a canvas element
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas size to match t-shirt model
+        const tshirtRect = tshirtModel.getBoundingClientRect();
+        canvas.width = tshirtRect.width;
+        canvas.height = tshirtRect.height;
+
+        // Draw the t-shirt template
+        const tshirtTemplate = tshirtModel.querySelector('.tshirt-template');
+        ctx.drawImage(tshirtTemplate, 0, 0, canvas.width, canvas.height);
+
+        // Draw the custom image if it exists
+        if (customImage.style.display !== 'none') {
+            const imageRect = imageWrapper.getBoundingClientRect();
+            const relativeRect = {
+                x: imageRect.left - tshirtRect.left,
+                y: imageRect.top - tshirtRect.top,
+                width: imageRect.width,
+                height: imageRect.height
+            };
+            ctx.drawImage(customImage, relativeRect.x, relativeRect.y, relativeRect.width, relativeRect.height);
+        }
+
+        // Draw the text if it exists
+        if (textOverlay.textContent.trim()) {
+            const textRect = textOverlay.getBoundingClientRect();
+            ctx.font = window.getComputedStyle(textOverlay).font;
+            ctx.fillStyle = textOverlay.style.color || '#000000';
+            ctx.textAlign = 'center';
+            ctx.fillText(
+                textOverlay.textContent,
+                textRect.left - tshirtRect.left + textRect.width / 2,
+                textRect.top - tshirtRect.top + textRect.height / 2
+            );
+        }
+
+        // Convert canvas to base64 image
+        return canvas.toDataURL('image/png');
+    }
+
+    async function addToCart() {
+        try {
+            // Check if user is logged in
+            const authResponse = await fetch('/api/cart/data');
+            if (!authResponse.ok) {
+                unauthorizedMessage.style.display = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            // Capture the design
+            const designImage = await captureDesign();
+
+            // Prepare cart data
+            const cartData = {
+                options: {
+                    size: tshirtSize.value,
+                    text: textOverlay.textContent.trim() || null,
+                    textColor: textColorPicker.value,
+                    fontSize: fontSize.value,
+                    design: designImage
+                }
+            };
+
+            // Send to server
+            const response = await fetch('/api/cart/add-merch', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(cartData)
+            });
+
+            if (response.ok) {
+                window.location.href = '/profile#cart';
+            } else {
+                throw new Error('Failed to add item to cart');
+            }
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+            alert('Failed to add item to cart. Please try again.');
+        }
+    }
+
+    // Add to cart button handler
+    if (addToCartBtn) {
+        addToCartBtn.addEventListener('click', addToCart);
+    }
 });

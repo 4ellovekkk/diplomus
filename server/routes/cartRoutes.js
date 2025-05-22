@@ -5,6 +5,7 @@ const express = require("express");
 const router = express.Router();
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
+const verifyToken = require('../middleware/authMiddleware');
 
 // Helper function to handle errors and redirect to profile
 const handleError = (req, res, error, message = "An error occurred") => {
@@ -15,7 +16,11 @@ const handleError = (req, res, error, message = "An error occurred") => {
 
 // Helper functions for cart calculations
 const calculateCartTotal = (cart) => {
-  return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+  return cart.reduce((total, item) => {
+    // For merch items, use fixed price
+    const price = item.type === 'merch' ? 1500 : item.price; // 1500 rubles for t-shirts
+    return total + (price * item.quantity);
+  }, 0);
 };
 
 const calculateItemCount = (cart) => {
@@ -33,6 +38,15 @@ router.get("/cart/data", verifyTokenExceptLogin, async (req, res) => {
     // Get fresh service details for display
     const cartWithDetails = await Promise.all(
       req.session.cart.map(async (item) => {
+        if (item.type === 'merch') {
+          return {
+            ...item,
+            name: 'Custom T-Shirt',
+            price: 1500, // Fixed price for t-shirts
+            service_description: 'Custom designed t-shirt'
+          };
+        }
+
         const service = await prisma.services.findUnique({
           where: { id: item.service_id },
         });
@@ -41,8 +55,8 @@ router.get("/cart/data", verifyTokenExceptLogin, async (req, res) => {
         const translatedOptions = {};
         if (item.options) {
           for (const [key, value] of Object.entries(item.options)) {
-            // Skip file option as it's a technical field
-            if (key === 'file') continue;
+            // Skip file and design options as they're technical fields
+            if (key === 'file' || key === 'design') continue;
             
             // Translate the option key and value
             const translatedKey = res.__(key);
@@ -76,6 +90,55 @@ router.get("/cart/data", verifyTokenExceptLogin, async (req, res) => {
       cart: [],
       cartTotal: 0,
       itemCount: 0
+    });
+  }
+});
+
+// Add merch to cart
+router.post("/cart/add-merch", verifyTokenExceptLogin, async (req, res) => {
+  try {
+    const { options } = req.body;
+
+    // Validate required fields
+    if (!options.size || !options.design) {
+      return res.status(400).json({
+        success: false,
+        message: 'Size and design are required'
+      });
+    }
+
+    // Initialize cart if needed
+    if (!req.session.cart) {
+      req.session.cart = [];
+    }
+
+    // Add merch item to cart
+    req.session.cart.push({
+      type: 'merch',
+      name: 'Custom T-Shirt',
+      price: 1500, // Fixed price for t-shirts
+      quantity: 1,
+      options: {
+        size: options.size,
+        text: options.text || null,
+        textColor: options.textColor || null,
+        fontSize: options.fontSize || null,
+        design: options.design
+      }
+    });
+
+    req.session.cartSuccess = "T-shirt added to cart";
+    req.session.save(() => {
+      res.json({
+        success: true,
+        message: 'T-shirt added to cart successfully'
+      });
+    });
+  } catch (error) {
+    console.error('Error adding merch to cart:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to add t-shirt to cart'
     });
   }
 });

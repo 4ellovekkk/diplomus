@@ -60,28 +60,58 @@
         
         const previewSection = document.getElementById('preview-section');
         
-        // Only show preview for PDF files
-        if (!file.type.includes('pdf')) {
-            previewSection.style.display = 'none';
-            return;
-        }
-
         try {
-            const fileReader = new FileReader();
-            fileReader.onload = async function() {
-                try {
-                    pdfDoc = await pdfjsLib.getDocument({data: this.result}).promise;
-                    totalPages = pdfDoc.numPages;
-                    document.getElementById('total-pages').textContent = totalPages;
-                    previewSection.style.display = 'block';
-                    renderPage(1);
-                } catch (error) {
-                    console.error('Error loading PDF:', error);
+            if (file.type.includes('pdf')) {
+                // Handle PDF files directly
+                const fileReader = new FileReader();
+                fileReader.onload = async function() {
+                    try {
+                        pdfDoc = await pdfjsLib.getDocument({data: this.result}).promise;
+                        totalPages = pdfDoc.numPages;
+                        document.getElementById('total-pages').textContent = totalPages;
+                        previewSection.style.display = 'block';
+                        renderPage(1);
+                    } catch (error) {
+                        console.error('Error loading PDF:', error);
+                    }
+                };
+                fileReader.readAsArrayBuffer(file);
+            } else if (file.type.includes('msword') || file.type.includes('wordprocessingml')) {
+                // Handle DOC/DOCX files by getting converted PDF data
+                const formData = new FormData();
+                formData.append('document', file);
+
+                const response = await fetch('/api/get-file-info', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.pdfData) {
+                    // Convert base64 to ArrayBuffer
+                    const binaryString = window.atob(data.pdfData);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+                    
+                    try {
+                        pdfDoc = await pdfjsLib.getDocument({data: bytes.buffer}).promise;
+                        totalPages = pdfDoc.numPages;
+                        document.getElementById('total-pages').textContent = totalPages;
+                        previewSection.style.display = 'block';
+                        renderPage(1);
+                    } catch (error) {
+                        console.error('Error loading converted PDF:', error);
+                    }
                 }
-            };
-            fileReader.readAsArrayBuffer(file);
+            } else {
+                previewSection.style.display = 'none';
+            }
         } catch (error) {
-            console.error('Error reading file:', error);
+            console.error('Error in preview initialization:', error);
+            previewSection.style.display = 'none';
         }
     }
 
@@ -115,6 +145,8 @@
         const fileInput = document.getElementById('document');
         const fileInfo = document.getElementById('fileInfo');
         const pagesInput = document.getElementById('pages');
+        const printPagesInput = document.getElementById('print_pages');
+        const totalDocumentPagesInput = document.getElementById('totalDocumentPages');
 
         if (fileInput.files.length > 0) {
             const file = fileInput.files[0];
@@ -129,14 +161,19 @@
             }
 
             // Get file info without authorization check
-            fetch('/get-file-info', {
+            fetch('/api/get-file-info', {
                 method: 'POST',
                 body: new FormData(document.getElementById('printForm'))
             })
             .then(response => response.json())
             .then(data => {
                 totalPages = data.pages || 0;
-                pagesInput.value = totalPages || "<%= __('unknown') %>";
+                totalDocumentPagesInput.value = totalPages; // Store total pages
+                if (!printPagesInput.value.trim()) {
+                    pagesInput.value = "<%= __('all') %> (" + totalPages + " <%= __('pages') %>)";
+                } else {
+                    pagesInput.value = totalPages || "<%= __('unknown') %>";
+                }
             })
             .catch(() => {
                 totalPages = 0;
@@ -217,6 +254,15 @@
                 renderPage(currentPage + 1);
             }
         });
+
+        // Add event listener for print_pages input
+        printPagesInput.addEventListener('input', function() {
+            if (!this.value.trim()) {
+                if (totalPages > 0) {
+                    pagesInput.value = "<%= __('all') %> (" + totalPages + " <%= __('pages') %>)";
+                }
+            }
+        });
     });
 </script>
 </head>
@@ -231,6 +277,8 @@
     </div>
 
     <form id="printForm" action="/print" method="POST" enctype="multipart/form-data" class="mx-auto" style="max-width: 600px;">
+        <input type="hidden" id="totalDocumentPages" name="totalDocumentPages" value="0">
+        
         <div class="mb-3">
             <label for="document" class="form-label"><%= __('upload_document') %>:</label>
             <input type="file" class="form-control" id="document" name="document" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required onchange="updateFileInfo()">

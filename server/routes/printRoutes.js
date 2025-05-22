@@ -14,7 +14,8 @@ async function calculatePrice({
   color,
   double_sided,
   paper_size,
-  service_id
+  service_id,
+  totalDocumentPages
 }) {
   // Get base price from service
   const service = await prisma.services.findUnique({
@@ -28,8 +29,24 @@ async function calculatePrice({
   const basePricePerPage = parseFloat(service.price); // base price per page from database
 
   // Convert input values to numbers
-  const pages = parseInt(print_pages) || 1;
   const numCopies = parseInt(copies) || 1;
+
+  // Calculate total pages from page ranges
+  let totalPages = 0;
+  if (print_pages && print_pages.trim()) {
+    const ranges = print_pages.split(',').map(range => range.trim());
+    ranges.forEach(range => {
+      if (range.includes('-')) {
+        const [start, end] = range.split('-').map(num => parseInt(num));
+        totalPages += end - start + 1;
+      } else {
+        totalPages += 1; // Single page
+      }
+    });
+  } else {
+    // If no pages specified, use total document pages
+    totalPages = totalDocumentPages || 1;
+  }
 
   // Adjustments
   const colorMultiplier = color === "true" ? 1.5 : 1; // color prints cost more
@@ -41,7 +58,8 @@ async function calculatePrice({
     colorMultiplier *
     doubleSidedMultiplier *
     paperSizeMultiplier;
-  const total = pages * numCopies * pricePerPage;
+  
+  const total = totalPages * numCopies * pricePerPage;
 
   return parseFloat(total.toFixed(2)); // round to 2 decimal places
 }
@@ -52,7 +70,7 @@ router.post("/print", upload.single("document"), async (req, res) => {
       return res.status(400).send("No file uploaded");
     }
 
-    const { print_pages, copies, color, paper_size, double_sided } = req.body;
+    const { print_pages, copies, color, paper_size, double_sided, totalDocumentPages } = req.body;
 
     // Get the document printing service
     const service = await prisma.services.findUnique({
@@ -70,7 +88,8 @@ router.post("/print", upload.single("document"), async (req, res) => {
       color,
       double_sided,
       paper_size,
-      service_id: service.id
+      service_id: service.id,
+      totalDocumentPages: parseInt(totalDocumentPages) || 1
     });
 
     // Construct item for cart
@@ -81,7 +100,7 @@ router.post("/print", upload.single("document"), async (req, res) => {
       quantity: parseInt(copies) || 1,
       options: {
         filename: req.file.originalname,
-        pages: print_pages,
+        pages: print_pages && print_pages.trim() ? print_pages : "All",
         color: color === "true" ? "Color" : "Black & White",
         paper_size,
         double_sided: double_sided === "true" ? "Yes" : "No",

@@ -84,14 +84,30 @@ router.get("/services", async (req, res) => {
 
 router.get("/print", verifyTokenExceptLogin, async (req, res) => {
   try {
-    res.render("printing", { user: null });
+    let user = null;
+    if (req.cookies?.token) {
+      const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+      user = await prisma.users.findUnique({
+        where: { id: decoded.userId },
+        select: {
+          id: true,
+          username: true,
+          role: true,
+        },
+      });
+    }
+    res.render("printing", { user });
   } catch (error) {
+    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+      res.clearCookie("token");
+      return res.redirect("/api/login");
+    }
     handleError(
       req,
       res,
       error,
       "Printing Error",
-      "Failed to load printing page",
+      "Failed to load printing page"
     );
   }
 });
@@ -112,37 +128,62 @@ router.post("/get-file-info", upload.single("document"), async (req, res) => {
   const fileExt = path.extname(req.file.originalname).toLowerCase();
   let pageCount = null;
   let convertedFilePath = null;
+  let pdfBuffer = null;
 
   try {
     if (fileExt === ".pdf") {
-      const data = await pdfParse(fs.readFileSync(filePath));
-      pageCount = data.numpages;
+      const dataBuffer = fs.readFileSync(filePath);
+      const data = await pdfParse(dataBuffer);
+      pageCount = data.numpages || 1;
+      pdfBuffer = dataBuffer.toString('base64');
     } else if (fileExt === ".docx" || fileExt === ".doc") {
-      convertedFilePath = filePath + ".pdf";
-      await convertToPdf(filePath, convertedFilePath);
-      const data = await pdfParse(fs.readFileSync(convertedFilePath));
-      pageCount = data.numpages;
+      try {
+        convertedFilePath = filePath + ".pdf";
+        await convertToPdf(filePath, convertedFilePath);
+        const dataBuffer = fs.readFileSync(convertedFilePath);
+        const data = await pdfParse(dataBuffer);
+        pageCount = data.numpages || 1;
+        pdfBuffer = dataBuffer.toString('base64');
+      } catch (conversionError) {
+        console.error("Conversion error:", conversionError);
+        // Fallback to estimating pages for Word documents
+        const content = await mammoth.extractRawText({ path: filePath });
+        const wordCount = content.value.split(/\s+/).length;
+        pageCount = Math.ceil(wordCount / 500); // Estimate: ~500 words per page
+      }
     } else {
-      pageCount = "Unknown (unsupported format)";
+      return res.status(400).json({
+        success: false,
+        message: "Unsupported file format. Please upload a PDF or Word document."
+      });
     }
 
     res.json({
+      success: true,
       fileName: req.file.originalname,
       fileSize: (req.file.size / 1024).toFixed(2) + " KB",
       pages: pageCount,
+      pdfData: pdfBuffer
     });
   } catch (error) {
-    handleError(
-      req,
-      res,
-      error,
-      "File Processing Error",
-      "Failed to analyze uploaded document",
-    );
+    console.error("File processing error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error processing file",
+      error: error.message
+    });
   } finally {
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    if (convertedFilePath && fs.existsSync(convertedFilePath))
-      fs.unlinkSync(convertedFilePath);
+    // Clean up temporary files
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      if (convertedFilePath && fs.existsSync(convertedFilePath)) {
+        fs.unlinkSync(convertedFilePath);
+      }
+    } catch (cleanupError) {
+      console.error("Error cleaning up temporary files:", cleanupError);
+    }
   }
 });
 
