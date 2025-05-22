@@ -18,6 +18,7 @@ const userRoutes = require("./routes/userRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
 const profileRoutes = require("./routes/profileRoutes.js");
 const printRoutes = require("./routes/printRoutes.js");
+const checkoutRoutes = require("./routes/checkoutRoutes");
 
 //additional imports
 const app = express();
@@ -117,7 +118,11 @@ app.use("/api", userRoutes);
 app.use("/", serviceRoutes);
 app.use("/", profileRoutes);
 app.use("/", printRoutes);
+app.use("/checkout", checkoutRoutes);
 //basic routes
+
+// Special middleware for Stripe webhook
+app.post('/checkout/webhook', express.raw({ type: 'application/json' }), checkoutRoutes);
 
 connectToMongo();
 app.get("/", async (req, res) => {

@@ -36,9 +36,25 @@ router.get("/cart/data", verifyTokenExceptLogin, async (req, res) => {
         const service = await prisma.services.findUnique({
           where: { id: item.service_id },
         });
+
+        // Translate options if they exist
+        const translatedOptions = {};
+        if (item.options) {
+          for (const [key, value] of Object.entries(item.options)) {
+            // Skip file option as it's a technical field
+            if (key === 'file') continue;
+            
+            // Translate the option key and value
+            const translatedKey = res.__(key);
+            const translatedValue = res.__(String(value));
+            translatedOptions[translatedKey] = translatedValue;
+          }
+        }
+
         return {
           ...item,
-          service_description: service.description
+          service_description: service.description,
+          options: translatedOptions
         };
       })
     );

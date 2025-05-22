@@ -331,7 +331,7 @@
           cartContentDiv.innerHTML = `
             <div class="text-center mt-4">
               <p class="mb-3"><%= __('your_cart_is_empty') %></p>
-              <a href="/services" class="btn btn-primary"><%= __('browse_services') %></a>
+              <a href="/" class="btn"><%= __('browse_services') %></a>
             </div>
           `;
           return;
@@ -375,15 +375,15 @@
                         <input type="number" class="form-control form-control-sm quantity-input" 
                                data-index="${index}" value="${item.quantity}" min="1" 
                                style="width: 70px;">
-                        <button class="btn btn-sm btn-outline-primary update-quantity" data-index="${index}">
+                        <button class="btn btn-sm update-quantity" data-index="${index}">
                           <%= __('update') %>
                         </button>
                       </div>
                     </td>
-                    <td>$${item.price.toFixed(2)}</td>
-                    <td>$${(item.quantity * item.price).toFixed(2)}</td>
+                    <td><%= __('currency_symbol') %>${item.price.toFixed(2)}</td>
+                    <td><%= __('currency_symbol') %>${(item.quantity * item.price).toFixed(2)}</td>
                     <td>
-                      <button class="btn btn-sm btn-danger remove-item" data-index="${index}">
+                      <button class="btn btn-sm remove-item" data-index="${index}">
                         <%= __('remove') %>
                       </button>
                     </td>
@@ -394,7 +394,7 @@
                 <tr>
                   <td colspan="3" class="text-end"><strong><%= __('total') %>:</strong></td>
                   <td colspan="2">
-                    <strong>$${data.cartTotal.toFixed(2)}</strong>
+                    <strong><%= __('currency_symbol') %>${data.cartTotal.toFixed(2)}</strong>
                   </td>
                 </tr>
               </tfoot>
@@ -402,12 +402,12 @@
           </div>
 
           <div class="d-flex justify-content-between mt-4">
-            <button class="btn btn-outline-danger clear-cart">
+            <button class="btn clear-cart">
               <%= __('clear_cart') %>
             </button>
-            <a href="/checkout" class="btn btn-success">
+            <button class="btn checkout-btn">
               <%= __('proceed_to_checkout') %>
-            </a>
+            </button>
           </div>
         `;
 
@@ -442,13 +442,14 @@
             });
 
             if (!response.ok) {
-              throw new Error('Failed to update quantity');
+              throw new Error('<%= __("error_update_cart") %>');
             }
 
             // Reload cart data after successful update
             loadCartData();
           } catch (error) {
             console.error('Error updating quantity:', error);
+            showStatusMessage('<%= __("error_update_cart") %>', false);
           }
         });
       });
@@ -468,20 +469,21 @@
             });
 
             if (!response.ok) {
-              throw new Error('Failed to remove item');
+              throw new Error('<%= __("error_remove_item") %>');
             }
 
             // Reload cart data after successful removal
             loadCartData();
           } catch (error) {
             console.error('Error removing item:', error);
+            showStatusMessage('<%= __("error_remove_item") %>', false);
           }
         });
       });
 
       // Clear cart button
       document.querySelector('.clear-cart')?.addEventListener('click', async function() {
-        if (!confirm('<%= __('confirm_clear_cart') %>')) {
+        if (!confirm('<%= __("confirm_clear_cart") %>')) {
           return;
         }
 
@@ -491,13 +493,43 @@
           });
 
           if (!response.ok) {
-            throw new Error('Failed to clear cart');
+            throw new Error('<%= __("error_clear_cart") %>');
           }
 
           // Reload cart data after successful clear
           loadCartData();
         } catch (error) {
           console.error('Error clearing cart:', error);
+          showStatusMessage('<%= __("error_clear_cart") %>', false);
+        }
+      });
+
+      // Checkout button
+      document.querySelector('.checkout-btn')?.addEventListener('click', async function() {
+        try {
+          // Show loading message
+          const loadingMessage = document.createElement('div');
+          loadingMessage.className = 'alert alert-info mt-3';
+          loadingMessage.textContent = '<%= __("redirecting_to_stripe") %>';
+          document.getElementById('cartMessages').appendChild(loadingMessage);
+
+          // Create checkout session
+          const response = await fetch('/checkout/create-checkout-session', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error('<%= __("checkout_error") %>');
+          }
+
+          const { url } = await response.json();
+          window.location.href = url;
+        } catch (error) {
+          console.error('Error initiating checkout:', error);
+          showStatusMessage('<%= __("checkout_error") %>', false);
         }
       });
     }
