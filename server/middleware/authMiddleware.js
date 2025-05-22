@@ -11,6 +11,11 @@ const allowedPaths = [
   "/services",
   "/about",
   "/set-locale",
+  "/print",
+  "/copy",
+  "/graphic-design",
+  "/merch",
+  "/get-file-info"
 ];
 
 const verifyTokenExceptLogin = (req, res, next) => {

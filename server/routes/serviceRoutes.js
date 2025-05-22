@@ -52,29 +52,32 @@ const handleError = (
     });
   }
 };
-
 router.get("/services", async (req, res) => {
   try {
-    let user = null;
-    if (req.cookies?.token) {
-      const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
-      user = await prisma.users.findUnique({
-        where: { id: decoded.userId },
-        select: {
-          id: true,
-          username: true,
-        },
-      });
-    }
-    res.render("services", { user });
+    const services = await prisma.services.findMany({
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        price: true
+      },
+      orderBy: {
+        id: 'asc'
+      }
+    });
+
+    res.json({
+      success: true,
+      services: services
+    });
+
   } catch (error) {
-    res.clearCookie("token");
     handleError(
       req,
       res,
       error,
-      "Services Error",
-      "Failed to load services page",
+      "Services Error", 
+      "Failed to fetch services"
     );
   }
 });
@@ -177,4 +180,156 @@ router.get("/merch", verifyTokenExceptLogin, async (req, res) => {
 router.get("/graphic-design", verifyTokenExceptLogin, async (req, res) => {
   res.render("designer");
 });
+
+// Get all services
+router.get('/services', verifyTokenExceptLogin, async (req, res) => {
+  try {
+    // Verify user is admin
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+    const user = await prisma.users.findUnique({
+      where: { id: decoded.userId },
+      select: { role: true }
+    });
+
+    if (user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized: Admin access required'
+      });
+    }
+
+    const services = await prisma.services.findMany({
+      orderBy: { id: 'asc' }
+    });
+
+    res.json({
+      success: true,
+      services
+    });
+  } catch (error) {
+    console.error('Error fetching services:', error);
+    // Ensure we always send a JSON response
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication failed'
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch services'
+    });
+  }
+});
+
+// Update service price
+router.patch('/api/services/:id/price', verifyTokenExceptLogin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { price } = req.body;
+
+    if (!price || isNaN(parseFloat(price))) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid price value'
+      });
+    }
+
+    // Verify user is admin
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+    const user = await prisma.users.findUnique({
+      where: { id: decoded.userId },
+      select: { role: true }
+    });
+
+    if (user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized: Admin access required'
+      });
+    }
+
+    // Update service price
+    const updatedService = await prisma.services.update({
+      where: { id: parseInt(id) },
+      data: { price: parseFloat(price) }
+    });
+
+    res.json({
+      success: true,
+      service: updatedService
+    });
+  } catch (error) {
+    console.error('Error updating service price:', error);
+    // Ensure we always send a JSON response
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication failed'
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update service price'
+    });
+  }
+});
+
+// Update service details
+router.put('/api/services/:id', verifyTokenExceptLogin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, price } = req.body;
+
+    if (!name || !price || isNaN(parseFloat(price))) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid service data'
+      });
+    }
+
+    // Verify user is admin
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+    const user = await prisma.users.findUnique({
+      where: { id: decoded.userId },
+      select: { role: true }
+    });
+
+    if (user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized: Admin access required'
+      });
+    }
+
+    // Update service
+    const updatedService = await prisma.services.update({
+      where: { id: parseInt(id) },
+      data: {
+        name,
+        description,
+        price: parseFloat(price)
+      }
+    });
+
+    res.json({
+      success: true,
+      service: updatedService
+    });
+  } catch (error) {
+    console.error('Error updating service:', error);
+    // Ensure we always send a JSON response
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication failed'
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update service'
+    });
+  }
+});
+
 module.exports = router;

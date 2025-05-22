@@ -33,7 +33,10 @@
               </div>
               <div>
                 <h2><%= user.name %></h2>
-                <p class="mb-0 text-muted"><%= __('joined') %>: <%= user.created_at %></p>
+                <p class="mb-0 text-muted">
+                  <%= __('joined') %>: 
+                  <span id="joinedDate" data-date="<%= user.created_at %>"></span>
+                </p>
               </div>
             </div>
           </div>
@@ -100,50 +103,75 @@
   <%- include('./partials/footer'); %>
 
   <script>
-    // Save user data when the page loads
-    let userData = <%- JSON.stringify(user) %>;
-    let originalValues = {};
-
-    function enableEdit() {
-      const inputs = document.querySelectorAll(".editable-input");
-      originalValues = {};
-
-      inputs.forEach(input => {
-        originalValues[input.name] = input.value;
-        input.removeAttribute("readonly");
-      });
-
-      document.getElementById("editBtn").classList.add("d-none");
-      document.getElementById("saveBtn").classList.remove("d-none");
-      document.getElementById("cancelBtn").classList.remove("d-none");
-    }
-
-    function cancelEdit() {
-      const inputs = document.querySelectorAll(".editable-input");
-
-      inputs.forEach(input => {
-        input.value = originalValues[input.name];
-        input.setAttribute("readonly", true);
-      });
-
-      document.getElementById("editBtn").classList.remove("d-none");
-      document.getElementById("saveBtn").classList.add("d-none");
-      document.getElementById("cancelBtn").classList.add("d-none");
-    }
-
-    function showStatusMessage(message, isSuccess = true) {
-      const statusDiv = document.getElementById("statusMessage");
-      statusDiv.classList.remove("d-none", "alert-success", "alert-danger");
-      statusDiv.classList.add(isSuccess ? "alert-success" : "alert-danger");
-      statusDiv.textContent = message;
-      
-      // Hide the message after 5 seconds
-      setTimeout(() => {
-        statusDiv.classList.add("d-none");
-      }, 5000);
+    // Format date according to locale
+    function formatDate(dateString, locale) {
+      try {
+        const date = new Date(dateString);
+        return new Intl.DateTimeFormat(locale, {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }).format(date);
+      } catch (error) {
+        console.error('Error formatting date:', error);
+        return dateString;
+      }
     }
 
     document.addEventListener("DOMContentLoaded", function () {
+      // Format joined date
+      const joinedDateElement = document.getElementById('joinedDate');
+      if (joinedDateElement) {
+        const dateString = joinedDateElement.getAttribute('data-date');
+        const locale = document.documentElement.lang || 'en';
+        joinedDateElement.textContent = formatDate(dateString, locale);
+      }
+
+      // Save initial user data
+      const userData = JSON.parse('<%- JSON.stringify(user) %>');
+      const originalValues = {};
+
+      function enableEdit() {
+        const inputs = document.querySelectorAll(".editable-input");
+        originalValues = {};
+
+        inputs.forEach(input => {
+          originalValues[input.name] = input.value;
+          input.removeAttribute("readonly");
+        });
+
+        document.getElementById("editBtn").classList.add("d-none");
+        document.getElementById("saveBtn").classList.remove("d-none");
+        document.getElementById("cancelBtn").classList.remove("d-none");
+      }
+
+      function cancelEdit() {
+        const inputs = document.querySelectorAll(".editable-input");
+
+        inputs.forEach(input => {
+          input.value = originalValues[input.name];
+          input.setAttribute("readonly", true);
+        });
+
+        document.getElementById("editBtn").classList.remove("d-none");
+        document.getElementById("saveBtn").classList.add("d-none");
+        document.getElementById("cancelBtn").classList.add("d-none");
+      }
+
+      function showStatusMessage(message, isSuccess = true) {
+        const statusDiv = document.getElementById("statusMessage");
+        statusDiv.classList.remove("d-none", "alert-success", "alert-danger");
+        statusDiv.classList.add(isSuccess ? "alert-success" : "alert-danger");
+        statusDiv.textContent = message;
+        
+        // Hide the message after 5 seconds
+        setTimeout(() => {
+          statusDiv.classList.add("d-none");
+        }, 5000);
+      }
+
       // Initialize event listeners
       document.getElementById("editBtn").addEventListener("click", enableEdit);
       document.getElementById("cancelBtn").addEventListener("click", cancelEdit);
@@ -163,6 +191,8 @@
           const result = await response.json();
 
           if (response.ok) {
+            // Update userData with new values
+            Object.assign(userData, Object.fromEntries(formData));
             showStatusMessage("Profile updated successfully!", true);
             setTimeout(() => location.reload(), 1500);
           } else {
@@ -176,63 +206,65 @@
 
       // Avatar upload handling
       document.getElementById('uploadAvatarBtn').addEventListener('click', async function() {
-  const fileInput = document.getElementById('avatar');
-  const file = fileInput.files[0];
-  const progressBar = document.getElementById('avatarUploadProgress');
-  const progressBarInner = progressBar.querySelector('.progress-bar');
-  
-  if (!file) {
-    showStatusMessage('Please select a file first', false);
-    return;
-  }
+        const fileInput = document.getElementById('avatar');
+        const file = fileInput.files[0];
+        const progressBar = document.getElementById('avatarUploadProgress');
+        const progressBarInner = progressBar.querySelector('.progress-bar');
+        
+        if (!file) {
+          showStatusMessage('Please select a file first', false);
+          return;
+        }
 
-  const formData = new FormData();
-  formData.append('avatar', file);
+        const formData = new FormData();
+        formData.append('avatar', file);
 
-  try {
-    // Show progress bar
-    progressBar.classList.remove('d-none');
-    progressBarInner.style.width = '0%';
+        try {
+          // Show progress bar
+          progressBar.classList.remove('d-none');
+          progressBarInner.style.width = '0%';
 
-    const response = await fetch('/upload-avatar', {
-      method: 'POST',
-      body: formData,
-      credentials: 'include'
-    });
+          const response = await fetch('/upload-avatar', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+          });
 
-    // First check if response is JSON
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      throw new Error('Server returned unexpected response');
-    }
+          // First check if response is JSON
+          const contentType = response.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Server returned unexpected response');
+          }
 
-    const result = await response.json();
+          const result = await response.json();
 
-    if (!response.ok) {
-      throw new Error(result.message || 'Upload failed');
-    }
+          if (!response.ok) {
+            throw new Error(result.message || 'Upload failed');
+          }
 
-    progressBarInner.style.width = '100%';
-    showStatusMessage('Avatar updated successfully! Page will refresh in 2 seconds...', true);
-  setTimeout(() => {
-    location.reload();
-  }, 2000);
-    
-    // Update avatar preview without page reload
-    const avatarImg = document.querySelector('.profile-avatar img');
-    if (avatarImg) {
-      avatarImg.src = result.avatarUrl + '?' + new Date().getTime(); // Cache bust
-    } else {
-      // Handle case where fallback avatar is shown
-      location.reload();
-    }
-    
-  } catch (error) {
-    progressBar.classList.add('d-none');
-    showStatusMessage(error.message || 'Avatar upload failed', false);
-    console.error('Upload error:', error);
-  }
-});      // Tab switching behavior
+          progressBarInner.style.width = '100%';
+          showStatusMessage('Avatar updated successfully! Page will refresh in 2 seconds...', true);
+          setTimeout(() => {
+            location.reload();
+          }, 2000);
+          
+          // Update avatar preview without page reload
+          const avatarImg = document.querySelector('.profile-avatar img');
+          if (avatarImg) {
+            avatarImg.src = result.avatarUrl + '?' + new Date().getTime(); // Cache bust
+          } else {
+            // Handle case where fallback avatar is shown
+            location.reload();
+          }
+          
+        } catch (error) {
+          progressBar.classList.add('d-none');
+          showStatusMessage(error.message || 'Avatar upload failed', false);
+          console.error('Upload error:', error);
+        }
+      });
+
+      // Tab switching behavior
       const tabs = document.querySelectorAll('[data-bs-toggle="tab"]');
       tabs.forEach(tab => {
         tab.addEventListener("shown.bs.tab", function (event) {
@@ -240,12 +272,16 @@
           const editBtn = document.getElementById("editBtn");
           if (activeTab === "#profile") {
             editBtn.classList.remove("d-none");
+            restoreUserData(); // Restore user data when switching back to profile tab
           } else {
             editBtn.classList.add("d-none");
             cancelEdit(); // Automatically cancel edit if user navigates away
           }
         });
       });
+
+      // Initial data setup
+      restoreUserData();
     });
 
     // Handle cart tab activation

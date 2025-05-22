@@ -8,14 +8,24 @@ const prisma = new PrismaClient();
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-function calculatePrice({
+async function calculatePrice({
   copies,
   print_pages,
   color,
   double_sided,
   paper_size,
+  service_id
 }) {
-  const basePricePerPage = 0.1; // base price per page (black & white, A4, single-sided)
+  // Get base price from service
+  const service = await prisma.services.findUnique({
+    where: { id: service_id }
+  });
+
+  if (!service) {
+    throw new Error('Service not found');
+  }
+
+  const basePricePerPage = parseFloat(service.price); // base price per page from database
 
   // Convert input values to numbers
   const pages = parseInt(print_pages) || 1;
@@ -53,13 +63,14 @@ router.post("/print", upload.single("document"), async (req, res) => {
       return res.status(400).send("Document printing service not found");
     }
 
-    // Calculate price based on options
-    const price = calculatePrice({
+    // Calculate price based on options and service
+    const price = await calculatePrice({
       copies,
       print_pages,
       color,
       double_sided,
       paper_size,
+      service_id: service.id
     });
 
     // Construct item for cart

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -125,6 +124,11 @@
 <body>
   <div class="container">
     <h1>Book a Graphic Design Consultation</h1>
+
+    <div id="unauthorized-message" style="display: none;">
+        <%- include('./partials/unauthorized-alert') %>
+    </div>
+
     <form action="/consultation" method="POST" enctype="multipart/form-data">
       <div class="form-group">
         <label for="fullName">Your Name</label>
@@ -167,5 +171,34 @@
       <button type="submit">Submit Consultation Request</button>
     </form>
   </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+      const designForm = document.querySelector('form');
+      const unauthorizedMessage = document.getElementById('unauthorized-message');
+
+      if (designForm) {
+          designForm.addEventListener('submit', async function(e) {
+              e.preventDefault();
+
+              try {
+                  const response = await fetch('/api/cart/data');
+                  if (response.ok) {
+                      // User is logged in, submit the form
+                      this.submit();
+                  } else {
+                      // User is not logged in, show error message
+                      unauthorizedMessage.style.display = 'block';
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+              } catch (error) {
+                  console.error('Error checking authentication:', error);
+                  unauthorizedMessage.style.display = 'block';
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+          });
+      }
+  });
+  </script>
 </body>
 </html>

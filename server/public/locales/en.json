@@ -164,5 +164,12 @@
   "No": "No",
   "A4": "A4",
   "A3": "A3",
-  "Letter": "Letter"
+  "Letter": "Letter",
+  "unauthorized_title": "Authentication Required",
+  "unauthorized_message": "Please log in or create an account to add items to your cart.",
+  "unauthorized_print": "Please log in to print documents",
+  "unauthorized_copy": "Please log in to use copy services",
+  "unauthorized_design": "Please log in to use graphic design services",
+  "unauthorized_merch": "Please log in to create custom merchandise",
+  "add_to_cart": "Add to Cart"
 }

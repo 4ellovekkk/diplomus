@@ -347,7 +347,6 @@ document.addEventListener("DOMContentLoaded", function () {
   fetchUsers();
 });
 
-/////////////////////////////////
 
 let changelogTimeout;
 let currentPageChangeLog = 1;
@@ -419,3 +418,181 @@ function renderPagination(totalPages, currentPage) {
 
 // Optional: fetch once on load
 document.addEventListener("DOMContentLoaded", fetchChangelog);
+
+// Service Prices Management Functions
+let services = [];
+
+// Function to fetch services
+async function fetchServices() {
+  try {
+    const response = await fetch('/api/services');
+    if (!response.ok) {
+      if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+      } else if (response.status === 403) {
+        alert('Access denied: Admin privileges required');
+        return;
+      }
+      const data = await response.json();
+      throw new Error(data.message || 'Failed to fetch services');
+    }
+    const data = await response.json();
+    if (data.success) {
+      services = data.services;
+      updateServicePricesTable();
+    } else {
+      throw new Error(data.message || 'Failed to fetch services');
+    }
+  } catch (error) {
+    console.error('Error fetching services:', error);
+    alert('Error loading services: ' + error.message);
+  }
+}
+
+// Function to update service prices table
+function updateServicePricesTable() {
+  const tableBody = document.getElementById('servicePricesTableBody');
+  tableBody.innerHTML = '';
+
+  if (!services || services.length === 0) {
+    const row = document.createElement('tr');
+    row.innerHTML = '<td colspan="5" class="text-center">No services found</td>';
+    tableBody.appendChild(row);
+    return;
+  }
+
+  services.forEach(service => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${service.id}</td>
+      <td>${service.name}</td>
+      <td>${service.description || '—'}</td>
+      <td>
+        <div class="input-group">
+          <input type="number" class="form-control form-control-sm" 
+                 value="${service.price}" 
+                 min="0" 
+                 step="0.01"
+                 style="max-width: 100px;"
+                 onchange="updateServicePrice(${service.id}, this.value)">
+          <span class="input-group-text">₽</span>
+        </div>
+      </td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary me-1" onclick="editService(${service.id})">
+          <i class="bi bi-pencil"></i> Edit
+        </button>
+      </td>
+    `;
+    tableBody.appendChild(row);
+  });
+}
+
+// Function to update service price
+async function updateServicePrice(serviceId, newPrice) {
+  try {
+    const response = await fetch(`/api/services/${serviceId}/price`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ price: newPrice })
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+      } else if (response.status === 403) {
+        alert('Access denied: Admin privileges required');
+        return;
+      }
+      const data = await response.json();
+      throw new Error(data.message || 'Failed to update service price');
+    }
+
+    const data = await response.json();
+    if (data.success) {
+      // Update the local services array
+      const serviceIndex = services.findIndex(s => s.id === serviceId);
+      if (serviceIndex !== -1) {
+        services[serviceIndex] = data.service;
+      }
+      alert('Price updated successfully');
+    } else {
+      throw new Error(data.message || 'Failed to update service price');
+    }
+  } catch (error) {
+    console.error('Error updating service price:', error);
+    alert('Error updating price: ' + error.message);
+    // Refresh the table to show original values
+    fetchServices();
+  }
+}
+
+// Function to edit service details
+async function editService(serviceId) {
+  try {
+    const service = services.find(s => s.id === serviceId);
+    if (!service) {
+      throw new Error('Service not found');
+    }
+
+    const newName = prompt('Enter new service name:', service.name);
+    if (newName === null) return; // User cancelled
+
+    const newDescription = prompt('Enter new service description:', service.description || '');
+    if (newDescription === null) return; // User cancelled
+
+    const newPrice = prompt('Enter new service price:', service.price);
+    if (newPrice === null) return; // User cancelled
+
+    const response = await fetch(`/api/services/${serviceId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: newName,
+        description: newDescription,
+        price: newPrice
+      })
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+      } else if (response.status === 403) {
+        alert('Access denied: Admin privileges required');
+        return;
+      }
+      const data = await response.json();
+      throw new Error(data.message || 'Failed to update service');
+    }
+
+    const data = await response.json();
+    if (data.success) {
+      // Update the local services array
+      const serviceIndex = services.findIndex(s => s.id === serviceId);
+      if (serviceIndex !== -1) {
+        services[serviceIndex] = data.service;
+      }
+      updateServicePricesTable();
+      alert('Service updated successfully');
+    } else {
+      throw new Error(data.message || 'Failed to update service');
+    }
+  } catch (error) {
+    console.error('Error updating service:', error);
+    alert('Error updating service: ' + error.message);
+  }
+}
+
+// Call fetchServices when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+  fetchUsers();
+  fetchChangelog();
+  fetchServices();
+});

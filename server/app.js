@@ -115,7 +115,7 @@ app.use("/api", authRouter);
 // app.use("/api", orderRoutes);
 app.use("/api", cartRoutes);
 app.use("/api", userRoutes);
-app.use("/", serviceRoutes);
+app.use("/api", serviceRoutes);
 app.use("/", profileRoutes);
 app.use("/", printRoutes);
 app.use("/checkout", checkoutRoutes);

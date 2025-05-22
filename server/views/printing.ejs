@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="<%= locale %>">
 <head>
@@ -9,11 +8,110 @@
     <link rel="stylesheet" href="/styles/Header.css"/>
     <link rel="stylesheet" href="/styles/Footer.css"/>
     <link rel="stylesheet" href="/styles/Buttons.css"/>
+    <!-- PDF.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+    <style>
+        .preview-container {
+            margin: 20px 0;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        #preview-canvas {
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            max-width: 100%;
+            height: auto;
+        }
+        .preview-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .preview-controls button {
+            padding: 5px 15px;
+        }
+        .page-number {
+            margin: 0 10px;
+        }
+    </style>
     <%- include('./partials/favicon') %>
 <script>
     let totalPages = 0;
+    let pdfDoc = null;
+    let currentPage = 1;
+    let isAuthorized = false;
 
-    function updateFileInfo() {
+    // Check if user is authorized
+    async function checkAuthorization() {
+        try {
+            const response = await fetch('/api/cart/data');
+            isAuthorized = response.ok;
+        } catch (error) {
+            isAuthorized = false;
+        }
+    }
+
+    // Initialize PDF preview
+    async function initPreview(file) {
+        if (!file || !isAuthorized) return;
+        
+        const previewSection = document.getElementById('preview-section');
+        
+        // Only show preview for PDF files
+        if (!file.type.includes('pdf')) {
+            previewSection.style.display = 'none';
+            return;
+        }
+
+        try {
+            const fileReader = new FileReader();
+            fileReader.onload = async function() {
+                try {
+                    pdfDoc = await pdfjsLib.getDocument({data: this.result}).promise;
+                    totalPages = pdfDoc.numPages;
+                    document.getElementById('total-pages').textContent = totalPages;
+                    previewSection.style.display = 'block';
+                    renderPage(1);
+                } catch (error) {
+                    console.error('Error loading PDF:', error);
+                }
+            };
+            fileReader.readAsArrayBuffer(file);
+        } catch (error) {
+            console.error('Error reading file:', error);
+        }
+    }
+
+    // Render PDF page
+    async function renderPage(pageNumber) {
+        if (!pdfDoc) return;
+
+        try {
+            const page = await pdfDoc.getPage(pageNumber);
+            const canvas = document.getElementById('preview-canvas');
+            const context = canvas.getContext('2d');
+            
+            const viewport = page.getViewport({scale: 1.5});
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
+
+            currentPage = pageNumber;
+            document.getElementById('current-page').textContent = currentPage;
+        } catch (error) {
+            console.error('Error rendering page:', error);
+        }
+    }
+
+    // Update file info and initialize preview
+    async function updateFileInfo() {
         const fileInput = document.getElementById('document');
         const fileInfo = document.getElementById('fileInfo');
         const pagesInput = document.getElementById('pages');
@@ -23,6 +121,14 @@
             fileInfo.textContent = "<%= __('file_name') %>: " + file.name + ", <%= __('file_size') %>: " + (file.size / 1024).toFixed(2) + " KB";
 
             pagesInput.value = "<%= __('detecting') %>";
+            
+            // Initialize preview for authorized users
+            await checkAuthorization();
+            if (isAuthorized) {
+                await initPreview(file);
+            }
+
+            // Get file info without authorization check
             fetch('/get-file-info', {
                 method: 'POST',
                 body: new FormData(document.getElementById('printForm'))
@@ -40,12 +146,23 @@
             fileInfo.textContent = '';
             pagesInput.value = '';
             totalPages = 0;
+            document.getElementById('preview-section').style.display = 'none';
         }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('printForm').addEventListener('submit', function(e) {
+    document.addEventListener('DOMContentLoaded', function() {
+        const printForm = document.getElementById('printForm');
+        const unauthorizedMessage = document.getElementById('unauthorized-message');
+
+        printForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Validate page range first
             const pagesField = document.getElementById('print_pages').value.trim();
+            const printPagesInput = document.getElementById('print_pages');
+            const errorDiv = document.getElementById('print_pages_error');
+            printPagesInput.classList.remove('is-invalid');
+            errorDiv.textContent = '';
 
             if (pagesField && totalPages > 0) {
                 const ranges = pagesField.split(',').map(part => part.trim());
@@ -60,18 +177,45 @@
                     return false;
                 });
 
-               const printPagesInput = document.getElementById('print_pages');
-const errorDiv = document.getElementById('print_pages_error');
-printPagesInput.classList.remove('is-invalid');
-errorDiv.textContent = '';
+                if (!valid) {
+                    printPagesInput.classList.add('is-invalid');
+                    errorDiv.textContent = "<%= __('invalid_page_range') %> (<%= __('max_pages') %> " + totalPages + ")";
+                    return;
+                }
+            }
 
-if (!valid) {
-    e.preventDefault();
-    printPagesInput.classList.add('is-invalid');
+            // Check authorization only when submitting
+            try {
+                const response = await fetch('/api/cart/data');
+                if (response.ok) {
+                    // User is logged in, submit the form
+                    this.submit();
+                } else {
+                    // User is not logged in, show error message
+                    unauthorizedMessage.style.display = 'block';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            } catch (error) {
+                console.error('Error checking authentication:', error);
+                unauthorizedMessage.style.display = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
 
+        // Add event listeners for preview navigation
+        const prevButton = document.getElementById('prev-page');
+        const nextButton = document.getElementById('next-page');
 
-errorDiv.textContent = "<%= __('invalid_page_range') %> (<%= __('max_pages') %> " + totalPages + ")";
-}            }
+        prevButton.addEventListener('click', () => {
+            if (currentPage > 1) {
+                renderPage(currentPage - 1);
+            }
+        });
+
+        nextButton.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                renderPage(currentPage + 1);
+            }
         });
     });
 </script>
@@ -82,11 +226,27 @@ errorDiv.textContent = "<%= __('invalid_page_range') %> (<%= __('max_pages') %> 
 <div class="container py-5">
     <h1 class="text-center mb-4"><%= __('print_heading') %></h1>
 
+    <div id="unauthorized-message" style="display: none;">
+        <%- include('./partials/unauthorized-alert') %>
+    </div>
+
     <form id="printForm" action="/print" method="POST" enctype="multipart/form-data" class="mx-auto" style="max-width: 600px;">
         <div class="mb-3">
             <label for="document" class="form-label"><%= __('upload_document') %>:</label>
             <input type="file" class="form-control" id="document" name="document" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required onchange="updateFileInfo()">
             <small id="fileInfo" class="form-text text-muted mt-1"></small>
+        </div>
+
+        <!-- Preview section -->
+        <div id="preview-section" style="display: none;">
+            <div class="preview-container">
+                <canvas id="preview-canvas"></canvas>
+                <div class="preview-controls">
+                    <button type="button" class="btn btn-secondary" id="prev-page">Previous</button>
+                    <span class="page-number">Page <span id="current-page">1</span> of <span id="total-pages">1</span></span>
+                    <button type="button" class="btn btn-secondary" id="next-page">Next</button>
+                </div>
+            </div>
         </div>
 
         <div class="mb-3">
