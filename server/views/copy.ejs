@@ -13,57 +13,59 @@
 <body>
 <%- include('./partials/header') %>
 
-<div class="container py-5">
-  <h1 class="mb-4"><%= __('xerox_heading') %></h1>
-  
-  <div id="unauthorized-message" style="display: none;">
-    <%- include('./partials/unauthorized-alert') %>
+<main>
+  <div class="container1 py-5">
+    <h1 class="mb-4"><%= __('xerox_heading') %></h1>
+    
+    <div id="unauthorized-message" style="display: none;">
+      <%- include('./partials/unauthorized-alert') %>
+    </div>
+
+    <p class="lead"><%= __('xerox_intro') %></p>
+
+    <h2 class="mt-5"><%= __('why_choose_us') %></h2>
+    <ul class="list-group list-group-flush mb-4">
+      <li class="list-group-item"><%= __('feature_fast') %></li>
+      <li class="list-group-item"><%= __('feature_affordable') %></li>
+      <li class="list-group-item"><%= __('feature_high_quality') %></li>
+      <li class="list-group-item"><%= __('feature_sizes') %></li>
+      <li class="list-group-item"><%= __('feature_sided') %></li>
+    </ul>
+
+    <h2><%= __('pricing') %></h2>
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped mt-3">
+        <thead class="table-light">
+          <tr>
+            <th scope="col"><%= __('type') %></th>
+            <th scope="col"><%= __('price_per_page') %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><%= __('bw_a4') %></td>
+            <td>$0.10</td>
+          </tr>
+          <tr>
+            <td><%= __('color_a4') %></td>
+            <td>$0.25</td>
+          </tr>
+          <tr>
+            <td><%= __('bw_a3') %></td>
+            <td>$0.20</td>
+          </tr>
+          <tr>
+            <td><%= __('color_a3') %></td>
+            <td>$0.50</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="mt-5"><%= __('how_to_order') %></h2>
+    <p><%= __('order_instructions') %></p>
   </div>
-
-  <p class="lead"><%= __('xerox_intro') %></p>
-
-  <h2 class="mt-5"><%= __('why_choose_us') %></h2>
-  <ul class="list-group list-group-flush mb-4">
-    <li class="list-group-item"><%= __('feature_fast') %></li>
-    <li class="list-group-item"><%= __('feature_affordable') %></li>
-    <li class="list-group-item"><%= __('feature_high_quality') %></li>
-    <li class="list-group-item"><%= __('feature_sizes') %></li>
-    <li class="list-group-item"><%= __('feature_sided') %></li>
-  </ul>
-
-  <h2><%= __('pricing') %></h2>
-  <div class="table-responsive">
-    <table class="table table-bordered table-striped mt-3">
-      <thead class="table-light">
-        <tr>
-          <th scope="col"><%= __('type') %></th>
-          <th scope="col"><%= __('price_per_page') %></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><%= __('bw_a4') %></td>
-          <td>$0.10</td>
-        </tr>
-        <tr>
-          <td><%= __('color_a4') %></td>
-          <td>$0.25</td>
-        </tr>
-        <tr>
-          <td><%= __('bw_a3') %></td>
-          <td>$0.20</td>
-        </tr>
-        <tr>
-          <td><%= __('color_a3') %></td>
-          <td>$0.50</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <h2 class="mt-5"><%= __('how_to_order') %></h2>
-  <p><%= __('order_instructions') %></p>
-</div>
+</main>
 
 <%- include('./partials/footer') %>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

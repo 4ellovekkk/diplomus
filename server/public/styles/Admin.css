@@ -27,61 +27,55 @@ body {
     margin-bottom: 1.5rem;
 }
 
-/* Buttons */
-button {
-    background: coral;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background 0.3s ease;
-    margin: 5px;
-}
-
-button:hover {
-    background: #e07b00;
-}
-
-.view {
+/* Action Button Variants */
+.btn.view {
     background: #5bc0de;
 }
 
-.view:hover {
-    background: #31b0d5;
+.btn.view:hover {
+    background: white;
+    color: #5bc0de;
+    border: 1px solid #5bc0de;
 }
 
-.edit {
+.btn.edit {
     background: #f0ad4e;
 }
 
-.edit:hover {
-    background: #ec971f;
+.btn.edit:hover {
+    background: white;
+    color: #f0ad4e;
+    border: 1px solid #f0ad4e;
 }
 
-.delete {
+.btn.delete {
     background: #d9534f;
 }
 
-.delete:hover {
-    background: #c9302c;
+.btn.delete:hover {
+    background: white;
+    color: #d9534f;
+    border: 1px solid #d9534f;
 }
 
-.unlock {
+.btn.unlock {
     background: #5cb85c;
 }
 
-.unlock:hover {
-    background: #4cae4c;
+.btn.unlock:hover {
+    background: white;
+    color: #5cb85c;
+    border: 1px solid #5cb85c;
 }
 
-.lock {
+.btn.lock {
     background: #d9534f;
 }
 
-.lock:hover {
-    background: #c9302c;
+.btn.lock:hover {
+    background: white;
+    color: #d9534f;
+    border: 1px solid #d9534f;
 }
 
 /* Table Styles */
@@ -151,7 +145,7 @@ tr:hover {
 }
 
 .modal-content button {
-    width: 100%;
+    width: 10%;
 }
 
 .close {
@@ -260,4 +254,28 @@ tr:hover {
 .form-buttons {
     margin-top: 20px;
     text-align: right;
+}
+
+/* Modal Footer Button Styles */
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+    padding: 1rem;
+}
+
+.modal-footer .btn {
+    width: 45%;
+}
+
+.modal-footer .btn[data-bs-dismiss="modal"] {
+    background: #ccc;
+}
+
+.modal-footer .btn[data-bs-dismiss="modal"]:hover {
+    background: white;
+    color: #666;
+    border: 1px solid #ccc;
+}
+
+header {
+    width: 100%;
 }

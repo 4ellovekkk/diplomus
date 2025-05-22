@@ -1,10 +1,31 @@
+/* Ensure the body takes up at least the full viewport height */
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Push the footer to the bottom */
+main {
+    flex: 1 0 auto;
+}
+
+/* Footer styles */
 footer {
+    flex-shrink: 0;
     background: var(--bs-light);
     color: black;
-    padding: 20px;
-    margin-top: 30px;
-    max-height: 6vh;
+    padding: 1rem 0;
+    width: 100%;
+    border-top: 1px solid #dee2e6;
 }
+
 footer p {
-    text-align:center;
+    text-align: center;
+    margin: 0;
 }

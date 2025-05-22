@@ -305,6 +305,7 @@ app.get("/about", async (req, res) => {
         select: {
           id: true,
           username: true,
+          role: true,
         },
       });
     }

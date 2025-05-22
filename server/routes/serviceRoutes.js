@@ -148,7 +148,19 @@ router.post("/get-file-info", upload.single("document"), async (req, res) => {
 
 router.get("/copy", async (req, res) => {
   try {
-    res.render("copy");
+    let user = null;
+    if (req.cookies?.token) {
+      const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+      user = await prisma.users.findUnique({
+        where: { id: decoded.userId },
+        select: {
+          id: true,
+          username: true,
+          role: true,
+        },
+      });
+    }
+    res.render("copy", { user });
   } catch (error) {
     handleError(
       req,
@@ -178,7 +190,29 @@ router.get("/merch", verifyTokenExceptLogin, async (req, res) => {
   }
 });
 router.get("/graphic-design", verifyTokenExceptLogin, async (req, res) => {
-  res.render("designer");
+  try {
+    let user = null;
+    if (req.cookies?.token) {
+      const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+      user = await prisma.users.findUnique({
+        where: { id: decoded.userId },
+        select: {
+          id: true,
+          username: true,
+          role: true,
+        },
+      });
+    }
+    res.render("designer", { user });
+  } catch (error) {
+    handleError(
+      req,
+      res,
+      error,
+      "Graphic Design Error",
+      "Failed to load graphic design page",
+    );
+  }
 });
 
 // Get all services
