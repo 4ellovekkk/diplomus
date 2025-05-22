@@ -223,7 +223,7 @@ router.get('/services', verifyTokenExceptLogin, async (req, res) => {
 });
 
 // Update service price
-router.patch('/api/services/:id/price', verifyTokenExceptLogin, async (req, res) => {
+router.patch('/services/:id/price', verifyTokenExceptLogin, async (req, res) => {
   try {
     const { id } = req.params;
     const { price } = req.body;
@@ -328,6 +328,114 @@ router.put('/api/services/:id', verifyTokenExceptLogin, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update service'
+    });
+  }
+});
+
+// Create new service
+router.post('/services', verifyTokenExceptLogin, async (req, res) => {
+  try {
+    // Verify user is admin
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+    const user = await prisma.users.findUnique({
+      where: { id: decoded.userId },
+      select: { role: true }
+    });
+
+    if (user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized: Admin access required'
+      });
+    }
+
+    const { name, description, price } = req.body;
+
+    if (!name || !price || isNaN(parseFloat(price))) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid service data'
+      });
+    }
+
+    const service = await prisma.services.create({
+      data: {
+        name,
+        description,
+        price: parseFloat(price)
+      }
+    });
+
+    res.json({
+      success: true,
+      service
+    });
+  } catch (error) {
+    console.error('Error creating service:', error);
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication failed'
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create service'
+    });
+  }
+});
+
+// Delete service
+router.delete('/services/:id', verifyTokenExceptLogin, async (req, res) => {
+  try {
+    // Verify user is admin
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+    const user = await prisma.users.findUnique({
+      where: { id: decoded.userId },
+      select: { role: true }
+    });
+
+    if (user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized: Admin access required'
+      });
+    }
+
+    const { id } = req.params;
+
+    // Check if service exists
+    const existingService = await prisma.services.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (!existingService) {
+      return res.status(404).json({
+        success: false,
+        message: 'Service not found'
+      });
+    }
+
+    // Delete the service
+    await prisma.services.delete({
+      where: { id: parseInt(id) }
+    });
+
+    res.json({
+      success: true,
+      message: 'Service deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting service:', error);
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication failed'
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete service'
     });
   }
 });

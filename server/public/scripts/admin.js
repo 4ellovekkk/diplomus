@@ -481,7 +481,10 @@ function updateServicePricesTable() {
       </td>
       <td>
         <button class="btn btn-sm btn-outline-primary me-1" onclick="editService(${service.id})">
-          <i class="bi bi-pencil"></i> Edit
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteService(${service.id})">
+          <i class="bi bi-trash"></i>
         </button>
       </td>
     `;
@@ -587,6 +590,108 @@ async function editService(serviceId) {
   } catch (error) {
     console.error('Error updating service:', error);
     alert('Error updating service: ' + error.message);
+  }
+}
+
+// Function to submit new service from modal
+async function submitNewService() {
+  try {
+    const name = document.getElementById('serviceName').value.trim();
+    const description = document.getElementById('serviceDescription').value.trim();
+    const price = document.getElementById('servicePrice').value;
+
+    if (!name) {
+      alert('Service name is required');
+      return;
+    }
+
+    if (!price || isNaN(parseFloat(price)) || parseFloat(price) < 0) {
+      alert('Please enter a valid price');
+      return;
+    }
+
+    const response = await fetch('/api/services', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name,
+        description,
+        price: parseFloat(price)
+      })
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+      } else if (response.status === 403) {
+        alert('Access denied: Admin privileges required');
+        return;
+      }
+      const data = await response.json();
+      throw new Error(data.message || 'Failed to create service');
+    }
+
+    const data = await response.json();
+    if (data.success) {
+      // Add new service to the list and update table
+      services.push(data.service);
+      updateServicePricesTable();
+      
+      // Close modal and reset form
+      const modal = bootstrap.Modal.getInstance(document.getElementById('addServiceModal'));
+      modal.hide();
+      document.getElementById('addServiceForm').reset();
+      
+      alert('Service created successfully');
+    } else {
+      throw new Error(data.message || 'Failed to create service');
+    }
+  } catch (error) {
+    console.error('Error creating service:', error);
+    alert('Error creating service: ' + error.message);
+  }
+}
+
+// Function to delete a service
+async function deleteService(serviceId) {
+  if (!confirm('Are you sure you want to delete this service? This action cannot be undone.')) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/services/${serviceId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+      } else if (response.status === 403) {
+        alert('Access denied: Admin privileges required');
+        return;
+      }
+      const data = await response.json();
+      throw new Error(data.message || 'Failed to delete service');
+    }
+
+    const data = await response.json();
+    if (data.success) {
+      services = services.filter(s => s.id !== serviceId);
+      updateServicePricesTable();
+      alert('Service deleted successfully');
+    } else {
+      throw new Error(data.message || 'Failed to delete service');
+    }
+  } catch (error) {
+    console.error('Error deleting service:', error);
+    alert('Error deleting service: ' + error.message);
   }
 }
 
