@@ -53,14 +53,13 @@
             <label for="image-upload"><%= __('image_upload_label') %>:</label>
             <input type="file" id="image-upload" accept="image/*">
         </div> 
-        <button id="addToCartBtn" class="btn btn-primary mt-3"><%= __('add_to_cart') %></button>
+        <button id="addToCartBtn" class="btn mt-3"><%= __('add_to_cart') %></button>
     </div>
 </div>
 <%- include('./partials/footer') %>
 <script src="/scripts/merch.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // ... existing code ...
 
     // Add to cart button handler
     const addToCartBtn = document.getElementById('addToCartBtn');

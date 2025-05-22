@@ -33,31 +33,42 @@ body {
 
 .text-overlay {
     position: absolute;
-    top: 50%;
-    left: 50%;
     transform: translate(-50%, -50%);
     font-size: 20px;
     color: #000;
     font-family: 'Arial', sans-serif;
     font-weight: bold;
-    pointer-events: none;
+    cursor: move;
     text-align: center;
     max-width: 100%;
+    user-select: none;
+    z-index: 10;
+    padding: 10px;
+}
+
+.text-overlay.dragging {
+    opacity: 0.8;
+    cursor: grabbing;
 }
 
 .image-wrapper {
     position: absolute;
-    top: 20%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    height: 60%;
+    width: 200px;
+    height: auto;
+    cursor: move;
+    user-select: none;
+}
+
+.image-wrapper.dragging {
+    opacity: 0.8;
+    cursor: grabbing;
 }
 
 .custom-image {
     width: 100%;
     height: auto;
     display: none;
+    pointer-events: none;
 }
 
 .resize-handle {

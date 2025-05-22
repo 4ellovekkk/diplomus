@@ -8,10 +8,24 @@ document.addEventListener('DOMContentLoaded', function () {
     const customImage = document.getElementById('custom-image');
     const imageWrapper = document.getElementById('image-wrapper');
     const resizeHandle = imageWrapper.querySelector('.resize-handle');
+    const tshirtSize = document.getElementById('tshirt-size');
+
+    // Initialize positions
+    textOverlay.style.left = '50%';
+    textOverlay.style.top = '50%';
+    imageWrapper.style.left = '50%';
+    imageWrapper.style.top = '20%';
+
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let activeElement = null;
 
     // Change text content
     textInput.addEventListener('input', function () {
-        textOverlay.textContent = this.value;
+        textOverlay.textContent = this.value || 'Your Text Here';
     });
 
     // Change text color
@@ -21,81 +35,120 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Change font size
     fontSize.addEventListener('input', function () {
-        textOverlay.style.fontSize = `${this.value}px`;
+        textOverlay.style.fontSize = this.value + 'px';
     });
 
     // Upload custom image
-    imageUpload.addEventListener('change', function (event) {
-        const file = event.target.files[0];
+    imageUpload.addEventListener('change', function (e) {
+        const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function (e) {
                 customImage.src = e.target.result;
                 customImage.style.display = 'block';
-                imageWrapper.style.display = 'block';
+                // Reset image position when new image is uploaded
+                imageWrapper.style.left = '50%';
+                imageWrapper.style.top = '20%';
             };
             reader.readAsDataURL(file);
         }
     });
 
-    // Make text draggable
-    let isDraggingText = false;
-    let offsetX, offsetY;
+    // Drag functionality
+    function dragStart(e) {
+        if (e.target === textOverlay || e.target === imageWrapper) {
+            activeElement = e.target;
+            isDragging = true;
+            activeElement.classList.add('dragging');
 
-    textOverlay.addEventListener('mousedown', function (e) {
-        isDraggingText = true;
-        offsetX = e.offsetX;
-        offsetY = e.offsetY;
-    });
+            const rect = activeElement.getBoundingClientRect();
+            const tshirtRect = tshirtModel.getBoundingClientRect();
 
-    document.addEventListener('mousemove', function (e) {
-        if (isDraggingText) {
-            const x = e.clientX - offsetX - tshirtModel.getBoundingClientRect().left;
-            const y = e.clientY - offsetY - tshirtModel.getBoundingClientRect().top;
-            textOverlay.style.left = `${x}px`;
-            textOverlay.style.top = `${y}px`;
+            if (e.type === "touchstart") {
+                initialX = e.touches[0].clientX - rect.left + tshirtRect.left;
+                initialY = e.touches[0].clientY - rect.top + tshirtRect.top;
+            } else {
+                initialX = e.clientX - rect.left + tshirtRect.left;
+                initialY = e.clientY - rect.top + tshirtRect.top;
+            }
         }
-    });
+    }
 
-    document.addEventListener('mouseup', function () {
-        isDraggingText = false;
-    });
-
-    // Make image draggable
-    let isDraggingImage = false;
-
-    imageWrapper.addEventListener('mousedown', function (e) {
-        if (e.target === resizeHandle) return; // Skip if resizing
-        isDraggingImage = true;
-        offsetX = e.offsetX;
-        offsetY = e.offsetY;
-    });
-
-    document.addEventListener('mousemove', function (e) {
-        if (isDraggingImage) {
-            const x = e.clientX - offsetX - tshirtModel.getBoundingClientRect().left;
-            const y = e.clientY - offsetY - tshirtModel.getBoundingClientRect().top;
-            imageWrapper.style.left = `${x}px`;
-            imageWrapper.style.top = `${y}px`;
+    function dragEnd(e) {
+        if (activeElement) {
+            isDragging = false;
+            activeElement.classList.remove('dragging');
+            activeElement = null;
         }
-    });
+    }
 
-    document.addEventListener('mouseup', function () {
-        isDraggingImage = false;
-    });
+    function drag(e) {
+        if (isDragging && activeElement) {
+            e.preventDefault();
+
+            let clientX, clientY;
+            if (e.type === "touchmove") {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            const tshirtRect = tshirtModel.getBoundingClientRect();
+            const elementRect = activeElement.getBoundingClientRect();
+
+            // Calculate new position relative to the t-shirt
+            let newX = ((clientX - initialX) / tshirtRect.width) * 100;
+            let newY = ((clientY - initialY) / tshirtRect.height) * 100;
+
+            // Constrain movement within t-shirt boundaries with some padding
+            newX = Math.min(Math.max(0, newX), 100);
+            newY = Math.min(Math.max(0, newY), 100);
+
+            // Update position using percentages
+            activeElement.style.left = `${newX}%`;
+            activeElement.style.top = `${newY}%`;
+        }
+    }
+
+    // Event Listeners for both mouse and touch events
+    textOverlay.addEventListener('mousedown', dragStart, false);
+    imageWrapper.addEventListener('mousedown', dragStart, false);
+    document.addEventListener('mousemove', drag, false);
+    document.addEventListener('mouseup', dragEnd, false);
+
+    textOverlay.addEventListener('touchstart', dragStart, false);
+    imageWrapper.addEventListener('touchstart', dragStart, false);
+    document.addEventListener('touchmove', drag, false);
+    document.addEventListener('touchend', dragEnd, false);
+
+    // Prevent default drag behavior
+    textOverlay.addEventListener('dragstart', (e) => e.preventDefault());
+    imageWrapper.addEventListener('dragstart', (e) => e.preventDefault());
 
     // Make image resizable
     let isResizing = false;
+    let initialWidth;
+    let initialHeight;
 
     resizeHandle.addEventListener('mousedown', function (e) {
         isResizing = true;
-        e.preventDefault(); // Prevent text selection
+        e.preventDefault();
+        initialWidth = customImage.offsetWidth;
+        initialHeight = customImage.offsetHeight;
     });
 
     document.addEventListener('mousemove', function (e) {
         if (isResizing) {
-            const newWidth = e.clientX - imageWrapper.getBoundingClientRect().left;
-            const newHeight = e.clientY - imageWrapper.getBoundingClientRect().top;
+            const tshirtRect = tshirtModel.getBoundingClientRect();
+            const newWidth = Math.min(
+                Math.max(50, e.clientX - imageWrapper.getBoundingClientRect().left),
+                tshirtRect.width * 0.9
+            );
+            const aspectRatio = initialHeight / initialWidth;
+            const newHeight = newWidth * aspectRatio;
+
             customImage.style.width = `${newWidth}px`;
             customImage.style.height = `${newHeight}px`;
         }
@@ -104,9 +157,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.addEventListener('mouseup', function () {
         isResizing = false;
     });
-
-    tshirtModel = document.getElementById('tshirt-model');
-    const tshirtSize = document.getElementById('tshirt-size');
 
     // Function to update T-shirt size
     function updateTshirtSize(size) {
