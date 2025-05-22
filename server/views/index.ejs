@@ -23,7 +23,6 @@
     <div class="container">
         <h1 class="display-5 mb-3"><%= __('hero_title') %></h1>
         <p class="lead mb-4"><%= __('hero_description') %></p>
-        <%- include('./partials/button', { href: '/services', text: __('explore_services') }); %>
     </div>
 </section>
 
@@ -41,7 +40,7 @@
                         <p class="card-text"><%= __('document_printing_desc') %></p>
                     </div>
                     <div class="card-footer bg-white border-0">
-                        <%- include('./partials/button', { href: '/print', text: __('learn_more') }); %>
+                        <%- include('./partials/button', { href: '/api/print', text: __('learn_more') }); %>
                     </div>
                 </div>
             </div>
@@ -54,7 +53,7 @@
                         <p class="card-text"><%= __('copy_scanning_desc') %></p>
                     </div>
                     <div class="card-footer bg-white border-0">
-                        <%- include('./partials/button', { href: '/copy', text: __('learn_more') }); %>
+                        <%- include('./partials/button', { href: '/api/copy', text: __('learn_more') }); %>
                     </div>
                 </div>
             </div>
@@ -67,20 +66,20 @@
                         <p class="card-text"><%= __('graphic_design_desc') %></p>
                     </div>
                     <div class="card-footer bg-white border-0">
-                        <%- include('./partials/button', { href: '/graphic-design', text: __('learn_more') }); %>
+                        <%- include('./partials/button', { href: '/api/graphic-design', text: __('learn_more') }); %>
                     </div>
                 </div>
             </div>
 
             <div class="col-md-6 col-lg-3">
                 <div class="card h-100 text-center shadow-sm">
-                    <div class="card-body">
+                    <div class="card-body"> 
                         <i class="fas fa-tshirt fa-2x mb-3 text-danger"></i>
                         <h5 class="card-title"><%= __('merch_design') %></h5>
                         <p class="card-text"><%= __('merch_design_desc') %></p>
                     </div>
                     <div class="card-footer bg-white border-0">
-                        <%- include('./partials/button', { href: '/merch', text: __('learn_more') }); %>
+                        <%- include('./partials/button', { href: '/api/merch', text: __('learn_more') }); %>
                     </div>
                 </div>
             </div>
