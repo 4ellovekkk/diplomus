@@ -82,7 +82,7 @@ router.get("/services", async (req, res) => {
   }
 });
 
-router.get("/print", verifyTokenExceptLogin, async (req, res) => {
+router.get("/print", async (req, res) => {
   try {
     let user = null;
     if (req.cookies?.token) {
@@ -213,24 +213,47 @@ router.get("/copy", async (req, res) => {
   }
 });
 
-router.get("/merch", verifyTokenExceptLogin, async (req, res) => {
+router.get("/merch", async (req, res) => {
   try {
+    let user = null;
+    if (req.cookies?.token) {
+      const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+      user = await prisma.users.findUnique({
+        where: { id: decoded.userId },
+        select: {
+          id: true,
+          username: true,
+          role: true,
+        },
+      });
+    }
+
     const text = req.query.text || "";
     const textColor = req.query.textColor || "#000000";
     const fontSize = req.query.fontSize || 20;
 
-    res.render("merch", { text, fontSize, textColor });
+    res.render("merch", { user, text, fontSize, textColor });
   } catch (error) {
-    handleError(
-      req,
-      res,
-      error,
-      "Merch Error",
-      "Failed to load merch designer",
-    );
+    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+      res.clearCookie("token");
+      res.render("merch", { 
+        user: null, 
+        text: req.query.text || "", 
+        fontSize: req.query.fontSize || 20,
+        textColor: req.query.textColor || "#000000"
+      });
+    } else {
+      handleError(
+        req,
+        res,
+        error,
+        "Merch Error",
+        "Failed to load merch designer",
+      );
+    }
   }
 });
-router.get("/graphic-design", verifyTokenExceptLogin, async (req, res) => {
+router.get("/graphic-design", async (req, res) => {
   try {
     let user = null;
     if (req.cookies?.token) {
