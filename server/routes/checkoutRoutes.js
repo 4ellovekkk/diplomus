@@ -121,7 +121,9 @@ router.post("/create-checkout-session", verifyTokenExceptLogin, async (req, res)
 // Checkout success route
 router.get("/success", async (req, res) => {
   try {
-    const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+    const session = await stripe.checkout.sessions.retrieve(req.query.session_id, {
+      expand: ['payment_intent', 'line_items']
+    });
     const token = req.query.token;
     
     if (session.payment_status !== 'paid') {
@@ -130,40 +132,161 @@ router.get("/success", async (req, res) => {
 
     // Get the user ID from the session metadata
     const userId = parseInt(session.metadata.user_id);
-    
-    // Create order in database with COMPLETED status
-    const order = await prisma.orders.create({
-      data: {
-        user_id: userId,
-        total_price: session.amount_total / 100,
-        status_id: ORDER_STATUS.COMPLETED,
-        payments: {
-          create: {
-            payment_method: 'card',
-            amount: session.amount_total / 100,
-            payment_status: 'completed'
-          }
-        },
-        items: {
-          create: req.session.cart.map(item => ({
-            service_id: item.service_id,
-            quantity: item.quantity,
-            price: item.price,
-            options: item.options
-          }))
+
+    // Start a transaction
+    const result = await prisma.$transaction(async (prisma) => {
+      // 1. Create order first
+      const order = await prisma.orders.create({
+        data: {
+          user_id: userId,
+          total_price: session.amount_total / 100,
+          status_id: ORDER_STATUS.COMPLETED,
+          created_at: new Date(),
+          updated_at: new Date()
         }
-      }
+      });
+
+      // 2. Create payment record with order relation and address details
+      const payment = await prisma.payments.create({
+        data: {
+          payment_method: 'stripe',
+          amount: session.amount_total / 100,
+          payment_status: 'completed',
+          stripe_payment_id: session.payment_intent.id,
+          stripe_session_id: session.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+          currency: session.currency,
+          payment_details: JSON.stringify({
+            payment_method_types: session.payment_method_types,
+            customer_email: session.customer_email,
+            customer_details: session.customer_details,
+            shipping_address: session.shipping,
+            billing_address: session.customer_details?.address || null
+          })
+        }
+      });
+
+      // 3. Update order with payment ID
+      await prisma.orders.update({
+        where: { id: order.id },
+        data: { 
+          payment_id: payment.id,
+          updated_at: new Date()
+        }
+      });
+
+      // 4. Create order items
+      const lineItems = session.line_items.data;
+      console.log('Line items from Stripe:', JSON.stringify(lineItems, null, 2));
+
+      const orderItems = await Promise.all(
+        lineItems.map(async (item) => {
+          console.log('Processing line item:', JSON.stringify(item, null, 2));
+          
+          // Safely access metadata and handle potential undefined values
+          const metadata = item.price?.product?.metadata || {};
+          console.log('Item metadata:', metadata);
+
+          const options = {};
+          
+          try {
+            // Only parse options if it exists and is a valid JSON string
+            if (metadata.options) {
+              Object.assign(options, JSON.parse(metadata.options));
+            }
+          } catch (e) {
+            console.warn('Failed to parse options metadata:', e);
+          }
+
+          // Get product name and description safely
+          const productName = item.price?.product?.name || 'Unknown Product';
+          const productDescription = item.price?.product?.description || null;
+          
+          // Try to get service_id from different possible locations
+          let serviceId = null;
+          
+          // First try from metadata
+          if (metadata.service_id) {
+            serviceId = parseInt(metadata.service_id);
+          }
+          
+          // If not found in metadata, try to find service by name
+          if (!serviceId) {
+            const service = await prisma.services.findUnique({
+              where: { name: productName }
+            });
+            if (service) {
+              serviceId = service.id;
+            }
+          }
+
+          // If still not found, throw error with more details
+          if (!serviceId) {
+            console.error('Failed to find service for product:', {
+              productName,
+              productDescription,
+              metadata,
+              priceId: item.price?.id,
+              productId: item.price?.product?.id
+            });
+            throw new Error(`Could not find service for product: ${productName}. Please ensure the service exists in the database.`);
+          }
+
+          // Verify service exists in database
+          const service = await prisma.services.findUnique({
+            where: { id: serviceId }
+          });
+
+          if (!service) {
+            throw new Error(`Service with ID ${serviceId} not found for line item: ${productName}`);
+          }
+          
+          return prisma.order_items.create({
+            data: {
+              order_id: order.id,
+              service_id: serviceId,
+              quantity: item.quantity || 1,
+              price: (item.price?.unit_amount || 0) / 100,
+              options: JSON.stringify({
+                ...options,
+                item_name: productName,
+                item_description: productDescription
+              }),
+              subtotal: ((item.price?.unit_amount || 0) * (item.quantity || 1)) / 100,
+              created_at: new Date(),
+              updated_at: new Date()
+            }
+          });
+        })
+      );
+
+      return { order, payment, orderItems };
     });
 
-    // Clear the cart
+    // Clear the cart and save success message
     req.session.cart = [];
     req.session.cartSuccess = req.__("order_success");
     await req.session.save();
 
+    // Log the successful order creation
+    console.log('Order created successfully:', {
+      orderId: result.order.id,
+      paymentId: result.payment.id,
+      items: result.orderItems.length
+    });
+
     // Redirect to homepage with success message
-    res.redirect(`/?token=${token}&payment_success=true&order_id=${order.id}`);
+    res.redirect(`/?token=${token}&payment_success=true&order_id=${result.order.id}`);
   } catch (error) {
     console.error('Error processing successful payment:', error);
+    console.error('Detailed error:', {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+      stack: error.stack
+    });
     req.session.cartError = req.__("order_error");
     const token = req.query.token || '';
     res.redirect(`/?token=${token}&payment_error=true`);
@@ -208,15 +331,17 @@ router.post("/webhook", async (req, res) => {
           // Find orders with a payment matching this payment intent
           const orders = await prisma.orders.findMany({
             where: {
-              payments: {
-                some: {
-                  payment_status: { not: 'completed' }
+              payment: {
+                payment_status: {
+                  not: "completed"
                 }
               },
-              status_id: { not: ORDER_STATUS.COMPLETED }
+              status_id: {
+                not: 3
+              }
             },
             include: {
-              payments: true
+              payment: true
             }
           });
 
@@ -226,7 +351,7 @@ router.post("/webhook", async (req, res) => {
               where: { id: order.id },
               data: {
                 status_id: ORDER_STATUS.COMPLETED,
-                payments: {
+                payment: {
                   updateMany: {
                     where: { order_id: order.id },
                     data: { payment_status: 'completed' }
@@ -249,14 +374,14 @@ router.post("/webhook", async (req, res) => {
           // Find and update orders with failed payments
           const orders = await prisma.orders.findMany({
             where: {
-              payments: {
-                some: {
-                  payment_status: { not: 'failed' }
+              payment: {
+                payment_status: {
+                  not: "completed"
                 }
               }
             },
             include: {
-              payments: true
+              payment: true
             }
           });
 
@@ -265,7 +390,7 @@ router.post("/webhook", async (req, res) => {
               where: { id: order.id },
               data: {
                 status_id: ORDER_STATUS.CANCELLED,
-                payments: {
+                payment: {
                   updateMany: {
                     where: { order_id: order.id },
                     data: { payment_status: 'failed' }
@@ -287,15 +412,17 @@ router.post("/webhook", async (req, res) => {
           // Update orders with successful charges
           const orders = await prisma.orders.findMany({
             where: {
-              payments: {
-                some: {
-                  payment_status: { not: 'completed' }
+              payment: {
+                payment_status: {
+                  not: "completed"
                 }
               },
-              status_id: { not: ORDER_STATUS.COMPLETED }
+              status_id: {
+                not: 3
+              }
             },
             include: {
-              payments: true
+              payment: true
             }
           });
 
@@ -304,7 +431,7 @@ router.post("/webhook", async (req, res) => {
               where: { id: order.id },
               data: {
                 status_id: ORDER_STATUS.COMPLETED,
-                payments: {
+                payment: {
                   updateMany: {
                     where: { order_id: order.id },
                     data: { payment_status: 'completed' }
@@ -327,15 +454,17 @@ router.post("/webhook", async (req, res) => {
             // Update orders for successful charges
             const orders = await prisma.orders.findMany({
               where: {
-                payments: {
-                  some: {
-                    payment_status: { not: 'completed' }
+                payment: {
+                  payment_status: {
+                    not: "completed"
                   }
                 },
-                status_id: { not: ORDER_STATUS.COMPLETED }
+                status_id: {
+                  not: 3
+                }
               },
               include: {
-                payments: true
+                payment: true
               }
             });
 
@@ -344,7 +473,7 @@ router.post("/webhook", async (req, res) => {
                 where: { id: order.id },
                 data: {
                   status_id: ORDER_STATUS.COMPLETED,
-                  payments: {
+                  payment: {
                     updateMany: {
                       where: { order_id: order.id },
                       data: { payment_status: 'completed' }
@@ -358,15 +487,17 @@ router.post("/webhook", async (req, res) => {
             // Update orders for failed charges
             const orders = await prisma.orders.findMany({
               where: {
-                payments: {
-                  some: {
-                    payment_status: { not: 'failed' }
+                payment: {
+                  payment_status: {
+                    not: "failed"
                   }
                 },
-                status_id: { not: ORDER_STATUS.CANCELLED }
+                status_id: {
+                  not: 4
+                }
               },
               include: {
-                payments: true
+                payment: true
               }
             });
 
@@ -375,7 +506,7 @@ router.post("/webhook", async (req, res) => {
                 where: { id: order.id },
                 data: {
                   status_id: ORDER_STATUS.CANCELLED,
-                  payments: {
+                  payment: {
                     updateMany: {
                       where: { order_id: order.id },
                       data: { payment_status: 'failed' }
@@ -400,15 +531,17 @@ router.post("/webhook", async (req, res) => {
           // Update orders with successful payment intents
           const orders = await prisma.orders.findMany({
             where: {
-              payments: {
-                some: {
-                  payment_status: { not: 'completed' }
+              payment: {
+                payment_status: {
+                  not: "completed"
                 }
               },
-              status_id: { not: ORDER_STATUS.COMPLETED }
+              status_id: {
+                not: 3
+              }
             },
             include: {
-              payments: true
+              payment: true
             }
           });
 
@@ -417,7 +550,7 @@ router.post("/webhook", async (req, res) => {
               where: { id: order.id },
               data: {
                 status_id: ORDER_STATUS.COMPLETED,
-                payments: {
+                payment: {
                   updateMany: {
                     where: { order_id: order.id },
                     data: { payment_status: 'completed' }
@@ -447,6 +580,60 @@ router.post("/webhook", async (req, res) => {
   } catch (error) {
     console.error('Error processing webhook:', error);
     res.status(500).send(`Webhook Error: ${error.message}`);
+  }
+});
+
+// Get user orders
+router.get("/user-orders", verifyTokenExceptLogin, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // Fetch all orders for the user with related data
+    const orders = await prisma.orders.findMany({
+      where: {
+        user_id: userId
+      },
+      include: {
+        status: true,
+        payment: true,
+        order_items: {
+          include: {
+            service: true
+          }
+        }
+      },
+      orderBy: {
+        created_at: 'desc'
+      }
+    });
+
+    // Format the orders data
+    const formattedOrders = orders.map(order => ({
+      id: order.id,
+      total_price: parseFloat(order.total_price.toString()),
+      status: order.status.name,
+      created_at: order.created_at,
+      updated_at: order.updated_at,
+      payment_status: order.payment?.payment_status || 'pending',
+      items: order.order_items.map(item => ({
+        service_name: item.service.name,
+        quantity: item.quantity,
+        price: parseFloat(item.price.toString()),
+        subtotal: parseFloat(item.subtotal.toString()),
+        options: JSON.parse(item.options || '{}')
+      }))
+    }));
+
+    res.json({
+      success: true,
+      orders: formattedOrders
+    });
+  } catch (error) {
+    console.error('Error fetching user orders:', error);
+    res.status(500).json({
+      success: false,
+      error: req.__("fetch_orders_error") || 'Error fetching orders'
+    });
   }
 });
 

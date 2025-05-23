@@ -93,6 +93,15 @@
                   </div>
                 </div>
               </div>
+
+              <div id="orders" class="tab-pane fade">
+                <div id="ordersMessages"></div>
+                <div id="ordersContent">
+                  <div class="text-center mt-4">
+                    <p class="mb-3"><%= __('loading_orders') %></p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div id="statusMessage" class="alert d-none mt-3" role="alert"></div>
@@ -120,6 +129,14 @@
         console.error('Error formatting date:', error);
         return dateString;
       }
+    }
+
+    // Add this helper function at the start of your script section
+    function formatPrice(price) {
+      if (typeof price === 'string') {
+        price = parseFloat(price);
+      }
+      return typeof price === 'number' && !isNaN(price) ? price.toFixed(2) : '0.00';
     }
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -603,6 +620,208 @@
       // Load cart data if cart tab is active on page load
       if (window.location.hash === '#cart') {
         loadCartData();
+      }
+    });
+
+    // Orders functionality
+    async function loadOrdersData() {
+      try {
+        const response = await fetch('/checkout/user-orders');
+        const data = await response.json();
+        
+        const ordersContentDiv = document.getElementById('ordersContent');
+        
+        if (!data.success) {
+          ordersContentDiv.innerHTML = `
+            <div class="alert alert-danger mt-3">
+              ${data.error || '<%= __("error_loading_orders") %>'}
+            </div>
+          `;
+          return;
+        }
+
+        if (!data.orders || data.orders.length === 0) {
+          ordersContentDiv.innerHTML = `
+            <div class="text-center mt-4">
+              <p class="mb-3"><%= __('no_orders_yet') %></p>
+              <a href="/" class="btn"><%= __('browse_services') %></a>
+            </div>
+          `;
+          return;
+        }
+
+        // Store translations in variables to avoid repetition
+        const translations = {
+          order_id: '<%= __("order_id") %>',
+          date: '<%= __("date") %>',
+          status: '<%= __("status") %>',
+          payment_status: '<%= __("payment_status") %>',
+          total: '<%= __("total") %>',
+          details: '<%= __("details") %>',
+          view_details: '<%= __("view_details") %>',
+          order_items: '<%= __("order_items") %>',
+          service: '<%= __("service") %>',
+          quantity: '<%= __("quantity") %>',
+          price: '<%= __("price") %>',
+          subtotal: '<%= __("subtotal") %>',
+          currency_symbol: '<%= __("currency_symbol") %>',
+          status_pending: '<%= __("status_pending") %>',
+          status_processing: '<%= __("status_processing") %>',
+          status_completed: '<%= __("status_completed") %>',
+          status_cancelled: '<%= __("status_cancelled") %>',
+          payment_status_completed: '<%= __("payment_status_completed") %>',
+          payment_status_pending: '<%= __("payment_status_pending") %>',
+          payment_status_failed: '<%= __("payment_status_failed") %>'
+        };
+
+        ordersContentDiv.innerHTML = `
+          <div class="table-responsive mt-3">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>${translations.order_id}</th>
+                  <th>${translations.date}</th>
+                  <th>${translations.status}</th>
+                  <th>${translations.payment_status}</th>
+                  <th>${translations.total}</th>
+                  <th>${translations.details}</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.orders.map(order => `
+                  <tr>
+                    <td>#${order.id}</td>
+                    <td>${formatDate(order.created_at, document.documentElement.lang)}</td>
+                    <td>
+                      <span class="badge bg-${getStatusColor(order.status)}">
+                        ${getTranslatedStatus(order.status, translations)}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge bg-${getPaymentStatusColor(order.payment_status)}">
+                        ${getTranslatedPaymentStatus(order.payment_status, translations)}
+                      </span>
+                    </td>
+                    <td>${translations.currency_symbol}${formatPrice(order.total_price)}</td>
+                    <td>
+                      <button class="btn btn-sm" onclick="toggleOrderDetails(${order.id})">
+                        ${translations.view_details}
+                      </button>
+                    </td>
+                  </tr>
+                  <tr id="details-${order.id}" class="order-details" style="display: none;">
+                    <td colspan="6">
+                      <div class="p-3 bg-light">
+                        <h6>${translations.order_items}:</h6>
+                        <div class="table-responsive">
+                          <table class="table table-sm">
+                            <thead>
+                              <tr>
+                                <th>${translations.service}</th>
+                                <th>${translations.quantity}</th>
+                                <th>${translations.price}</th>
+                                <th>${translations.subtotal}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              ${order.items.map(item => `
+                                <tr>
+                                  <td>
+                                    <div>
+                                      <strong>${item.service_name}</strong>
+                                      ${Object.entries(item.options)
+                                        .filter(([key]) => key !== 'file')
+                                        .map(([key, value]) => `
+                                          <br><small>${key}: ${value}</small>
+                                        `).join('')}
+                                    </div>
+                                  </td>
+                                  <td>${item.quantity}</td>
+                                  <td>${translations.currency_symbol}${formatPrice(item.price)}</td>
+                                  <td>${translations.currency_symbol}${formatPrice(item.subtotal)}</td>
+                                </tr>
+                              `).join('')}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      } catch (error) {
+        console.error('Error loading orders:', error);
+        document.getElementById('ordersContent').innerHTML = `
+          <div class="alert alert-danger mt-3">
+            <%= __('error_loading_orders') %>
+          </div>
+        `;
+      }
+    }
+
+    function getStatusColor(status) {
+      const statusColors = {
+        'Pending': 'warning',
+        'Processing': 'info',
+        'Completed': 'success',
+        'Cancelled': 'danger'
+      };
+      return statusColors[status] || 'secondary';
+    }
+
+    function getPaymentStatusColor(status) {
+      const statusColors = {
+        'completed': 'success',
+        'pending': 'warning',
+        'failed': 'danger'
+      };
+      return statusColors[status] || 'secondary';
+    }
+
+    function getTranslatedStatus(status, translations) {
+      const statusMap = {
+        'Pending': translations.status_pending,
+        'Processing': translations.status_processing,
+        'Completed': translations.status_completed,
+        'Cancelled': translations.status_cancelled
+      };
+      return statusMap[status] || status;
+    }
+
+    function getTranslatedPaymentStatus(status, translations) {
+      const statusMap = {
+        'completed': translations.payment_status_completed,
+        'pending': translations.payment_status_pending,
+        'failed': translations.payment_status_failed
+      };
+      return statusMap[status] || status;
+    }
+
+    function toggleOrderDetails(orderId) {
+      const detailsRow = document.getElementById(`details-${orderId}`);
+      if (detailsRow) {
+        detailsRow.style.display = detailsRow.style.display === 'none' ? 'table-row' : 'none';
+      }
+    }
+
+    // Load orders data when switching to orders tab
+    document.addEventListener('DOMContentLoaded', function() {
+      const tabLinks = document.querySelectorAll('.nav-link');
+      
+      tabLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          if (this.getAttribute('href') === '#orders') {
+            loadOrdersData();
+          }
+        });
+      });
+      
+      // Load orders data if orders tab is active on page load
+      if (window.location.hash === '#orders') {
+        loadOrdersData();
       }
     });
   </script>
