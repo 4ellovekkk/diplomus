@@ -76,15 +76,35 @@ app.set("views", path.join(__dirname, "views"));
 
 //middleware
 app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use((req, res, next) => {
+  if (req.originalUrl === '/checkout/webhook') {
+    next();
+  } else {
+    express.json()(req, res, next);
+  }
+});
+app.use((req, res, next) => {
+  if (req.originalUrl === '/checkout/webhook') {
+    next();
+  } else {
+    express.urlencoded({ extended: true })(req, res, next);
+  }
+});
+
+// Configure session middleware
 app.use(
   session({
+    secret: process.env.SESSION_SECRET || ca,
     resave: false,
-    saveUninitialized: false,
-    secret: ca,
-  }),
+    saveUninitialized: true,
+    cookie: {
+      secure: true, // Required for HTTPS
+      httpOnly: true,
+      sameSite: 'strict'
+    }
+  })
 );
+
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.static(path.join(__dirname, "public")));
@@ -118,11 +138,17 @@ app.use("/api", userRoutes);
 app.use("/api", serviceRoutes);
 app.use("/", profileRoutes);
 app.use("/", printRoutes);
-app.use("/checkout", checkoutRoutes);
-//basic routes
 
-// Special middleware for Stripe webhook
-app.post('/checkout/webhook', express.raw({ type: 'application/json' }), checkoutRoutes);
+// Special handling for checkout routes with raw body parsing for webhook
+app.use("/checkout", (req, res, next) => {
+  if (req.originalUrl === '/checkout/webhook') {
+    express.raw({type: 'application/json'})(req, res, next);
+  } else {
+    next();
+  }
+}, checkoutRoutes);
+
+//basic routes
 
 connectToMongo();
 app.get("/", async (req, res) => {

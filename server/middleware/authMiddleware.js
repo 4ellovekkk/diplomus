@@ -19,16 +19,23 @@ const allowedPaths = [
   "/api/copy",
   "/api/graphic-design",
   "/api/merch",
-  "/api/get-file-info"
+  "/api/get-file-info",
+  "/webhook",
+  "/checkout/webhook"
 ];
 
 const verifyTokenExceptLogin = (req, res, next) => {
-  if (allowedPaths.includes(req.path)) {
+  // Check if the path is in allowed paths
+  const isAllowedPath = allowedPaths.some(path => req.path === path);
+  
+  // Special handling for checkout/success with session_id
+  const isCheckoutSuccess = req.path === '/checkout/success' && req.query.session_id;
+  
+  if (isAllowedPath || isCheckoutSuccess) {
     return next();
   }
 
-  const token =
-    req.headers["authorization"] || req.cookies.token || req.query.token;
+  const token = req.headers["authorization"] || req.cookies.token || req.query.token;
 
   if (!token) {
     return res.status(400).render("error", {
