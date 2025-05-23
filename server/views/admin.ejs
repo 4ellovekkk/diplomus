@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= locale %>">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <%- include('./partials/favicon') %>
-  <title>Admin Panel - User Management</title>
+  <title><%= t('admin_title') %></title>
 
   <!-- Custom CSS -->
   <link rel="stylesheet" href="/styles/Admin.css" />
@@ -20,33 +20,33 @@
   <%- include('./partials/header'); %>
 
   <section class="admin-panel container py-4">
-    <h1 class="mb-4">User Management</h1>
+    <h1 class="mb-4"><%= t('user_management') %></h1>
 
     <!-- Search and Sorting Controls -->
     <div class="row gy-3 align-items-end mb-4">
       <div class="col-md-3">
-        <label for="searchInput" class="form-label">Search</label>
-        <input type="text" id="searchInput" class="form-control" placeholder="Search users..." oninput="debouncedFetchUsers()" />
+        <label for="searchInput" class="form-label"><%= t('search') %></label>
+        <input type="text" id="searchInput" class="form-control" placeholder="<%= t('search_users') %>" oninput="debouncedFetchUsers()" />
       </div>
       <div class="col-md-2">
-        <label for="sortField" class="form-label">Sort by</label>
+        <label for="sortField" class="form-label"><%= t('sort_by') %></label>
         <select id="sortField" class="form-select" onchange="fetchUsers()">
-          <option value="id" selected>ID</option>
-          <option value="username">Username</option>
-          <option value="email">Email</option>
-          <option value="role">Role</option>
-          <option value="is_locked">Status</option>
+          <option value="id" selected><%= t('id') %></option>
+          <option value="username"><%= t('username') %></option>
+          <option value="email"><%= t('email') %></option>
+          <option value="role"><%= t('role') %></option>
+          <option value="is_locked"><%= t('status') %></option>
         </select>
       </div>
       <div class="col-md-2">
-        <label for="sortOrder" class="form-label">Order</label>
+        <label for="sortOrder" class="form-label"><%= t('order') %></label>
         <select id="sortOrder" class="form-select" onchange="fetchUsers()">
-          <option value="asc" selected>Ascending</option>
-          <option value="desc">Descending</option>
+          <option value="asc" selected><%= t('ascending') %></option>
+          <option value="desc"><%= t('descending') %></option>
         </select>
       </div>
       <div class="col-md-2">
-        <label for="limit" class="form-label">Items per page</label>
+        <label for="limit" class="form-label"><%= t('items_per_page') %></label>
         <select id="limit" class="form-select" onchange="fetchUsers()">
           <option value="10">10</option>
           <option value="25">25</option>
@@ -58,20 +58,20 @@
 
     <!-- Loading Indicator -->
     <div id="loadingIndicator" class="text-muted mb-3">
-      Loading users, please wait...
+      <%= t('loading_users') %>
     </div>
 
-    <!-- Unchanged Table -->
+    <!-- User Table -->
     <table>
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Username</th>
-          <th>Email</th>
-          <th>Role</th>
-          <th>Status</th>
-          <th>Created At</th>
-          <th>Actions</th>
+          <th><%= t('id') %></th>
+          <th><%= t('username') %></th>
+          <th><%= t('email') %></th>
+          <th><%= t('role') %></th>
+          <th><%= t('status') %></th>
+          <th><%= t('created_at') %></th>
+          <th><%= t('actions') %></th>
         </tr>
       </thead>
       <tbody id="userTableBody">
@@ -90,92 +90,92 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="viewUserLabel">User Details</h5>
+          <h5 class="modal-title" id="viewUserLabel"><%= t('user_details') %></h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label class="form-label">User ID</label>
+            <label class="form-label"><%= t('user_id') %></label>
             <input type="text" id="viewUserId" class="form-control" />
           </div>
           <div class="mb-3">
-            <label class="form-label">Username</label>
+            <label class="form-label"><%= t('username') %></label>
             <input type="text" id="viewUsername" class="form-control" />
           </div>
           <div class="mb-3">
-            <label class="form-label">Email</label>
+            <label class="form-label"><%= t('email') %></label>
             <input type="email" id="viewEmail" class="form-control" />
           </div>
           <div class="mb-3">
-            <label class="form-label">Role</label>
+            <label class="form-label"><%= t('role') %></label>
             <input type="text" id="viewRole" class="form-control" />
           </div>
           <div class="mb-3">
-            <label class="form-label">Status</label>
+            <label class="form-label"><%= t('status') %></label>
             <input type="text" id="viewStatus" class="form-control" />
           </div>
           <div class="mb-3">
-            <label class="form-label">Created At</label>
+            <label class="form-label"><%= t('created_at') %></label>
             <input type="text" id="viewCreatedAt" class="form-control" />
           </div>
           <div class="mb-3">
-            <label class="form-label">Name</label>
+            <label class="form-label"><%= t('name') %></label>
             <input type="text" id="viewName" class="form-control" />
           </div>
           <div class="mb-3">
-            <label class="form-label">Phone</label>
+            <label class="form-label"><%= t('phone') %></label>
             <input type="tel" id="viewPhone" class="form-control" />
           </div>
           <div class="mb-3">
-            <label class="form-label">Address</label>
+            <label class="form-label"><%= t('address') %></label>
             <input type="text" id="viewAddress" class="form-control" />
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn" onclick="saveUserFromModal(event)">Save</button>
-          <button type="button" class="btn" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn" onclick="saveUserFromModal(event)"><%= t('save') %></button>
+          <button type="button" class="btn" data-bs-dismiss="modal"><%= t('close') %></button>
         </div>
       </div>
     </div>
   </div>
 
   <section class="admin-panel container py-4">
-    <h1 class="mb-4">User data Changelog</h1>
+    <h1 class="mb-4"><%= t('user_changelog') %></h1>
 
     <!-- Search and Sorting Controls -->
     <div class="row gy-3 align-items-end mb-4">
       <div class="col-md-3">
-        <label for="logSearch" class="form-label">Search</label>
+        <label for="logSearch" class="form-label"><%= t('search') %></label>
         <input
           type="text"
           id="logSearch"
           class="form-control"
-          placeholder="Search changelog..."
+          placeholder="<%= t('search_changelog') %>"
           oninput="debouncedFetchChangelog()" />
       </div>
       <div class="col-md-2">
-        <label for="logSortField" class="form-label">Sort by</label>
+        <label for="logSortField" class="form-label"><%= t('sort_by') %></label>
         <select
           id="logSortField"
           class="form-select"
           onchange="fetchChangelog()">
-          <option value="id">ID</option>
-          <option value="field">Field</option>
-          <option value="changedAt">Timestamp</option>
+          <option value="id"><%= t('id') %></option>
+          <option value="field"><%= t('field') %></option>
+          <option value="changedAt"><%= t('timestamp') %></option>
         </select>
       </div>
       <div class="col-md-2">
-        <label for="logSortOrder" class="form-label">Order</label>
+        <label for="logSortOrder" class="form-label"><%= t('order') %></label>
         <select
           id="logSortOrder"
           class="form-select"
           onchange="fetchChangelog()">
-          <option value="asc">Ascending</option>
-          <option value="desc">Descending</option>
+          <option value="asc"><%= t('ascending') %></option>
+          <option value="desc"><%= t('descending') %></option>
         </select>
       </div>
       <div class="col-md-2">
-        <label for="logLimit" class="form-label">Items per page</label>
+        <label for="logLimit" class="form-label"><%= t('items_per_page') %></label>
         <select id="logLimit" class="form-select" onchange="fetchChangelog()">
           <option value="10">10</option>
           <option value="25">25</option>
@@ -190,13 +190,13 @@
       <table class="table table-bordered table-hover align-middle text-center">
         <thead class="table-light">
           <tr>
-            <th>ID</th>
-            <th>User ID</th>
-            <th>Field</th>
-            <th>Timestamp</th>
-            <th>Changed by</th>
-            <th>Old Value</th>
-            <th>New Value</th>
+            <th><%= t('id') %></th>
+            <th><%= t('user_id') %></th>
+            <th><%= t('field') %></th>
+            <th><%= t('timestamp') %></th>
+            <th><%= t('changed_by') %></th>
+            <th><%= t('old_value') %></th>
+            <th><%= t('new_value') %></th>
           </tr>
         </thead>
         <tbody id="changelogTableBody">
@@ -214,12 +214,12 @@
   <!-- Service Prices Management Section -->
   <section class="admin-panel container py-4">
     <div class="service-management-header">
-      <h1>Service Prices Management</h1>
+      <h1><%= t('service_management') %></h1>
     </div>
     
     <div class="service-management-actions" style="border: none;">
       <button class="add-service-button" data-bs-toggle="modal" data-bs-target="#addServiceModal">
-        <i class="bi bi-plus-circle"></i> Add New Service
+        <i class="bi bi-plus-circle"></i> <%= t('add_service') %>
       </button>
     </div>
 
@@ -227,11 +227,11 @@
       <table class="table table-bordered table-hover align-middle text-center">
         <thead class="table-light">
           <tr>
-            <th>ID</th>
-            <th>Service Name</th>
-            <th>Description</th>
-            <th>Base Price</th>
-            <th>Actions</th>
+            <th><%= t('id') %></th>
+            <th><%= t('service_name') %></th>
+            <th><%= t('description') %></th>
+            <th><%= t('base_price') %></th>
+            <th><%= t('actions') %></th>
           </tr>
         </thead>
         <tbody id="servicePricesTableBody">
@@ -246,32 +246,56 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="addServiceModalLabel">Add New Service</h5>
+          <h5 class="modal-title" id="addServiceModalLabel"><%= t('add_service_modal_title') %></h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <form id="addServiceForm">
+          <form id="addServiceForm" onsubmit="submitNewService(event)">
             <div class="mb-3">
-              <label for="serviceName" class="form-label">Service Name</label>
+              <label for="serviceName" class="form-label"><%= t('service_name_label') %></label>
               <input type="text" class="form-control" id="serviceName" required>
             </div>
             <div class="mb-3">
-              <label for="serviceDescription" class="form-label">Description</label>
+              <label for="serviceDescription" class="form-label"><%= t('service_description_label') %></label>
               <textarea class="form-control" id="serviceDescription" rows="3"></textarea>
             </div>
             <div class="mb-3">
-              <label for="servicePrice" class="form-label">Base Price (₽)</label>
+              <label for="servicePrice" class="form-label"><%= t('base_price_label') %></label>
               <input type="number" class="form-control" id="servicePrice" min="0" step="0.01" required>
             </div>
+            <div class="modal-footer d-flex justify-content-between">
+              <button type="button" class="btn" data-bs-dismiss="modal"><%= t('cancel') %></button>
+              <button type="submit" class="btn btn-primary"><%= t('add') %></button>
+            </div>
           </form>
-        </div>
-        <div class="modal-footer d-flex justify-content-between">
-          <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn">Add Service</button>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Initialize translations for client-side JavaScript -->
+  <script>
+    // Initialize translations object
+    const translations = <%- JSON.stringify(translations || {}) %>;
+    
+    // Global translation function
+    window.t = function(key, params) {
+      try {
+        let translation = translations[key] || key;
+        
+        if (params) {
+          Object.keys(params).forEach(param => {
+            translation = translation.replace(`{{${param}}}`, params[param]);
+          });
+        }
+        
+        return translation;
+      } catch (e) {
+        console.error('Translation error:', e);
+        return key;
+      }
+    };
+  </script>
 
   <!-- Script -->
   <script type="text/javascript" src="/scripts/admin.js"></script>

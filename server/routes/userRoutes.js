@@ -348,7 +348,7 @@ router.put(
     }
   },
 );
-router.patch("/users/:id/lock", verifyTokenExceptLogin, async (req, res) => {
+router.post("/users/:id/lock", verifyTokenExceptLogin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ message: "Invalid user ID" });
@@ -365,7 +365,7 @@ router.patch("/users/:id/lock", verifyTokenExceptLogin, async (req, res) => {
   }
 });
 
-router.patch(
+router.post(
   "/users/:id/toggle-lock",
   verifyTokenExceptLogin,
   async (req, res) => {

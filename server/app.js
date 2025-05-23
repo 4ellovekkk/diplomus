@@ -230,10 +230,21 @@ app.get("/admin", async (req, res) => {
       },
     });
 
+    // Load translations for the current locale
+    const translations = require(`./public/locales/${req.getLocale()}.json`);
+
+    // Pass all necessary i18n variables to the view
     res.render("admin", {
       users,
       user: currentUser,
-      locale: res.locals.locale,
+      i18n: {
+        language: req.getLocale(),
+        defaultLocale: i18n.getLocale(),
+        languages: i18n.getLocales()
+      },
+      t: req.__,  // Pass translation function
+      locale: req.getLocale(),
+      translations // Pass translations for client-side
     });
   } catch (error) {
     console.error("Admin route error:", error);

@@ -1,3 +1,6 @@
+// Get translation function from window object
+const t = window.t || ((key) => key);
+
 // Debounce function to limit how often fetchUsers is called during typing
 let debounceTimer;
 function debouncedFetchUsers() {
@@ -40,12 +43,12 @@ function fetchUsers(page = 1) {
         updateUserTable(data.data);
         updatePaginationControls(data.pagination);
       } else {
-        throw new Error(data.message || "Failed to fetch users");
+        throw new Error(data.message || t("failed_to_fetch_users"));
       }
     })
     .catch((error) => {
       console.error("Error fetching users:", error);
-      alert("Error fetching users: " + error.message);
+      alert(t("error_fetching_users") + ": " + error.message);
     })
     .finally(() => {
       document.getElementById("loadingIndicator").style.display = "none";
@@ -59,8 +62,7 @@ function updateUserTable(users) {
 
   if (users.length === 0) {
     const row = document.createElement("tr");
-    row.innerHTML =
-      '<td colspan="7" style="text-align: center;">No users found</td>';
+    row.innerHTML = `<td colspan="7" style="text-align: center;">${t("no_users_found")}</td>`;
     tableBody.appendChild(row);
     return;
   }
@@ -73,35 +75,33 @@ function updateUserTable(users) {
     const formattedDate = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, "0")}-${String(createdAt.getDate()).padStart(2, "0")}`;
 
     row.innerHTML = `
-                <td>${user.id}</td>
-                <td>${user.username}</td>
-                <td>${user.email}</td>
-                <td>${user.role}</td>
-                <td>${user.is_locked ? "Locked" : "Active"}</td>
-                <td>${formattedDate}</td>
-
-<td>
-    <button class="btn btn-sm btn-outline-primary me-1" title="View" onclick="viewUser(${user.id})">
-        <i class="bi bi-eye"></i>
-    </button>
-    <button class="btn btn-sm btn-outline-secondary me-1" title="Edit" onclick="editUser(${user.id})">
-        <i class="bi bi-pencil"></i>
-    </button>
-    <button class="btn btn-sm btn-outline-danger me-1" title="Delete" onclick="deleteUser(${user.id})">
-        <i class="bi bi-trash"></i>
-    </button>
-    <button class="btn btn-sm btn-outline-warning" title="${user.is_locked ? "Unlock" : "Lock"}" onclick="toggleUserLock(${user.id})">
-        <i class="bi ${user.is_locked ? "bi-unlock" : "bi-lock"}"></i>
-    </button>
-</td>
-            `;
+      <td>${user.id}</td>
+      <td>${user.username}</td>
+      <td>${user.email}</td>
+      <td>${user.role}</td>
+      <td>${user.is_locked ? t("locked") : t("active")}</td>
+      <td>${formattedDate}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary me-1" title="${t("view")}" onclick="viewUser(${user.id})">
+          <i class="bi bi-eye"></i>
+        </button>
+        <button class="btn btn-sm btn-outline-secondary me-1" title="${t("edit")}" onclick="editUser(${user.id})">
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button class="btn btn-sm btn-outline-danger me-1" title="${t("delete")}" onclick="deleteUser(${user.id})">
+          <i class="bi bi-trash"></i>
+        </button>
+        <button class="btn btn-sm btn-outline-warning" title="${user.is_locked ? t("unlock") : t("lock")}" onclick="toggleUserLock(${user.id})">
+          <i class="bi ${user.is_locked ? "bi-unlock" : "bi-lock"}"></i>
+        </button>
+      </td>
+    `;
 
     tableBody.appendChild(row);
   });
 }
 
 // Function to update pagination controls
-
 function updatePaginationControls(pagination) {
   const paginationDiv = document.getElementById("paginationControls");
   paginationDiv.innerHTML = "";
@@ -110,7 +110,7 @@ function updatePaginationControls(pagination) {
 
   // Previous button
   const prevButton = document.createElement("button");
-  prevButton.textContent = "Previous";
+  prevButton.textContent = t("previous");
   prevButton.classList.add("btn", "btn-outline-primary");
   prevButton.disabled = currentPage === 1;
   prevButton.onclick = () => fetchUsers(currentPage - 1);
@@ -118,18 +118,19 @@ function updatePaginationControls(pagination) {
 
   // Page info
   const pageInfo = document.createElement("span");
-  pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+  pageInfo.textContent = t("page_of_total", { current: currentPage, total: totalPages });
   pageInfo.classList.add("align-self-center");
   paginationDiv.appendChild(pageInfo);
 
   // Next button
   const nextButton = document.createElement("button");
-  nextButton.textContent = "Next";
+  nextButton.textContent = t("next");
   nextButton.classList.add("btn", "btn-outline-primary");
   nextButton.disabled = currentPage >= totalPages;
   nextButton.onclick = () => fetchUsers(currentPage + 1);
   paginationDiv.appendChild(nextButton);
 }
+
 function setFormReadOnly(isReadOnly) {
   const formFields = document.querySelectorAll("#viewUserModal input");
 
@@ -141,50 +142,49 @@ function setFormReadOnly(isReadOnly) {
     }
   });
 }
+
 // Function to view user details
 function viewUser(id) {
   fetch(`/api/users/${id}`)
     .then((response) => {
-      if (!response.ok) throw new Error("User not found");
+      if (!response.ok) throw new Error(t("user_not_found"));
       return response.json();
     })
     .then((data) => {
       const user = data.user;
+      const placeholder = "—";
 
       // Set basic user info
-      document.getElementById("viewUserId").value = user.id || "—";
-      document.getElementById("viewUsername").value = user.username || "—";
-      document.getElementById("viewEmail").value = user.email || "—";
-      document.getElementById("viewRole").value = user.role || "—";
-      document.getElementById("viewStatus").value = user.is_locked
-        ? "Locked"
-        : "Active";
+      document.getElementById("viewUserId").value = user.id || placeholder;
+      document.getElementById("viewUsername").value = user.username || placeholder;
+      document.getElementById("viewEmail").value = user.email || placeholder;
+      document.getElementById("viewRole").value = user.role || placeholder;
+      document.getElementById("viewStatus").value = user.is_locked ? t("locked") : t("active");
       document.getElementById("viewCreatedAt").value = user.created_at
         ? new Date(user.created_at).toLocaleString()
-        : "—";
+        : placeholder;
 
       // Set optional fields with fallback
-      document.getElementById("viewName").value = user.name || "—";
-      document.getElementById("viewPhone").value = user.phone || "—";
-      document.getElementById("viewAddress").value = user.adress || "—";
+      document.getElementById("viewName").value = user.name || placeholder;
+      document.getElementById("viewPhone").value = user.phone || placeholder;
+      document.getElementById("viewAddress").value = user.adress || placeholder;
       setFormReadOnly(true);
       // Show the modal
-      const userModal = new bootstrap.Modal(
-        document.getElementById("viewUserModal"),
-      );
+      const userModal = new bootstrap.Modal(document.getElementById("viewUserModal"));
       userModal.show();
     })
     .catch((error) => {
       console.error("Error fetching user:", error);
-      alert("Error loading user details: " + error.message);
+      alert(t("error_loading_user_details") + ": " + error.message);
     });
-} // Function to close the view user modal
+}
+
+// Function to close the view user modal
 function closeViewUserModal() {
   document.getElementById("viewUserModal").style.display = "none";
 }
 
 // Function to edit user
-
 function editUser(userId) {
   fetch(`/api/users/${userId}`)
     .then((response) => {
@@ -216,121 +216,85 @@ function editUser(userId) {
       alert("Error loading user for viewing: " + error.message);
     });
 }
+
 // Function to delete user
 function deleteUser(userId) {
-  if (
-    confirm(
-      "Are you sure you want to delete this user? This action cannot be undone.",
-    )
-  ) {
-    fetch(`/api/users/${userId}`, {
-      method: "DELETE",
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error("Failed to delete user");
-        return response.json();
-      })
-      .then((data) => {
-        if (data.success) {
-          alert("User deleted successfully");
-          fetchUsers(currentPage); // Refresh current page
-        } else {
-          throw new Error(data.message || "Failed to delete user");
-        }
-      })
-      .catch((error) => {
-        console.error("Error deleting user:", error);
-        alert("Error deleting user: " + error.message);
-      });
-  }
-}
-function toggleUserLock(userId) {
-  if (!confirm("Are you sure you want to toggle this user's lock status?")) {
-    return;
-  }
+  if (!confirm(t("confirm_delete_user"))) return;
 
-  fetch(`/api/users/${userId}/toggle-lock`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  })
+  fetch(`/api/users/${userId}`, { method: "DELETE" })
     .then((response) => {
-      if (!response.ok) throw new Error("Failed to update lock status");
+      if (!response.ok) throw new Error(t("failed_to_delete_user"));
       return response.json();
     })
     .then((data) => {
       if (data.success) {
-        const action = data.user.is_locked ? "locked" : "unlocked";
-        alert(`User account has been ${action} successfully`);
-        fetchUsers(currentPage); // Refresh the current user list
+        alert(t("user_deleted_successfully"));
+        fetchUsers(currentPage);
       } else {
-        throw new Error(data.message || "Operation failed");
+        throw new Error(data.message || t("failed_to_delete_user"));
       }
     })
     .catch((error) => {
-      console.error("Error toggling user lock state:", error);
-      alert("Error: " + error.message);
+      console.error("Error deleting user:", error);
+      alert(t("error_deleting_user") + ": " + error.message);
     });
-} // Function to save user (create or update)
+}
 
+// Function to toggle user lock status
+function toggleUserLock(userId) {
+  fetch(`/api/users/${userId}/toggle-lock`, { method: "POST" })
+    .then((response) => {
+      if (!response.ok) throw new Error(t("failed_to_toggle_user_lock"));
+      return response.json();
+    })
+    .then((data) => {
+      if (data.success) {
+        fetchUsers(currentPage);
+      } else {
+        throw new Error(data.message || t("failed_to_toggle_user_lock"));
+      }
+    })
+    .catch((error) => {
+      console.error("Error toggling user lock:", error);
+      alert(t("error_toggling_user_lock") + ": " + error.message);
+    });
+}
+
+// Function to save user changes
 function saveUserFromModal(event) {
   event.preventDefault();
-
   const userId = document.getElementById("viewUserId").value;
-  const url = userId ? `/api/users/${userId}` : "/api/users";
-  const method = userId ? "PUT" : "POST";
-
   const userData = {
     username: document.getElementById("viewUsername").value,
     email: document.getElementById("viewEmail").value,
     role: document.getElementById("viewRole").value,
-    status: document.getElementById("viewStatus").value,
     name: document.getElementById("viewName").value,
     phone: document.getElementById("viewPhone").value,
-    address: document.getElementById("viewAddress").value,
+    adress: document.getElementById("viewAddress").value,
   };
 
-  // Optional: handle password only if you add a password field to the modal
-  const passwordField = document.getElementById("viewPassword");
-  if (passwordField && passwordField.value) {
-    userData.password = passwordField.value;
-  }
-
-  fetch(url, {
-    method: method,
-    headers: {
-      "Content-Type": "application/json",
-    },
+  fetch(`/api/users/${userId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(userData),
   })
     .then((response) => {
-      if (!response.ok)
-        throw new Error(
-          userId ? "Failed to update user" : "Failed to create user",
-        );
+      if (!response.ok) throw new Error(t("failed_to_update_user"));
       return response.json();
     })
     .then((data) => {
       if (data.success) {
-        const modal = bootstrap.Modal.getInstance(
-          document.getElementById("viewUserModal"),
-        );
+        alert(t("user_updated_successfully"));
+        const modal = bootstrap.Modal.getInstance(document.getElementById("viewUserModal"));
         modal.hide();
-        alert(
-          userId ? "User updated successfully" : "User created successfully",
-        );
-        fetchUsers(currentPage); // Refresh the user list
+        fetchUsers(currentPage);
       } else {
-        throw new Error(
-          data.message ||
-            (userId ? "Failed to update user" : "Failed to create user"),
-        );
+        throw new Error(data.message || t("failed_to_update_user"));
       }
     })
     .catch((error) => {
-      console.error("Error saving user:", error);
-      alert("Error saving user: " + error.message);
+      console.error("Error updating user:", error);
+      alert(t("error_updating_user") + ": " + error.message);
     });
 }
 
@@ -346,7 +310,6 @@ function closeUserForm() {
 document.addEventListener("DOMContentLoaded", function () {
   fetchUsers();
 });
-
 
 let changelogTimeout;
 let currentPageChangeLog = 1;
@@ -380,7 +343,7 @@ async function fetchChangelog(page = 1) {
 
     if (data.length === 0) {
       const row = document.createElement("tr");
-      row.innerHTML = `<td colspan="7">No results found</td>`;
+      row.innerHTML = `<td colspan="7">${t("no_results_found")}</td>`;
       tbody.appendChild(row);
     } else {
       data.forEach((entry) => {
@@ -403,6 +366,7 @@ async function fetchChangelog(page = 1) {
     console.error("Error loading changelog:", err);
   }
 }
+
 function renderPagination(totalPages, currentPage) {
   const paginationContainer = document.getElementById("changelogPagination");
   paginationContainer.innerHTML = "";
@@ -594,19 +558,21 @@ async function editService(serviceId) {
 }
 
 // Function to submit new service from modal
-async function submitNewService() {
+async function submitNewService(event) {
+  event.preventDefault(); // Prevent form from submitting normally
+  
   try {
     const name = document.getElementById('serviceName').value.trim();
     const description = document.getElementById('serviceDescription').value.trim();
     const price = document.getElementById('servicePrice').value;
 
     if (!name) {
-      alert('Service name is required');
+      alert(t('service_name_required'));
       return;
     }
 
     if (!price || isNaN(parseFloat(price)) || parseFloat(price) < 0) {
-      alert('Please enter a valid price');
+      alert(t('invalid_price'));
       return;
     }
 
@@ -627,11 +593,11 @@ async function submitNewService() {
         window.location.href = '/login';
         return;
       } else if (response.status === 403) {
-        alert('Access denied: Admin privileges required');
+        alert(t('access_denied_admin'));
         return;
       }
       const data = await response.json();
-      throw new Error(data.message || 'Failed to create service');
+      throw new Error(data.message || t('failed_to_create_service'));
     }
 
     const data = await response.json();
@@ -645,13 +611,13 @@ async function submitNewService() {
       modal.hide();
       document.getElementById('addServiceForm').reset();
       
-      alert('Service created successfully');
+      alert(t('service_created_successfully'));
     } else {
-      throw new Error(data.message || 'Failed to create service');
+      throw new Error(data.message || t('failed_to_create_service'));
     }
   } catch (error) {
     console.error('Error creating service:', error);
-    alert('Error creating service: ' + error.message);
+    alert(t('error_creating_service') + ': ' + error.message);
   }
 }
 
