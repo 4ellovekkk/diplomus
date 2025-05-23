@@ -7,21 +7,41 @@ const verifyTokenExceptLogin = require("../middleware/authMiddleware");
 
 // Helper function to format cart items for Stripe
 const formatLineItems = (cart) => {
-  return cart.map(item => ({
-    price_data: {
-      currency: 'usd',
-      product_data: {
-        name: item.name,
-        description: item.service_description || '',
-        metadata: {
-          service_id: item.service_id,
-          options: JSON.stringify(item.options)
-        }
+  return cart.map(item => {
+    // Extract only essential options for metadata
+    const essentialOptions = {};
+    if (item.options) {
+      const options = typeof item.options === 'string' ? JSON.parse(item.options) : item.options;
+      // Include only basic printing options, not the file content
+      if (options.filename) essentialOptions.filename = options.filename;
+      if (options.pages) essentialOptions.pages = options.pages;
+      if (options.color) essentialOptions.color = options.color;
+      if (options.paper_size) essentialOptions.paper_size = options.paper_size;
+      if (options.double_sided) essentialOptions.double_sided = options.double_sided;
+    }
+
+    const productData = {
+      name: item.name,
+      metadata: {
+        service_id: item.service_id,
+        options: JSON.stringify(essentialOptions)
+      }
+    };
+
+    // Only add description if it exists and is not empty
+    if (item.service_description) {
+      productData.description = item.service_description;
+    }
+
+    return {
+      price_data: {
+        currency: 'usd',
+        product_data: productData,
+        unit_amount: Math.round(item.price * 100), // Convert to cents
       },
-      unit_amount: Math.round(item.price * 100), // Convert to cents
-    },
-    quantity: item.quantity,
-  }));
+      quantity: item.quantity,
+    };
+  });
 };
 
 // Create checkout session

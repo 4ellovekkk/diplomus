@@ -1,0 +1,7 @@
+You have not configured API keys yet. Running `stripe login`...
+Your pairing code is: unity-liking-snazzy-finest
+This pairing code verifies your authentication with Stripe.
+Press Enter to open the browser or visit https://dashboard.stripe.com/stripecli/confirm_auth?t=pSCdAeoaHOnPOX0f6GxBQJW6HURkrqzl (^C to quit)
+> Done! The Stripe CLI is configured for New business sandbox with account id acct_1RRJFaQTLvKrh2fX
+
+Please note: this key will expire after 90 days, at which point you'll need to re-authenticate.
