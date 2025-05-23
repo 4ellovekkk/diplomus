@@ -8,3 +8,5 @@ https://developers.google.com/maps/documentation/javascript
 
 
 GOOGLE_CLOUD:AIzaSyCj0gpXMrKwVDUDX7kzNeHRRKWE5RNSI-c
+
+stripe listen --forward-to https://localhost:3000/checkout/webhook --skip-verify
