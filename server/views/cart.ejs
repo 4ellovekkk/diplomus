@@ -23,9 +23,18 @@
             <h3><%= item.name %></h3>
             <p><%= item.service_description || '' %></p>
             <% if (item.options) { %>
-              <% Object.entries(item.options).forEach(([key, value]) => { %>
-                <span class="option-tag"><%= key %>: <%= value %></span>
-              <% }) %>
+              <div class="options-container">
+                <% Object.entries(item.options).forEach(([key, value]) => { %>
+                  <% if (key === 'viewButton') { %>
+                    <%- value %>
+                  <% } else if (key !== 'design') { %>
+                    <span class="option-tag"><%= key %>: <%= value %></span>
+                  <% } %>
+                <% }) %>
+                <% if (item.hasDesign) { %>
+                  <button onclick="window.open('/cart-design/<%= item.designIndex %>', '_blank', 'width=600,height=600')">View Design</button>
+                <% } %>
+              </div>
             <% } %>
           </div>
           <div class="item-quantity">
@@ -72,5 +81,44 @@
 
 <!-- Include cart.js and its dependencies -->
 <script src="/js/cart.js"></script>
+<script>
+  console.log(cart);  
+</script>
+<style>
+    .preview-container {
+        margin: 20px 0;
+        max-width: 100%;
+        overflow: hidden;
+    }
+    .options-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 10px 0;
+        align-items: center;
+    }
+    .option-tag {
+        background: #f0f0f0;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.9em;
+        text-transform: capitalize;
+    }
+    .option-tag::first-letter {
+        text-transform: uppercase;
+    }
+    .options-container button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .options-container button:hover {
+        background: #0056b3;
+    }
+</style>
 
 <%- include('partials/footer') %> 

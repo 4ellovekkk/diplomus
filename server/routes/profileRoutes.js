@@ -18,6 +18,7 @@ const calculateCartTotals = (cart) => {
   }), { total: 0, itemCount: 0 });
 };
 
+
 router.get("/profile", verifyTokenExceptLogin, async (req, res) => {
   try {
     // Decode the JWT token to get the user ID
@@ -26,7 +27,7 @@ router.get("/profile", verifyTokenExceptLogin, async (req, res) => {
     // Fetch the user from SQL DB (Prisma)
     const user = await prisma.users.findUnique({
       where: { id: decoded.userId },
-      include: { orders: true }, // Include user's orders
+      include: { orders: true },
     });
 
     if (!user) {
@@ -45,33 +46,25 @@ router.get("/profile", verifyTokenExceptLogin, async (req, res) => {
       avatarBase64 = `data:${avatarDoc.contentType};base64,${avatarDoc.data.toString("base64")}`;
     }
 
-    // Get cart data and fetch service details
+    // Get cart data from session
     const cart = req.session.cart || [];
-    
-    // Create a display version of the cart without design data
-    const displayCart = cart.map((item, index) => {
-      if (item.type === 'merch' && item.options) {
-        const displayItem = { ...item };
-        displayItem.options = { ...item.options };
-        // Replace design data with a view button
-        if (displayItem.options.design) {
-          displayItem.options.viewButton = `<button onclick="window.open('/cart-design/${index}', '_blank', 'width=600,height=600')">View Design</button>`;
-          delete displayItem.options.design;
-        }
-        return displayItem;
-      }
-      return item;
-    });
-    
-    console.log('Display Cart:', displayCart);
-    const cartWithDetails = await Promise.all(
-      displayCart.map(async (item) => {
-        // For merchandise items, return as is since it's already filtered
+
+    // Process cart items once
+    const processedCart = await Promise.all(
+      cart.map(async (item, index) => {
+        // For merchandise items
         if (item.type === 'merch') {
-          return item;
+          const processedItem = { ...item };
+          if (processedItem.options?.design) {
+            // Add view design information instead of HTML button
+            processedItem.hasDesign = true;
+            processedItem.designIndex = index;
+            delete processedItem.options.design; // Remove the actual design data
+          }
+          return processedItem;
         }
         
-        // For service items, fetch additional details
+        // For service items
         if (item.service_id) {
           const service = await prisma.services.findUnique({
             where: { id: item.service_id },
@@ -82,12 +75,11 @@ router.get("/profile", verifyTokenExceptLogin, async (req, res) => {
           };
         }
         
-        // Default case - return item as is
         return item;
       })
     );
 
-    const { total: cartTotal, itemCount } = calculateCartTotals(cartWithDetails);
+    const { total: cartTotal, itemCount } = calculateCartTotals(processedCart);
 
     // Get cart messages from session and clear them
     const cartSuccess = req.session.cartSuccess;
@@ -98,21 +90,10 @@ router.get("/profile", verifyTokenExceptLogin, async (req, res) => {
     // If there's a cart hash parameter, switch to cart tab
     const activeTab = req.query.tab || (req.url.includes('#cart') ? 'cart' : 'profile');
 
-    // Final cleanup of cart data before rendering
-    const cleanCart = cartWithDetails.map(item => {
-      if (item.type === 'merch' && item.options) {
-        const cleanItem = { ...item };
-        cleanItem.options = { ...item.options };
-        delete cleanItem.options.design;
-        return cleanItem;
-      }
-      return item;
-    });
-
     // Render the profile template with all data
     res.render("profile", {
       user,
-      cart: cleanCart,
+      cart: processedCart,
       cartTotal,
       itemCount,
       cartSuccess,
