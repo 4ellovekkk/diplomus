@@ -26,25 +26,26 @@ const formatLineItems = (cart) => {
       if (options.color) essentialOptions.color = options.color;
       if (options.paper_size) essentialOptions.paper_size = options.paper_size;
       if (options.double_sided) essentialOptions.double_sided = options.double_sided;
+      if (options.size) essentialOptions.size = options.size; // For t-shirts
     }
 
-    const productData = {
+    // Create a product with metadata first
+    const product = {
       name: item.name,
+      description: item.service_description || 'Custom designed t-shirt',
       metadata: {
-        service_id: item.service_id,
+        type: item.type || 'service',
+        service_id: item.service_id?.toString() || '',
+        name: item.name,
+        description: item.service_description || 'Custom designed t-shirt',
         options: JSON.stringify(essentialOptions)
       }
     };
 
-    // Only add description if it exists and is not empty
-    if (item.service_description) {
-      productData.description = item.service_description;
-    }
-
     return {
       price_data: {
         currency: 'usd',
-        product_data: productData,
+        product_data: product,
         unit_amount: Math.round(item.price * 100), // Convert to cents
       },
       quantity: item.quantity,
@@ -184,8 +185,11 @@ router.get("/success", async (req, res) => {
         lineItems.map(async (item) => {
           console.log('Processing line item:', JSON.stringify(item, null, 2));
           
-          // Safely access metadata and handle potential undefined values
-          const metadata = item.price?.product?.metadata || {};
+          // Expand the product to get its metadata
+          const product = await stripe.products.retrieve(item.price.product);
+          console.log('Product data:', JSON.stringify(product, null, 2));
+          
+          const metadata = product.metadata || {};
           console.log('Item metadata:', metadata);
 
           const options = {};
@@ -199,20 +203,25 @@ router.get("/success", async (req, res) => {
             console.warn('Failed to parse options metadata:', e);
           }
 
-          // Get product name and description safely
-          const productName = item.price?.product?.name || 'Unknown Product';
-          const productDescription = item.price?.product?.description || null;
+          // Get product name and description from metadata or product data
+          const productName = metadata.name || product.name || 'Unknown Product';
+          const productDescription = metadata.description || product.description || null;
+          const productType = metadata.type || 'service';
           
-          // Try to get service_id from different possible locations
+          // Try to get service_id from metadata
           let serviceId = null;
           
-          // First try from metadata
           if (metadata.service_id) {
             serviceId = parseInt(metadata.service_id);
           }
           
-          // If not found in metadata, try to find service by name
-          if (!serviceId) {
+          // If service_id not found and it's a merch item, use the merchandise service ID
+          if (!serviceId && productType === 'merch') {
+            serviceId = 2; // Use the existing merchandise service ID
+          }
+          
+          // If still not found and it's a service, try to find by name
+          if (!serviceId && productType === 'service') {
             const service = await prisma.services.findUnique({
               where: { name: productName }
             });
@@ -227,8 +236,7 @@ router.get("/success", async (req, res) => {
               productName,
               productDescription,
               metadata,
-              priceId: item.price?.id,
-              productId: item.price?.product?.id
+              product: product.id
             });
             throw new Error(`Could not find service for product: ${productName}. Please ensure the service exists in the database.`);
           }
@@ -250,6 +258,7 @@ router.get("/success", async (req, res) => {
               price: (item.price?.unit_amount || 0) / 100,
               options: JSON.stringify({
                 ...options,
+                type: productType,
                 item_name: productName,
                 item_description: productDescription
               }),

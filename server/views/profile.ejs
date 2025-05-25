@@ -671,7 +671,13 @@
           status_cancelled: '<%= __("status_cancelled") %>',
           payment_status_completed: '<%= __("payment_status_completed") %>',
           payment_status_pending: '<%= __("payment_status_pending") %>',
-          payment_status_failed: '<%= __("payment_status_failed") %>'
+          payment_status_failed: '<%= __("payment_status_failed") %>',
+          custom_tshirt: '<%= __("custom_tshirt") %>',
+          custom_tshirt_desc: '<%= __("custom_tshirt_desc") %>',
+          option_size: '<%= __("option_size") %>',
+          size_small: '<%= __("size_small") %>',
+          size_medium: '<%= __("size_medium") %>',
+          size_large: '<%= __("size_large") %>'
         };
 
         ordersContentDiv.innerHTML = `
@@ -728,12 +734,48 @@
                                 <tr>
                                   <td>
                                     <div>
-                                      <strong>${item.service_name}</strong>
+                                      <strong>${item.options.type === 'merch' ? translations.custom_tshirt : item.service_name}</strong>
+                                      ${item.options.type === 'merch' ? `
+                                        <small class="text-muted d-block">${translations.custom_tshirt_desc}</small>
+                                      ` : ''}
                                       ${Object.entries(item.options)
-                                        .filter(([key]) => key !== 'file')
-                                        .map(([key, value]) => `
-                                          <br><small>${key}: ${value}</small>
-                                        `).join('')}
+                                        .filter(([key]) => !['file', 'type', 'item_name', 'item_description'].includes(key))
+                                        .map(([key, value]) => {
+                                          let translatedKey;
+                                          let translatedValue;
+                                          
+                                          switch(key) {
+                                            case 'filename':
+                                              translatedKey = translations['filename'] || 'Filename';
+                                              translatedValue = value;
+                                              break;
+                                            case 'pages':
+                                              translatedKey = translations['pages'] || 'Pages';
+                                              translatedValue = value;
+                                              break;
+                                            case 'color':
+                                              translatedKey = translations['color_mode'] || 'Color Mode';
+                                              translatedValue = translations[value.replace(/\s+/g, '_')] || value;
+                                              break;
+                                            case 'paper_size':
+                                              translatedKey = translations['paper_size'] || 'Paper Size';
+                                              translatedValue = value;
+                                              break;
+                                            case 'double_sided':
+                                              translatedKey = translations['double_sided'] || 'Double-Sided';
+                                              translatedValue = translations[value] || value;
+                                              break;
+                                            case 'size':
+                                              translatedKey = translations['option_size'] || 'Size';
+                                              translatedValue = translations[`size_${value.toLowerCase()}`] || value;
+                                              break;
+                                            default:
+                                              translatedKey = translations[`option_${key}`] || translations[key] || key;
+                                              translatedValue = value;
+                                          }
+                                          
+                                          return `<br><small>${translatedKey}: ${translatedValue}</small>`;
+                                        }).join('')}
                                     </div>
                                   </td>
                                   <td>${item.quantity}</td>

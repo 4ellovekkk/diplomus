@@ -254,5 +254,13 @@
   "access_denied_admin": "Access denied: Admin privileges required",
   "failed_to_create_service": "Failed to create service",
   "service_created_successfully": "Service created successfully",
-  "error_creating_service": "Error creating service"
+  "error_creating_service": "Error creating service",
+  "custom_tshirt": "Custom T-Shirt",
+  "custom_tshirt_desc": "Custom designed t-shirt",
+  "option_size": "Size",
+  "option_color": "Color",
+  "option_pages": "Pages",
+  "option_paper_size": "Paper Size",
+  "option_double_sided": "Double Sided",
+  "size_2xl": "2X Large"
 }
