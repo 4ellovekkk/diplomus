@@ -18,7 +18,7 @@ const handleError = (req, res, error, message = "An error occurred") => {
 const calculateCartTotal = (cart) => {
   return cart.reduce((total, item) => {
     // For merch items, use fixed price
-    const price = item.type === 'merch' ? 1500 : item.price; // 1500 rubles for t-shirts
+    const price = item.type === 'merch' ? 149.99 : item.price; // $149.99 for t-shirts
     return total + (price * item.quantity);
   }, 0);
 };
@@ -42,7 +42,7 @@ router.get("/cart/data", verifyTokenExceptLogin, async (req, res) => {
           return {
             ...item,
             name: 'Custom T-Shirt',
-            price: 1500, // Fixed price for t-shirts
+            price: 149.99, // Fixed price for t-shirts ($149.99)
             service_description: 'Custom designed t-shirt'
           };
         }
@@ -116,7 +116,7 @@ router.post("/cart/add-merch", verifyTokenExceptLogin, async (req, res) => {
     req.session.cart.push({
       type: 'merch',
       name: 'Custom T-Shirt',
-      price: 1500, // Fixed price for t-shirts
+      price: 149.99, // Fixed price for t-shirts ($149.99)
       quantity: 1,
       options: {
         size: options.size,
