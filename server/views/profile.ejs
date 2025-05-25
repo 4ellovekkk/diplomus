@@ -55,15 +55,37 @@
                   <div class="row g-3">
                     <div class="col-md-6">
                       <label class="form-label"><%= __('email') %></label>
-                      <input type="email" name="email" class="form-control editable-input" value="<%= user.email %>" readonly>
+                      <input type="email" 
+                             name="email" 
+                             class="form-control editable-input" 
+                             value="<%= user.email %>" 
+                             pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                             title="<%= __('email_validation_message') %>"
+                             readonly>
+                      <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6">
                       <label class="form-label"><%= __('phone') %></label>
-                      <input type="tel" name="phone" class="form-control editable-input" value="<%= user.phone %>" readonly>
+                      <input type="tel" 
+                             name="phone" 
+                             class="form-control editable-input" 
+                             value="<%= user.phone %>" 
+                             pattern="^\+?[1-9][0-9]{7,14}$"
+                             title="<%= __('phone_validation_message') %>"
+                             readonly>
+                      <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6">
                       <label class="form-label"><%= __('address') %></label>
-                      <input type="text" name="adress" class="form-control editable-input" value="<%= user.adress %>" readonly>
+                      <input type="text" 
+                             name="adress" 
+                             class="form-control editable-input" 
+                             value="<%= user.adress %>" 
+                             minlength="5"
+                             maxlength="200"
+                             title="<%= __('address_validation_message') %>"
+                             readonly>
+                      <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6">
                       <label for="avatar" class="form-label"><%= __('change_avatar') %></label>
@@ -204,8 +226,48 @@
       document.getElementById("cancelBtn").addEventListener("click", cancelEdit);
 
       const form = document.getElementById("profileForm");
+      
+      function validateInput(input) {
+        const isValid = input.checkValidity();
+        const feedback = input.nextElementSibling;
+        
+        if (!isValid) {
+          input.classList.add('is-invalid');
+          feedback.textContent = input.title;
+          feedback.style.display = 'block';
+        } else {
+          input.classList.remove('is-invalid');
+          feedback.style.display = 'none';
+        }
+        
+        return isValid;
+      }
+
+      function validateForm() {
+        const inputs = form.querySelectorAll('.editable-input:not([readonly])');
+        let isValid = true;
+        
+        inputs.forEach(input => {
+          if (!validateInput(input)) {
+            isValid = false;
+          }
+        });
+        
+        return isValid;
+      }
+
+      // Add validation on input
+      form.querySelectorAll('.editable-input').forEach(input => {
+        input.addEventListener('input', () => validateInput(input));
+      });
+
       form.addEventListener("submit", async function (e) {
         e.preventDefault();
+
+        if (!validateForm()) {
+          showStatusMessage('<%= __("validation_error") %>', false);
+          return;
+        }
 
         const formData = new FormData(form);
 
@@ -223,7 +285,18 @@
             showStatusMessage("Profile updated successfully!", true);
             setTimeout(() => location.reload(), 1500);
           } else {
-            showStatusMessage(result.error || "An error occurred.", false);
+            // Handle specific validation errors
+            if (result.error === 'email_exists') {
+              showStatusMessage('<%= __("email_exists") %>', false);
+            } else if (result.error === 'invalid_email') {
+              showStatusMessage('<%= __("invalid_email") %>', false);
+            } else if (result.error === 'invalid_phone') {
+              showStatusMessage('<%= __("invalid_phone") %>', false);
+            } else if (result.error === 'invalid_address') {
+              showStatusMessage('<%= __("invalid_address") %>', false);
+            } else {
+              showStatusMessage(result.error || "An error occurred.", false);
+            }
           }
         } catch (error) {
           console.error("Error:", error);

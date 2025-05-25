@@ -281,5 +281,13 @@
   "paper_size_a3": "A3",
   "paper_size_letter": "Letter",
   "pages_all": "Все страницы",
-  "print_options": "Параметры печати"
+  "print_options": "Параметры печати",
+  "email_validation_message": "Пожалуйста, введите корректный email адрес",
+  "phone_validation_message": "Пожалуйста, введите корректный номер телефона (8-15 цифр, может начинаться с +)",
+  "address_validation_message": "Адрес должен содержать от 5 до 200 символов",
+  "validation_error": "Пожалуйста, проверьте форму на наличие ошибок",
+  "email_exists": "Этот email уже используется",
+  "invalid_email": "Неверный формат email",
+  "invalid_phone": "Неверный формат номера телефона",
+  "invalid_address": "Адрес должен содержать от 5 до 200 символов"
 }

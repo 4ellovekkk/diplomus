@@ -273,5 +273,13 @@
   "paper_size_letter": "Letter",
   "pages_all": "All pages",
   "print_options": "Print Options",
-  "size_2xl": "2X Large"
+  "size_2xl": "2X Large",
+  "email_validation_message": "Please enter a valid email address",
+  "phone_validation_message": "Please enter a valid phone number (8-15 digits, can start with +)",
+  "address_validation_message": "Address must be between 5 and 200 characters",
+  "validation_error": "Please check the form for errors",
+  "email_exists": "This email is already in use",
+  "invalid_email": "Invalid email format",
+  "invalid_phone": "Invalid phone number format",
+  "invalid_address": "Address must be between 5 and 200 characters"
 }
