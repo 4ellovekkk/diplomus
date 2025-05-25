@@ -29,6 +29,11 @@
                                 <a class="nav-link ms-2" href="/admin"><%= __('admin_panel') %></a>
                             </li>
                         <% } %>
+                        <% if (['admin', 'employee'].includes(user.role)) { %>
+                            <li class="nav-item">
+                                <a class="nav-link ms-2" href="/print-queue"><%= __('print_queue_title') %></a>
+                            </li>
+                        <% } %>
                         <li class="nav-item">
                             <a class="btn ms-2" href="/api/logout"><%= __('logout') %></a>
                         </li>

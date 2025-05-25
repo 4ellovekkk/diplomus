@@ -5,11 +5,13 @@ const prisma = new PrismaClient();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const verifyTokenExceptLogin = require("../middleware/authMiddleware");
 const jwt = require("jsonwebtoken");
+const PrintFile = require("../models_mongo/printFile");
+const MerchDesign = require("../models_mongo/merchDesign");
 
 const ORDER_STATUS = {
   PENDING: 1,     // Initial status when order is created
-  PROCESSING: 2,  // When payment is being processed
-  COMPLETED: 3,   // When payment is successful
+  PROCESSING: 2,  // When payment is successful and order is in printing queue
+  COMPLETED: 3,   // When order is printed and completed
   CANCELLED: 4    // When payment fails or order is cancelled
 };
 
@@ -67,7 +69,31 @@ router.post("/create-checkout-session", verifyTokenExceptLogin, async (req, res)
       return res.status(400).json({ error: req.__("cart_empty") });
     }
 
-    console.log('Cart contents:', JSON.stringify(req.session.cart, null, 2));
+    // Store the full cart data in the session for later use
+    req.session.pendingCart = JSON.parse(JSON.stringify(req.session.cart));
+
+    // Create a simplified version of the cart for metadata
+    const metadataCart = req.session.cart.map(item => {
+      const { options, ...rest } = item;
+      const simplifiedOptions = {};
+      
+      if (options) {
+        const opts = typeof options === 'string' ? JSON.parse(options) : options;
+        // Only include essential options, excluding file and design data
+        if (opts.size) simplifiedOptions.size = opts.size;
+        if (opts.text) simplifiedOptions.text = opts.text;
+        if (opts.textColor) simplifiedOptions.textColor = opts.textColor;
+        if (opts.fontSize) simplifiedOptions.fontSize = opts.fontSize;
+        if (opts.position) simplifiedOptions.position = opts.position;
+        if (opts.imagePosition) simplifiedOptions.imagePosition = opts.imagePosition;
+        if (opts.imageSize) simplifiedOptions.imageSize = opts.imageSize;
+      }
+      
+      return {
+        ...rest,
+        options: simplifiedOptions
+      };
+    });
 
     // Get user details
     const decoded = req.user;
@@ -101,6 +127,7 @@ router.post("/create-checkout-session", verifyTokenExceptLogin, async (req, res)
       cancel_url: `${domain}/?token=${currentToken}&payment_cancelled=true`,
       metadata: {
         user_id: user.id.toString(),
+        cart: JSON.stringify(metadataCart) // Store simplified cart data in metadata
       },
     });
 
@@ -133,6 +160,10 @@ router.get("/success", async (req, res) => {
 
     // Get the user ID from the session metadata
     const userId = parseInt(session.metadata.user_id);
+    
+    // Use the full cart data from the session
+    const cartData = req.session.pendingCart || [];
+    console.log('Processing cart data:', JSON.stringify(cartData, null, 2));
 
     // Start a transaction
     const result = await prisma.$transaction(async (prisma) => {
@@ -141,7 +172,7 @@ router.get("/success", async (req, res) => {
         data: {
           user_id: userId,
           total_price: session.amount_total / 100,
-          status_id: ORDER_STATUS.COMPLETED,
+          status_id: ORDER_STATUS.PROCESSING,
           created_at: new Date(),
           updated_at: new Date()
         }
@@ -182,104 +213,96 @@ router.get("/success", async (req, res) => {
         }
       });
 
-      // 4. Create order items
-      const lineItems = session.line_items.data;
-      console.log('Line items from Stripe:', JSON.stringify(lineItems, null, 2));
-
+      // 4. Create order items and store files in MongoDB
       const orderItems = await Promise.all(
-        lineItems.map(async (item) => {
-          console.log('Processing line item:', JSON.stringify(item, null, 2));
-          
-          // Expand the product to get its metadata
-          const product = await stripe.products.retrieve(item.price.product);
-          console.log('Product data:', JSON.stringify(product, null, 2));
-          
-          const metadata = product.metadata || {};
-          console.log('Item metadata:', metadata);
+        cartData.map(async (cartItem) => {
+          const options = typeof cartItem.options === 'string' ? 
+            JSON.parse(cartItem.options) : cartItem.options;
 
-          const options = {};
-          
-          try {
-            // Only parse options if it exists and is a valid JSON string
-            if (metadata.options) {
-              Object.assign(options, JSON.parse(metadata.options));
-            }
-          } catch (e) {
-            console.warn('Failed to parse options metadata:', e);
-          }
-
-          // Get product name and description from metadata or product data
-          const productName = metadata.name || product.name || 'Unknown Product';
-          const productDescription = metadata.description || product.description || null;
-          const productType = metadata.type || 'service';
-          
-          // Try to get service_id from metadata
-          let serviceId = null;
-          
-          if (metadata.service_id) {
-            serviceId = parseInt(metadata.service_id);
-          }
-          
-          // If service_id not found and it's a merch item, use the merchandise service ID
-          if (!serviceId && productType === 'merch') {
-            serviceId = 2; // Use the existing merchandise service ID
-          }
-          
-          // If still not found and it's a service, try to find by name
-          if (!serviceId && productType === 'service') {
-            const service = await prisma.services.findUnique({
-              where: { name: productName }
-            });
-            if (service) {
-              serviceId = service.id;
-            }
-          }
-
-          // If still not found, throw error with more details
-          if (!serviceId) {
-            console.error('Failed to find service for product:', {
-              productName,
-              productDescription,
-              metadata,
-              product: product.id
-            });
-            throw new Error(`Could not find service for product: ${productName}. Please ensure the service exists in the database.`);
-          }
-
-          // Verify service exists in database
-          const service = await prisma.services.findUnique({
-            where: { id: serviceId }
+          console.log('Processing cart item:', {
+            type: cartItem.type,
+            options: JSON.stringify(options)
           });
 
-          if (!service) {
-            throw new Error(`Service with ID ${serviceId} not found for line item: ${productName}`);
-          }
-          
-          return prisma.order_items.create({
+          // Create order item
+          const orderItem = await prisma.order_items.create({
             data: {
-              order_id: order.id,
-              service_id: serviceId,
-              quantity: item.quantity || 1,
-              price: (item.price?.unit_amount || 0) / 100,
+              quantity: cartItem.quantity || 1,
+              price: cartItem.price,
               options: JSON.stringify({
-                ...options,
-                type: productType,
-                item_name: productName,
-                item_description: productDescription
+                type: cartItem.type || 'service',
+                size: options.size,
+                text: options.text || null,
+                textColor: options.textColor || null,
+                fontSize: options.fontSize || null,
+                position: options.position || null,
+                imagePosition: options.imagePosition || null,
+                imageSize: options.imageSize || null,
+                design: null // Don't store design in order_items
               }),
-              subtotal: ((item.price?.unit_amount || 0) * (item.quantity || 1)) / 100,
+              subtotal: cartItem.price * (cartItem.quantity || 1),
               created_at: new Date(),
-              updated_at: new Date()
+              updated_at: new Date(),
+              order: {
+                connect: { id: order.id }
+              },
+              service: {
+                connect: { 
+                  id: cartItem.type === 'merch' ? 2 : 1
+                }
+              }
             }
           });
+
+          // If this is a print order with a file, store it in MongoDB
+          if (!cartItem.type && cartItem.service_id === 1 && options.file) { // Document Printing service
+            await PrintFile.create({
+              orderId: order.id,
+              orderItemId: orderItem.id,
+              filename: options.filename,
+              contentType: options.file.mimetype,
+              data: Buffer.from(options.file.buffer, 'base64'),
+            });
+          }
+          
+          // If this is a merch order with a design, store it in MongoDB
+          if (cartItem.type === 'merch' && options.design) {
+            console.log('Storing merch design:', {
+              orderId: order.id,
+              orderItemId: orderItem.id,
+              hasDesign: !!options.design
+            });
+
+            await MerchDesign.create({
+              orderId: order.id,
+              orderItemId: orderItem.id,
+              filename: `design_${order.id}_${orderItem.id}.png`,
+              contentType: 'image/png',
+              data: Buffer.from(options.design.split(',')[1], 'base64'),
+              designType: options.text ? 'text' : 'image',
+              designDetails: {
+                text: options.text || null,
+                textColor: options.textColor || null,
+                fontSize: options.fontSize || null,
+                position: options.position || null,
+                imagePosition: options.imagePosition || null,
+                imageSize: options.imageSize || null
+              }
+            });
+
+            console.log('Merch design stored successfully');
+          }
+
+          return orderItem;
         })
       );
 
       return { order, payment, orderItems };
     });
 
-    // Clear the cart and save success message
+    // Clear both cart and pendingCart from session
     req.session.cart = [];
+    req.session.pendingCart = [];
     req.session.cartSuccess = req.__("order_success");
     await req.session.save();
 
@@ -351,7 +374,7 @@ router.post("/webhook", async (req, res) => {
                 }
               },
               status_id: {
-                not: 3
+                not: ORDER_STATUS.PROCESSING
               }
             },
             include: {
@@ -364,7 +387,7 @@ router.post("/webhook", async (req, res) => {
             await prisma.orders.update({
               where: { id: order.id },
               data: {
-                status_id: ORDER_STATUS.COMPLETED,
+                status_id: ORDER_STATUS.PROCESSING,
                 payment: {
                   updateMany: {
                     where: { order_id: order.id },
@@ -432,7 +455,7 @@ router.post("/webhook", async (req, res) => {
                 }
               },
               status_id: {
-                not: 3
+                not: ORDER_STATUS.PROCESSING
               }
             },
             include: {
@@ -444,7 +467,7 @@ router.post("/webhook", async (req, res) => {
             await prisma.orders.update({
               where: { id: order.id },
               data: {
-                status_id: ORDER_STATUS.COMPLETED,
+                status_id: ORDER_STATUS.PROCESSING,
                 payment: {
                   updateMany: {
                     where: { order_id: order.id },
@@ -474,7 +497,7 @@ router.post("/webhook", async (req, res) => {
                   }
                 },
                 status_id: {
-                  not: 3
+                  not: ORDER_STATUS.PROCESSING
                 }
               },
               include: {
@@ -486,7 +509,7 @@ router.post("/webhook", async (req, res) => {
               await prisma.orders.update({
                 where: { id: order.id },
                 data: {
-                  status_id: ORDER_STATUS.COMPLETED,
+                  status_id: ORDER_STATUS.PROCESSING,
                   payment: {
                     updateMany: {
                       where: { order_id: order.id },
@@ -551,7 +574,7 @@ router.post("/webhook", async (req, res) => {
                 }
               },
               status_id: {
-                not: 3
+                not: ORDER_STATUS.PROCESSING
               }
             },
             include: {
@@ -563,7 +586,7 @@ router.post("/webhook", async (req, res) => {
             await prisma.orders.update({
               where: { id: order.id },
               data: {
-                status_id: ORDER_STATUS.COMPLETED,
+                status_id: ORDER_STATUS.PROCESSING,
                 payment: {
                   updateMany: {
                     where: { order_id: order.id },

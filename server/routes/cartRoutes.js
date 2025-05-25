@@ -107,25 +107,46 @@ router.post("/cart/add-merch", verifyTokenExceptLogin, async (req, res) => {
       });
     }
 
+    // Get the Custom T-Shirt service by ID
+    const service = await prisma.services.findUnique({
+      where: { id: 2 } // Custom T-Shirt service ID
+    });
+
+    if (!service) {
+      return res.status(400).json({
+        success: false,
+        message: 'Custom T-Shirt service not found'
+      });
+    }
+
     // Initialize cart if needed
     if (!req.session.cart) {
       req.session.cart = [];
     }
 
+    console.log('Adding merch to cart with design:', options.design.substring(0, 100) + '...');
+
     // Add merch item to cart
     req.session.cart.push({
       type: 'merch',
+      service_id: service.id,
       name: 'Custom T-Shirt',
       price: 149.99, // Fixed price for t-shirts ($149.99)
       quantity: 1,
       options: {
+        type: 'merch',
         size: options.size,
         text: options.text || null,
         textColor: options.textColor || null,
         fontSize: options.fontSize || null,
-        design: options.design
+        position: options.position || null,
+        imagePosition: options.imagePosition || null,
+        imageSize: options.imageSize || null,
+        design: options.design // Store the base64 design data directly
       }
     });
+
+    console.log('Merch added to cart successfully');
 
     req.session.cartSuccess = "T-shirt added to cart";
     req.session.save(() => {

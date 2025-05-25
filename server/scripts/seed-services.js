@@ -4,11 +4,11 @@ const prisma = new PrismaClient();
 async function seedServices() {
   try {
     // Check if Document Printing service exists
-    const existingService = await prisma.services.findUnique({
+    let service = await prisma.services.findUnique({
       where: { name: 'Document Printing' }
     });
 
-    if (!existingService) {
+    if (!service) {
       // Create Document Printing service
       await prisma.services.create({
         data: {
@@ -20,6 +20,25 @@ async function seedServices() {
       console.log('Document Printing service created successfully');
     } else {
       console.log('Document Printing service already exists');
+    }
+
+    // Check if Custom T-Shirt service exists
+    service = await prisma.services.findUnique({
+      where: { name: 'Custom T-Shirt' }
+    });
+
+    if (!service) {
+      // Create Custom T-Shirt service
+      await prisma.services.create({
+        data: {
+          name: 'Custom T-Shirt',
+          description: 'Custom designed t-shirt with your text and images.',
+          price: 149.99 // Fixed price per t-shirt
+        }
+      });
+      console.log('Custom T-Shirt service created successfully');
+    } else {
+      console.log('Custom T-Shirt service already exists');
     }
   } catch (error) {
     console.error('Error seeding services:', error);

@@ -268,32 +268,38 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Capture the design
             const designImage = await captureDesign();
+            console.log('Design captured:', designImage.substring(0, 100) + '...');
 
-            // Split the base64 string into chunks if it's too large
-            const maxChunkSize = 500000; // 500KB chunks
-            const chunks = [];
-            let currentChunk = '';
-            
-            for (let i = 0; i < designImage.length; i++) {
-                currentChunk += designImage[i];
-                if (currentChunk.length >= maxChunkSize || i === designImage.length - 1) {
-                    chunks.push(currentChunk);
-                    currentChunk = '';
-                }
-            }
-
-            // Send first chunk with metadata
+            // Send to server
             const cartData = {
                 options: {
                     size: tshirtSize.value,
                     text: textOverlay.textContent.trim() || null,
                     textColor: textColorPicker.value,
                     fontSize: fontSize.value,
-                    design: chunks[0],
-                    totalChunks: chunks.length,
-                    chunkIndex: 0
+                    position: {
+                        x: parseFloat(textOverlay.style.left) || 50,
+                        y: parseFloat(textOverlay.style.top) || 50
+                    },
+                    imagePosition: customImage.style.display !== 'none' ? {
+                        x: parseFloat(imageWrapper.style.left) || 50,
+                        y: parseFloat(imageWrapper.style.top) || 20
+                    } : null,
+                    imageSize: customImage.style.display !== 'none' ? {
+                        width: customImage.offsetWidth,
+                        height: customImage.offsetHeight
+                    } : null,
+                    design: designImage
                 }
             };
+
+            console.log('Sending cart data:', {
+                ...cartData,
+                options: {
+                    ...cartData.options,
+                    design: cartData.options.design.substring(0, 100) + '...'
+                }
+            });
 
             // Send to server
             const response = await fetch('/api/cart/add-merch', {
@@ -306,31 +312,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (!response.ok) {
                 throw new Error(await response.text() || 'Failed to add item to cart');
-            }
-
-            // If there are more chunks, send them
-            if (chunks.length > 1) {
-                const designId = await response.json();
-                
-                for (let i = 1; i < chunks.length; i++) {
-                    const chunkData = {
-                        designId: designId,
-                        chunk: chunks[i],
-                        chunkIndex: i
-                    };
-                    
-                    const chunkResponse = await fetch('/api/cart/add-merch-chunk', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(chunkData)
-                    });
-                    
-                    if (!chunkResponse.ok) {
-                        throw new Error('Failed to upload design chunk');
-                    }
-                }
             }
 
             // Redirect to cart

@@ -13,6 +13,7 @@ BEGIN
     INSERT INTO order_statuses (name) VALUES
         ('PENDING'),
         ('PROCESSING'),
+        ('IN_PRINTING_QUEUE'),
         ('COMPLETED'),
         ('CANCELLED');
 END

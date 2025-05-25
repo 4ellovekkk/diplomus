@@ -183,7 +183,7 @@
   "order_items": "Состав заказа",
   "subtotal": "Итого",
   "status_pending": "В ожидании",
-  "status_processing": "В обработке",
+  "status_processing": "В очереди на печать",
   "status_completed": "Завершен",
   "status_cancelled": "Отменен",
   "payment_status_completed": "Оплачен",
@@ -289,5 +289,16 @@
   "email_exists": "Этот email уже используется",
   "invalid_email": "Неверный формат email",
   "invalid_phone": "Неверный формат номера телефона",
-  "invalid_address": "Адрес должен содержать от 5 до 200 символов"
+  "invalid_address": "Адрес должен содержать от 5 до 200 символов",
+  "print_queue_title": "Очередь печати",
+  "customer": "Клиент",
+  "order_date": "Дата заказа",
+  "print": "Распечатать документ",
+  "mark_as_completed": "Отметить как выполненный",
+  "no_orders_in_queue": "Нет заказов в очереди печати",
+  "confirm_complete_order": "Вы уверены, что хотите отметить этот заказ как выполненный?",
+  "order_completed_success": "Заказ успешно отмечен как выполненный",
+  "error_completing_order": "Ошибка при отметке заказа как выполненного",
+  "error_printing": "Ошибка при печати документа",
+  "error_fetching_document": "Ошибка при получении документа"
 }
