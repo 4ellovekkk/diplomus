@@ -40,19 +40,38 @@ document.addEventListener('DOMContentLoaded', function () {
         textOverlay.style.fontSize = this.value + 'px';
     });
 
-    // Upload custom image
-    imageUpload.addEventListener('change', function (e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                customImage.src = e.target.result;
-                customImage.style.display = 'block';
-                // Reset image position when new image is uploaded
-                imageWrapper.style.left = '50%';
-                imageWrapper.style.top = '20%';
-            };
-            reader.readAsDataURL(file);
+    // Upload custom image with authorization check
+    imageUpload.addEventListener('change', async function (e) {
+        try {
+            // Check authorization first
+            const response = await fetch('/api/cart/data');
+            if (!response.ok) {
+                // User is not logged in, show error message
+                unauthorizedMessage.style.display = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                // Clear the file input
+                imageUpload.value = '';
+                return;
+            }
+
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    customImage.src = e.target.result;
+                    customImage.style.display = 'block';
+                    // Reset image position when new image is uploaded
+                    imageWrapper.style.left = '50%';
+                    imageWrapper.style.top = '20%';
+                };
+                reader.readAsDataURL(file);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            unauthorizedMessage.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Clear the file input
+            imageUpload.value = '';
         }
     });
 
@@ -229,12 +248,16 @@ document.addEventListener('DOMContentLoaded', function () {
             );
         }
 
-        // Convert canvas to base64 image
-        return canvas.toDataURL('image/png');
+        // Convert canvas to base64 image with compression
+        return canvas.toDataURL('image/jpeg', 0.7); // Use JPEG format with 70% quality
     }
 
     async function addToCart() {
         try {
+            // Disable the button to prevent multiple clicks
+            addToCartBtn.disabled = true;
+            addToCartBtn.textContent = 'Adding to cart...';
+
             // Check if user is logged in
             const authResponse = await fetch('/api/cart/data');
             if (!authResponse.ok) {
@@ -246,14 +269,29 @@ document.addEventListener('DOMContentLoaded', function () {
             // Capture the design
             const designImage = await captureDesign();
 
-            // Prepare cart data
+            // Split the base64 string into chunks if it's too large
+            const maxChunkSize = 500000; // 500KB chunks
+            const chunks = [];
+            let currentChunk = '';
+            
+            for (let i = 0; i < designImage.length; i++) {
+                currentChunk += designImage[i];
+                if (currentChunk.length >= maxChunkSize || i === designImage.length - 1) {
+                    chunks.push(currentChunk);
+                    currentChunk = '';
+                }
+            }
+
+            // Send first chunk with metadata
             const cartData = {
                 options: {
                     size: tshirtSize.value,
                     text: textOverlay.textContent.trim() || null,
                     textColor: textColorPicker.value,
                     fontSize: fontSize.value,
-                    design: designImage
+                    design: chunks[0],
+                    totalChunks: chunks.length,
+                    chunkIndex: 0
                 }
             };
 
@@ -266,14 +304,44 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: JSON.stringify(cartData)
             });
 
-            if (response.ok) {
-                window.location.href = '/profile#cart';
-            } else {
-                throw new Error('Failed to add item to cart');
+            if (!response.ok) {
+                throw new Error(await response.text() || 'Failed to add item to cart');
             }
+
+            // If there are more chunks, send them
+            if (chunks.length > 1) {
+                const designId = await response.json();
+                
+                for (let i = 1; i < chunks.length; i++) {
+                    const chunkData = {
+                        designId: designId,
+                        chunk: chunks[i],
+                        chunkIndex: i
+                    };
+                    
+                    const chunkResponse = await fetch('/api/cart/add-merch-chunk', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(chunkData)
+                    });
+                    
+                    if (!chunkResponse.ok) {
+                        throw new Error('Failed to upload design chunk');
+                    }
+                }
+            }
+
+            // Redirect to cart
+            window.location.href = '/profile#cart';
         } catch (error) {
             console.error('Error adding to cart:', error);
-            alert('Failed to add item to cart. Please try again.');
+            alert('Failed to add item to cart: ' + error.message);
+        } finally {
+            // Re-enable the button
+            addToCartBtn.disabled = false;
+            addToCartBtn.textContent = 'Add to Cart';
         }
     }
 
