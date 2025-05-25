@@ -371,27 +371,80 @@ function renderPagination(totalPages, currentPage) {
   const paginationContainer = document.getElementById("changelogPagination");
   paginationContainer.innerHTML = "";
 
+  const paginationWrapper = document.createElement("div");
+  paginationWrapper.className = "d-flex align-items-center gap-3";
+
   // Previous button
   const prevButton = document.createElement("button");
   prevButton.textContent = t("previous");
-  prevButton.className = "btn btn-outline-primary me-2";
+  prevButton.className = "btn btn-outline-primary";
   prevButton.disabled = currentPage === 1;
   prevButton.onclick = () => fetchChangelog(currentPage - 1);
-  paginationContainer.appendChild(prevButton);
+  paginationWrapper.appendChild(prevButton);
 
-  // Page info
-  const pageInfo = document.createElement("span");
-  pageInfo.textContent = t("page_of_total", { current: currentPage, total: totalPages });
-  pageInfo.className = "mx-2";
-  paginationContainer.appendChild(pageInfo);
+  // Page numbers
+  const pagesWrapper = document.createElement("div");
+  pagesWrapper.className = "d-flex align-items-center gap-2";
+
+  // Calculate range of pages to show
+  let startPage = Math.max(1, currentPage - 2);
+  let endPage = Math.min(totalPages, startPage + 4);
+  if (endPage - startPage < 4) {
+    startPage = Math.max(1, endPage - 4);
+  }
+
+  // First page
+  if (startPage > 1) {
+    const firstPageBtn = document.createElement("button");
+    firstPageBtn.textContent = "1";
+    firstPageBtn.className = `btn btn-outline-primary${currentPage === 1 ? " active" : ""}`;
+    firstPageBtn.onclick = () => fetchChangelog(1);
+    pagesWrapper.appendChild(firstPageBtn);
+
+    if (startPage > 2) {
+      const ellipsis = document.createElement("span");
+      ellipsis.textContent = "...";
+      ellipsis.className = "px-2";
+      pagesWrapper.appendChild(ellipsis);
+    }
+  }
+
+  // Page numbers
+  for (let i = startPage; i <= endPage; i++) {
+    const pageBtn = document.createElement("button");
+    pageBtn.textContent = i;
+    pageBtn.className = `btn btn-outline-primary${currentPage === i ? " active" : ""}`;
+    pageBtn.onclick = () => fetchChangelog(i);
+    pagesWrapper.appendChild(pageBtn);
+  }
+
+  // Last page
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
+      const ellipsis = document.createElement("span");
+      ellipsis.textContent = "...";
+      ellipsis.className = "px-2";
+      pagesWrapper.appendChild(ellipsis);
+    }
+
+    const lastPageBtn = document.createElement("button");
+    lastPageBtn.textContent = totalPages;
+    lastPageBtn.className = `btn btn-outline-primary${currentPage === totalPages ? " active" : ""}`;
+    lastPageBtn.onclick = () => fetchChangelog(totalPages);
+    pagesWrapper.appendChild(lastPageBtn);
+  }
+
+  paginationWrapper.appendChild(pagesWrapper);
 
   // Next button
   const nextButton = document.createElement("button");
   nextButton.textContent = t("next");
-  nextButton.className = "btn btn-outline-primary ms-2";
+  nextButton.className = "btn btn-outline-primary";
   nextButton.disabled = currentPage >= totalPages;
   nextButton.onclick = () => fetchChangelog(currentPage + 1);
-  paginationContainer.appendChild(nextButton);
+  paginationWrapper.appendChild(nextButton);
+
+  paginationContainer.appendChild(paginationWrapper);
 }
 
 // Optional: fetch once on load
