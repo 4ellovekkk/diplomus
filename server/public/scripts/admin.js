@@ -320,14 +320,14 @@ function debouncedFetchChangelog() {
 }
 
 async function fetchChangelog(page = 1) {
-  let currentPageLog = page;
+  currentPageChangeLog = page;
   const search = document.getElementById("logSearch").value.trim();
   const sortField = document.getElementById("logSortField").value;
   const sortOrder = document.getElementById("logSortOrder").value;
   const limit = document.getElementById("logLimit").value;
   try {
     const res = await fetch(
-      `/api/changelog?search=${encodeURIComponent(search)}&sort=${sortField}&order=${sortOrder}&page=${currentPageChangeLog}&limit=${limit}`,
+      `/api/changelog?search=${encodeURIComponent(search)}&sort=${sortField}&order=${sortOrder}&page=${page}&limit=${limit}`,
     );
 
     const result = await res.json();
@@ -371,13 +371,27 @@ function renderPagination(totalPages, currentPage) {
   const paginationContainer = document.getElementById("changelogPagination");
   paginationContainer.innerHTML = "";
 
-  for (let page = 1; page <= totalPages; page++) {
-    const btn = document.createElement("button");
-    btn.className = `btn btn-sm mx-1 ${page === currentPage ? "btn-primary" : "btn-outline-primary"}`;
-    btn.textContent = page;
-    btn.onclick = () => fetchChangelog(page);
-    paginationContainer.appendChild(btn);
-  }
+  // Previous button
+  const prevButton = document.createElement("button");
+  prevButton.textContent = t("previous");
+  prevButton.className = "btn btn-outline-primary me-2";
+  prevButton.disabled = currentPage === 1;
+  prevButton.onclick = () => fetchChangelog(currentPage - 1);
+  paginationContainer.appendChild(prevButton);
+
+  // Page info
+  const pageInfo = document.createElement("span");
+  pageInfo.textContent = t("page_of_total", { current: currentPage, total: totalPages });
+  pageInfo.className = "mx-2";
+  paginationContainer.appendChild(pageInfo);
+
+  // Next button
+  const nextButton = document.createElement("button");
+  nextButton.textContent = t("next");
+  nextButton.className = "btn btn-outline-primary ms-2";
+  nextButton.disabled = currentPage >= totalPages;
+  nextButton.onclick = () => fetchChangelog(currentPage + 1);
+  paginationContainer.appendChild(nextButton);
 }
 
 // Optional: fetch once on load

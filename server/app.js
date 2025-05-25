@@ -28,10 +28,7 @@ const Document = require("./models_mongo/documents.js");
 const mongoose = require("mongoose");
 async function connectToMongo() {
   try {
-    await mongoose.connect("mongodb://localhost:27017/print_center", {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect("mongodb://localhost:27017/print_center");
   } catch (err) {
     console.error("MongoDB connection failed:", err.message);
     process.exit(1); // Stop the app if DB fails
@@ -283,10 +280,10 @@ app.get("/api/changelog", async (req, res) => {
             { field: { contains: search } },
             { oldValue: { contains: search } },
             { newValue: { contains: search } },
-            { userId: { contains: search } },
-            { changedBy: { contains: search } },
-            { changedAt: { contains: search } },
-            { details: { contains: search } },
+            ...(isNaN(search) ? [] : [
+              { userId: parseInt(search) },
+              { changedBy: parseInt(search) }
+            ])
           ],
         }
       : {};
@@ -298,7 +295,7 @@ app.get("/api/changelog", async (req, res) => {
     const changelog = await prisma.changelog.findMany({
       where: whereCondition,
       orderBy: { [sortBy]: orderBy },
-      skip,
+      skip: skip || 0,
       take: limitNumber,
       select: {
         id: true,
