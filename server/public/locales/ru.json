@@ -268,8 +268,18 @@
   "custom_tshirt": "Футболка с принтом",
   "custom_tshirt_desc": "Футболка с вашим дизайном",
   "option_size": "Размер",
-  "option_color": "Цвет",
   "option_pages": "Страницы",
   "option_paper_size": "Размер бумаги",
-  "option_double_sided": "Двусторонняя печать"
+  "option_double_sided": "Двусторонняя печать",
+  "option_filename": "Имя файла",
+  "option_color": "Режим печати",
+  "color_black_white": "Чёрно-белая",
+  "color_color": "Цветная",
+  "double_sided_yes": "Да",
+  "double_sided_no": "Нет",
+  "paper_size_a4": "A4",
+  "paper_size_a3": "A3",
+  "paper_size_letter": "Letter",
+  "pages_all": "Все страницы",
+  "print_options": "Параметры печати"
 }

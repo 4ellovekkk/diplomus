@@ -665,6 +665,19 @@
           price: '<%= __("price") %>',
           subtotal: '<%= __("subtotal") %>',
           currency_symbol: '<%= __("currency_symbol") %>',
+          option_filename: '<%= __("option_filename") %>',
+          option_pages: '<%= __("option_pages") %>',
+          option_color: '<%= __("option_color") %>',
+          option_paper_size: '<%= __("option_paper_size") %>',
+          option_double_sided: '<%= __("option_double_sided") %>',
+          pages_all: '<%= __("pages_all") %>',
+          color_black_white: '<%= __("color_black_white") %>',
+          color_color: '<%= __("color_color") %>',
+          double_sided_yes: '<%= __("double_sided_yes") %>',
+          double_sided_no: '<%= __("double_sided_no") %>',
+          paper_size_a4: '<%= __("paper_size_a4") %>',
+          paper_size_a3: '<%= __("paper_size_a3") %>',
+          paper_size_letter: '<%= __("paper_size_letter") %>',
           status_pending: '<%= __("status_pending") %>',
           status_processing: '<%= __("status_processing") %>',
           status_completed: '<%= __("status_completed") %>',
@@ -753,24 +766,24 @@
                                           
                                           switch(key) {
                                             case 'filename':
-                                              translatedKey = translations['filename'] || 'Filename';
+                                              translatedKey = translations.option_filename;
                                               translatedValue = value;
                                               break;
                                             case 'pages':
-                                              translatedKey = translations['pages'] || 'Pages';
-                                              translatedValue = value;
+                                              translatedKey = translations.option_pages;
+                                              translatedValue = value === 'All' ? translations.pages_all : value;
                                               break;
                                             case 'color':
-                                              translatedKey = translations['color_mode'] || 'Color Mode';
-                                              translatedValue = translations[value.replace(/\s+/g, '_')] || value;
+                                              translatedKey = translations.option_color;
+                                              translatedValue = value === 'Black & White' ? translations.color_black_white : translations.color_color;
                                               break;
                                             case 'paper_size':
-                                              translatedKey = translations['paper_size'] || 'Paper Size';
-                                              translatedValue = value;
+                                              translatedKey = translations.option_paper_size;
+                                              translatedValue = translations[`paper_size_${value.toLowerCase()}`] || value;
                                               break;
                                             case 'double_sided':
-                                              translatedKey = translations['double_sided'] || 'Double-Sided';
-                                              translatedValue = translations[value] || value;
+                                              translatedKey = translations.option_double_sided;
+                                              translatedValue = value === 'Yes' ? translations.double_sided_yes : translations.double_sided_no;
                                               break;
                                             case 'size':
                                               translatedKey = translations['option_size'] || 'Size';
