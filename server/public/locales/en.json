@@ -190,6 +190,7 @@
   "payment_status_completed": "Completed",
   "payment_status_pending": "Pending",
   "payment_status_failed": "Failed",
+  "view_receipt": "View Receipt",
   "admin_title": "Admin Panel - User Management",
   "user_management": "User Management",
   "search": "Search",

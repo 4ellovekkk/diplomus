@@ -710,9 +710,16 @@
                     </td>
                     <td>${translations.currency_symbol}${formatPrice(order.total_price)}</td>
                     <td>
-                      <button class="btn btn-sm" onclick="toggleOrderDetails(${order.id})">
-                        ${translations.view_details}
-                      </button>
+                      <div class="d-flex flex-column gap-2">
+                        <button class="btn btn-sm" onclick="toggleOrderDetails(${order.id})">
+                          ${translations.view_details}
+                        </button>
+                        ${order.receipt_url ? `
+                          <a href="${order.receipt_url}" target="_blank" class="btn btn-sm">
+                            <%= __('view_receipt') %>
+                          </a>
+                        ` : ''}
+                      </div>
                     </td>
                   </tr>
                   <tr id="details-${order.id}" class="order-details" style="display: none;">

@@ -51,6 +51,7 @@ model orders {
   status_id   Int
   created_at  DateTime?      @default(now(), map: "DF__orders__created___778AC167")
   updated_at  DateTime?      @default(now(), map: "DF__orders__updated___787EE5A0")
+  receipt_url String?        @db.NVarChar(255)
   order_items order_items[]
   payment     payments?      @relation(fields: [payment_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__orders__payment___7A672E12")
   status      order_statuses @relation(fields: [status_id], references: [id], onUpdate: NoAction, map: "FK__orders__status_i__7B5B524B")
@@ -71,6 +72,7 @@ model payments {
   payment_details   String?   @db.NVarChar(Max)
   created_at        DateTime? @default(now(), map: "DF__payments__create__73BA3083")
   updated_at        DateTime? @default(now(), map: "DF__payments__update__74AE54BC")
+  receipt_url       String?   @db.NVarChar(255)
   orders            orders[]
 }
 

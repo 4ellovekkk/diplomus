@@ -189,6 +189,7 @@
   "payment_status_completed": "Оплачен",
   "payment_status_pending": "Ожидает оплаты",
   "payment_status_failed": "Ошибка оплаты",
+  "view_receipt": "Посмотреть чек",
   
   "admin_title": "Панель администратора - Управление пользователями",
   "user_management": "Управление пользователями",
@@ -223,7 +224,7 @@
   "old_value": "Старое значение",
   "new_value": "Новое значение",
   "field": "Поле",
-  
+  "add_to_cart": "Добавить в корзину",
   "service_management": "Управление ценами на услуги",
   "add_service": "Добавить новую услугу",
   "service_name": "Название услуги",

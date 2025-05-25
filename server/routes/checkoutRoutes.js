@@ -147,6 +147,10 @@ router.get("/success", async (req, res) => {
         }
       });
 
+      // Get the payment intent and its latest charge to access the receipt URL
+      const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent.id);
+      const charge = await stripe.charges.retrieve(paymentIntent.latest_charge);
+      
       // 2. Create payment record with order relation and address details
       const payment = await prisma.payments.create({
         data: {
@@ -155,6 +159,7 @@ router.get("/success", async (req, res) => {
           payment_status: 'completed',
           stripe_payment_id: session.payment_intent.id,
           stripe_session_id: session.id,
+          receipt_url: charge?.receipt_url || null,
           created_at: new Date(),
           updated_at: new Date(),
           currency: session.currency,
@@ -624,6 +629,7 @@ router.get("/user-orders", verifyTokenExceptLogin, async (req, res) => {
       created_at: order.created_at,
       updated_at: order.updated_at,
       payment_status: order.payment?.payment_status || 'pending',
+      receipt_url: order.payment?.receipt_url || null,
       items: order.order_items.map(item => ({
         service_name: item.service.name,
         quantity: item.quantity,
