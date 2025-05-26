@@ -297,5 +297,21 @@
   "text": "Text",
   "text_color": "Text Color",
   "print_design": "Print Design",
-  "design_preview": "Design Preview"
+  "design_preview": "Design Preview",
+  "forgot_password": "Forgot Password",
+  "reset_password": "Reset Password",
+  "send_reset_link": "Send Reset Link",
+  "back_to_login": "Back to Login",
+  "sending": "Sending...",
+  "resetting": "Resetting...",
+  "reset_link_sent": "Password reset link has been sent to your email",
+  "error_sending_reset_link": "Error sending password reset link",
+  "new_password": "New Password",
+  "confirm_password": "Confirm Password",
+  "password_requirements": "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number",
+  "passwords_do_not_match": "Passwords do not match",
+  "invalid_or_expired_token": "Invalid or expired reset token",
+  "error_verifying_token": "Error verifying reset token",
+  "password_reset_success": "Password has been successfully reset",
+  "error_resetting_password": "Error resetting password"
 }

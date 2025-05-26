@@ -19,6 +19,7 @@ const serviceRoutes = require("./routes/serviceRoutes");
 const profileRoutes = require("./routes/profileRoutes.js");
 const printRoutes = require("./routes/printRoutes.js");
 const checkoutRoutes = require("./routes/checkoutRoutes");
+const passwordResetRoutes = require('./routes/passwordResetRoutes');
 
 //additional imports
 const app = express();
@@ -72,20 +73,14 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 //middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Set character encoding
 app.use((req, res, next) => {
-  if (req.originalUrl === '/checkout/webhook') {
-    next();
-  } else {
-    express.json()(req, res, next);
-  }
-});
-app.use((req, res, next) => {
-  if (req.originalUrl === '/checkout/webhook') {
-    next();
-  } else {
-    express.urlencoded({ extended: true })(req, res, next);
-  }
+  res.charset = 'utf-8';
+  next();
 });
 
 // Configure session middleware
@@ -135,6 +130,7 @@ app.use("/api", userRoutes);
 app.use("/api", serviceRoutes);
 app.use("/", profileRoutes);
 app.use("/", printRoutes);
+app.use('/auth', passwordResetRoutes);
 
 // Special handling for checkout routes with raw body parsing for webhook
 app.use("/checkout", (req, res, next) => {
@@ -369,7 +365,7 @@ app.get(
       if (!user) {
         user = await prisma.users.create({
           data: {
-            username: displayName.replace(/\s/g, "").toLowerCase(),
+            username: email.split('@')[0], // Use email prefix instead of displayName
             email,
             password_hash: "", // No password required for OAuth
             role: "customer",
@@ -416,6 +412,30 @@ app.get("/set-locale", (req, res) => {
   // Redirect back to previous page or home
   const redirectUrl = redirectTo || "/";
   res.redirect(redirectUrl);
+});
+
+// Forgot password page
+app.get('/forgot-password', (req, res) => {
+  res.render('forgot-password', { 
+    locale: req.getLocale(),
+    translations: require(`./public/locales/${req.getLocale()}.json`),
+    t: req.__
+  });
+});
+
+// Reset password page
+app.get('/reset-password', (req, res) => {
+  const { token } = req.query;
+  if (!token) {
+    return res.redirect('/forgot-password');
+  }
+  
+  res.render('reset-password', { 
+    token,
+    locale: req.getLocale(),
+    translations: require(`./public/locales/${req.getLocale()}.json`),
+    t: req.__
+  });
 });
 
 https.createServer(credentials, app).listen(3000, () => {

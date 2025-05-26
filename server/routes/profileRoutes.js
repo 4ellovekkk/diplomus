@@ -92,7 +92,11 @@ router.get("/profile", verifyTokenExceptLogin, async (req, res) => {
 
     // Render the profile template with all data
     res.render("profile", {
-      user,
+      user: {
+        ...user,
+        name: user.name || user.username, // Fallback to username if name is not set
+        initials: user.name ? user.name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase(),
+      },
       cart: processedCart,
       cartTotal,
       itemCount,
