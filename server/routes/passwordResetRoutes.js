@@ -3,81 +3,47 @@ const router = express.Router();
 const nodemailer = require('nodemailer');
 const CryptoJS = require('crypto-js');
 const { PrismaClient } = require('@prisma/client');
-const { google } = require('googleapis');
 const prisma = new PrismaClient();
 
 // Debug: Log email configuration (without showing full credentials)
 console.log('Email Configuration:', {
-  user: process.env.EMAIL_USER ? process.env.EMAIL_USER.substring(0, 3) + '...' : 'not set',
-  pass: process.env.EMAIL_APP_PASSWORD ? 'set (length: ' + process.env.EMAIL_APP_PASSWORD.length + ')' : 'not set'
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  user: process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 3) + '...' : 'not set'
 });
 
-if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
-  console.error('ERROR: Email credentials are not properly set in environment variables!');
+if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  console.error('ERROR: SMTP credentials are not properly set in environment variables!');
 }
 
-// Configure OAuth2 client with the same credentials used for login
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI
-);
-
-// Set credentials including refresh token
-oauth2Client.setCredentials({
-  refresh_token: process.env.GOOGLE_REFRESH_TOKEN
-});
-
-// Create async function to get access token
-async function getAccessToken() {
-  try {
-    const { token } = await oauth2Client.getAccessToken();
-    return token;
-  } catch (error) {
-    console.error('Error getting access token:', error);
-    throw error;
-  }
-}
-
-// Create transporter using OAuth2
+// Create transporter using SMTP
 const createTransporter = async () => {
   try {
-    // Log OAuth2 configuration for debugging
-    console.log('OAuth2 Configuration:', {
-      clientId: process.env.GOOGLE_CLIENT_ID ? 'Set' : 'Not set',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ? 'Set' : 'Not set',
-      refreshToken: process.env.GOOGLE_REFRESH_TOKEN ? 'Set' : 'Not set'
-    });
-
-    // Get new access token
-    const accessToken = await oauth2Client.getAccessToken();
-    console.log('Access Token Retrieved:', !!accessToken.token);
-
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: process.env.SMTP_HOST || 'smtp.yandex.ru',
+      port: parseInt(process.env.SMTP_PORT, 10) || 587,
+      secure: false, // STARTTLS
       auth: {
-        type: 'OAuth2',
-        user: 'diplomservice724@gmail.com',
-        clientId: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
-        accessToken: accessToken.token
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+      },
+      tls: {
+        ciphers: 'SSLv3', // helps with compatibility
+        rejectUnauthorized: false
       }
     });
 
-    // Verify the transporter configuration
     await transporter.verify();
-    console.log('Transporter verified successfully');
-    
+    console.log('SMTP Transporter verified successfully');
+
     return transporter;
   } catch (error) {
-    console.error('Error creating transporter:', error);
-    if (!process.env.GOOGLE_REFRESH_TOKEN) {
-      console.error('GOOGLE_REFRESH_TOKEN is not set in environment variables');
-    }
+    console.error('Error creating SMTP transporter:', error);
     throw error;
   }
 };
+
+
 
 // Generate reset token
 function generateResetToken(email) {
@@ -130,10 +96,7 @@ router.post('/forgot-password', async (req, res) => {
     
     // Email content
     const mailOptions = {
-      from: {
-        name: 'Diplom Service',
-        address: 'diplomservice724@gmail.com'
-      },
+      from: `"${process.env.SMTP_FROM_NAME}" <${process.env.SMTP_USER}@yandex.ru>`,
       to: email,
       subject: 'Password Reset Request',
       html: `
@@ -144,6 +107,7 @@ router.post('/forgot-password', async (req, res) => {
         <p>If you didn't request this, please ignore this email.</p>
       `
     };
+    
 
     // Get transporter and send email
     const transporter = await createTransporter();

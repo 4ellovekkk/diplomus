@@ -32,6 +32,14 @@ const allowedPaths = [
 ];
 
 const verifyTokenExceptLogin = (req, res, next) => {
+  // Allow access to static files
+  if (req.path.startsWith('/styles/') || 
+      req.path.startsWith('/images/') || 
+      req.path.startsWith('/js/') ||
+      req.path.startsWith('/favicon')) {
+    return next();
+  }
+
   // Check if the path is in allowed paths
   const isAllowedPath = allowedPaths.some(path => req.path === path);
   
