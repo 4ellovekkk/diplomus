@@ -132,13 +132,19 @@ function updatePaginationControls(pagination) {
 }
 
 function setFormReadOnly(isReadOnly) {
-  const formFields = document.querySelectorAll("#viewUserModal input");
+  const formFields = document.querySelectorAll("#viewUserModal input, #viewUserModal select");
 
   formFields.forEach((field) => {
     if (isReadOnly) {
       field.setAttribute("readonly", "readonly");
+      if (field.tagName === "SELECT") {
+        field.setAttribute("disabled", "disabled");
+      }
     } else {
       field.removeAttribute("readonly");
+      if (field.tagName === "SELECT") {
+        field.removeAttribute("disabled");
+      }
     }
   });
 }
@@ -158,7 +164,7 @@ function viewUser(id) {
       document.getElementById("viewUserId").value = user.id || placeholder;
       document.getElementById("viewUsername").value = user.username || placeholder;
       document.getElementById("viewEmail").value = user.email || placeholder;
-      document.getElementById("viewRole").value = user.role || placeholder;
+      document.getElementById("viewRole").value = user.role || "customer";
       document.getElementById("viewStatus").value = user.is_locked ? t("locked") : t("active");
       document.getElementById("viewCreatedAt").value = user.created_at
         ? new Date(user.created_at).toLocaleString()
@@ -197,7 +203,7 @@ function editUser(userId) {
       document.getElementById("viewUserId").value = user.id;
       document.getElementById("viewUsername").value = user.username;
       document.getElementById("viewEmail").value = user.email;
-      document.getElementById("viewRole").value = user.role;
+      document.getElementById("viewRole").value = user.role || "customer";
       document.getElementById("viewStatus").value = user.status;
       document.getElementById("viewCreatedAt").value = new Date(
         user.createdAt,
