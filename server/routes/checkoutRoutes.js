@@ -225,21 +225,27 @@ router.get("/success", async (req, res) => {
           });
 
           // Create order item
+          const orderItemOptions = {
+            type: cartItem.type || 'service',
+            ...(options.filename && { filename: options.filename }),
+            ...(options.pages && { pages: options.pages }),
+            ...(options.color && { color: options.color }),
+            ...(options.paper_size && { paper_size: options.paper_size }),
+            ...(options.double_sided && { double_sided: options.double_sided }),
+            ...(options.size && { size: options.size }),
+            ...(options.text && { text: options.text }),
+            ...(options.textColor && { textColor: options.textColor }),
+            ...(options.fontSize && { fontSize: options.fontSize }),
+            ...(options.position && { position: options.position }),
+            ...(options.imagePosition && { imagePosition: options.imagePosition }),
+            ...(options.imageSize && { imageSize: options.imageSize })
+          };
+
           const orderItem = await prisma.order_items.create({
             data: {
               quantity: cartItem.quantity || 1,
               price: cartItem.price,
-              options: JSON.stringify({
-                type: cartItem.type || 'service',
-                size: options.size,
-                text: options.text || null,
-                textColor: options.textColor || null,
-                fontSize: options.fontSize || null,
-                position: options.position || null,
-                imagePosition: options.imagePosition || null,
-                imageSize: options.imageSize || null,
-                design: null // Don't store design in order_items
-              }),
+              options: JSON.stringify(orderItemOptions),
               subtotal: cartItem.price * (cartItem.quantity || 1),
               created_at: new Date(),
               updated_at: new Date(),

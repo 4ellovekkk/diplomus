@@ -73,8 +73,22 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 //middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use((req, res, next) => {
+  if (req.originalUrl === '/checkout/webhook') {
+    express.raw({type: 'application/json'})(req, res, next);
+  } else {
+    express.json()(req, res, next);
+  }
+});
+
+app.use((req, res, next) => {
+  if (req.originalUrl === '/checkout/webhook') {
+    next();
+  } else {
+    express.urlencoded({ extended: true })(req, res, next);
+  }
+});
+
 app.use(cookieParser());
 
 // Set character encoding
@@ -132,14 +146,8 @@ app.use("/", profileRoutes);
 app.use("/", printRoutes);
 app.use('/auth', passwordResetRoutes);
 
-// Special handling for checkout routes with raw body parsing for webhook
-app.use("/checkout", (req, res, next) => {
-  if (req.originalUrl === '/checkout/webhook') {
-    express.raw({type: 'application/json'})(req, res, next);
-  } else {
-    next();
-  }
-}, checkoutRoutes);
+// Special handling for checkout routes
+app.use("/checkout", checkoutRoutes);
 
 //basic routes
 
