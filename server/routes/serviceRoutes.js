@@ -504,13 +504,24 @@ router.delete('/services/:id', verifyTokenExceptLogin, async (req, res) => {
 
     // Check if service exists
     const existingService = await prisma.services.findUnique({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(id) },
+      include: {
+        order_items: true
+      }
     });
 
     if (!existingService) {
       return res.status(404).json({
         success: false,
         message: 'Service not found'
+      });
+    }
+
+    // Check if there are any orders using this service
+    if (existingService.order_items.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete service: There are existing orders that use this service'
       });
     }
 
@@ -531,6 +542,7 @@ router.delete('/services/:id', verifyTokenExceptLogin, async (req, res) => {
         message: 'Authentication failed'
       });
     }
+    // Handle any other errors
     res.status(500).json({
       success: false,
       message: 'Failed to delete service'

@@ -708,6 +708,8 @@ async function deleteService(serviceId) {
       }
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
       if (response.status === 401) {
         window.location.href = '/login';
@@ -715,12 +717,13 @@ async function deleteService(serviceId) {
       } else if (response.status === 403) {
         alert('Access denied: Admin privileges required');
         return;
+      } else if (response.status === 400 && data.message.includes('existing orders')) {
+        alert('Cannot delete this service because it has existing orders. Consider disabling or archiving the service instead.');
+        return;
       }
-      const data = await response.json();
       throw new Error(data.message || 'Failed to delete service');
     }
 
-    const data = await response.json();
     if (data.success) {
       services = services.filter(s => s.id !== serviceId);
       updateServicePricesTable();
