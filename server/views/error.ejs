@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= locale %>">
 <head>
   <meta charset="UTF-8">
-  <title><%= errorTitle || "Error" %></title>
+  <title><%= errorTitle || __('error_default_title') %></title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/styles/Buttons.css"/>
   <style>
@@ -22,11 +21,11 @@
 <body>
   <div class="container error-container">
     <div class="card shadow p-5">
-      <h1 class="text-danger mb-3"><%= errorTitle || "Something went wrong" %></h1>
+      <h1 class="text-danger mb-3"><%= errorTitle || __('error_something_wrong') %></h1>
       <% if (errorMessage) { %>
         <p class="text-muted mb-4"><%= errorMessage %></p>
       <% } %>
-      <a href="/" class="btn ">← Go back to Home</a>
+      <a href="/" class="btn"><%= __('back_to_home') %></a>
     </div>
   </div>
 

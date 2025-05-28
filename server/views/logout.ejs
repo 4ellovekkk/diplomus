@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logout</title>
+    <title><%= __('logout_title') %></title>
     <%- include('./partials/favicon') %>
     <link rel="stylesheet" href="/styles/Logout.css"> <!-- Add your CSS file if needed -->
 </head>
 <body>
 <div class="logout-container">
     <div class="logout-box">
-        <h2>You have been logged out</h2>
-        <p>Thank you for visiting. Click below to log in again, or you will be redirected shortly.</p>
-        <a href="/api/login" class="btn">Login</a>
+        <h2><%= __('logout_message') %></h2>
+        <p><%= __('logout_description') %></p>
+        <a href="/api/login" class="btn"><%= __('login_button') %></a>
     </div>
 </div>
 

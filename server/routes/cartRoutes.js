@@ -41,9 +41,14 @@ router.get("/cart/data", verifyTokenExceptLogin, async (req, res) => {
         if (item.type === 'merch') {
           return {
             ...item,
-            name: 'Custom T-Shirt',
+            name: req.__('custom_tshirt'),
             price: 149.99, // Fixed price for t-shirts ($149.99)
-            service_description: 'Custom designed t-shirt'
+            service_description: req.__('custom_tshirt_desc'),
+            options: {
+              ...item.options,
+              type: 'merch',
+              design: item.options.design // Ensure design data is preserved
+            }
           };
         }
 
@@ -51,42 +56,41 @@ router.get("/cart/data", verifyTokenExceptLogin, async (req, res) => {
           where: { id: item.service_id },
         });
 
-        // Translate options if they exist
-        const translatedOptions = {};
-        if (item.options) {
-          for (const [key, value] of Object.entries(item.options)) {
-            // Skip file and design options as they're technical fields
-            if (key === 'file' || key === 'design') continue;
-            
-            // Translate the option key and value
-            const translatedKey = res.__(key);
-            const translatedValue = res.__(String(value));
-            translatedOptions[translatedKey] = translatedValue;
-          }
-        }
-
         return {
           ...item,
           service_description: service.description,
-          options: translatedOptions
+          options: item.options
         };
       })
     );
 
-    res.json({
+    console.log('Cart with details:', cartWithDetails.map(item => ({
+      ...item,
+      options: item.options ? {
+        ...item.options,
+        design: item.options.design ? 'design_data_exists' : 'no_design_data'
+      } : 'no_options'
+    })));
+
+    // Make cart data available to client-side JavaScript
+    const responseData = {
       cart: cartWithDetails,
       cartTotal: calculateCartTotal(req.session.cart),
       itemCount: calculateItemCount(req.session.cart),
-      success: req.session.cartSuccess,
-      error: req.session.cartError
-    });
+      success: req.session.cartSuccess ? req.__(req.session.cartSuccess) : null,
+      error: req.session.cartError ? req.__(req.session.cartError) : null
+    };
+
+    // Send the response
+    res.json(responseData);
 
     // Clear messages after sending
     delete req.session.cartSuccess;
     delete req.session.cartError;
   } catch (error) {
+    console.error('Error loading cart:', error);
     res.status(500).json({
-      error: "Failed to load cart",
+      error: req.__("error_loading_cart"),
       cart: [],
       cartTotal: 0,
       itemCount: 0
@@ -126,8 +130,8 @@ router.post("/cart/add-merch", verifyTokenExceptLogin, async (req, res) => {
 
     console.log('Adding merch to cart with design:', options.design.substring(0, 100) + '...');
 
-    // Add merch item to cart
-    req.session.cart.push({
+    // Create the cart item
+    const cartItem = {
       type: 'merch',
       service_id: service.id,
       name: 'Custom T-Shirt',
@@ -142,11 +146,20 @@ router.post("/cart/add-merch", verifyTokenExceptLogin, async (req, res) => {
         position: options.position || null,
         imagePosition: options.imagePosition || null,
         imageSize: options.imageSize || null,
-        design: options.design // Store the base64 design data directly
+        design: options.design // Store the base64 design data
+      }
+    };
+
+    // Add to cart
+    req.session.cart.push(cartItem);
+
+    console.log('Merch added to cart successfully. Cart item:', {
+      ...cartItem,
+      options: {
+        ...cartItem.options,
+        design: cartItem.options.design ? 'design_data_exists' : 'no_design_data'
       }
     });
-
-    console.log('Merch added to cart successfully');
 
     req.session.cartSuccess = "T-shirt added to cart";
     req.session.save(() => {
@@ -221,24 +234,24 @@ router.post("/cart/update", verifyTokenExceptLogin, async (req, res) => {
 
     if (!req.session.cart || !req.session.cart[index]) {
       return res.status(400).json({
-        error: "Invalid cart item"
+        error: req.__("error_update_cart")
       });
     }
 
     if (quantity <= 0) {
       // Remove item if quantity is 0 or negative
       req.session.cart.splice(index, 1);
-      req.session.cartSuccess = "Item removed from cart";
+      req.session.cartSuccess = "item_removed";
     } else {
       req.session.cart[index].quantity = parseInt(quantity);
-      req.session.cartSuccess = "Cart updated successfully";
+      req.session.cartSuccess = "cart_updated";
     }
 
     await req.session.save();
     
     // Return updated cart data
     res.json({
-      success: req.session.cartSuccess,
+      success: req.__(req.session.cartSuccess),
       cart: req.session.cart,
       cartTotal: calculateCartTotal(req.session.cart),
       itemCount: calculateItemCount(req.session.cart)
@@ -246,7 +259,7 @@ router.post("/cart/update", verifyTokenExceptLogin, async (req, res) => {
   } catch (error) {
     console.error("Error updating cart item:", error);
     res.status(500).json({
-      error: "Failed to update cart item"
+      error: req.__("error_update_cart")
     });
   }
 });
@@ -258,19 +271,22 @@ router.post("/cart/remove", verifyTokenExceptLogin, async (req, res) => {
 
     if (!req.session.cart || !req.session.cart[index]) {
       return res.status(400).json({
-        error: "Invalid cart item"
+        error: req.__("error_remove_item")
       });
     }
 
-    const removedItemName = req.session.cart[index].name;
+    const removedItem = req.session.cart[index];
     req.session.cart.splice(index, 1);
-    req.session.cartSuccess = `${removedItemName} removed from cart`;
+    
+    // Set success message based on item type
+    const itemName = removedItem.type === 'merch' ? req.__('custom_tshirt') : removedItem.name;
+    req.session.cartSuccess = "item_removed_name";
 
     await req.session.save();
     
     // Return updated cart data
     res.json({
-      success: req.session.cartSuccess,
+      success: req.__("item_removed_name").replace('{name}', itemName),
       cart: req.session.cart,
       cartTotal: calculateCartTotal(req.session.cart),
       itemCount: calculateItemCount(req.session.cart)
@@ -278,7 +294,7 @@ router.post("/cart/remove", verifyTokenExceptLogin, async (req, res) => {
   } catch (error) {
     console.error("Error removing cart item:", error);
     res.status(500).json({
-      error: "Failed to remove cart item"
+      error: req.__("error_remove_item")
     });
   }
 });
@@ -287,13 +303,13 @@ router.post("/cart/remove", verifyTokenExceptLogin, async (req, res) => {
 router.post("/cart/clear", verifyTokenExceptLogin, async (req, res) => {
   try {
     req.session.cart = [];
-    req.session.cartSuccess = "Cart cleared successfully";
+    req.session.cartSuccess = "cart_cleared";
 
     await req.session.save();
     
     // Return updated cart data
     res.json({
-      success: req.session.cartSuccess,
+      success: req.__("cart_cleared"),
       cart: [],
       cartTotal: 0,
       itemCount: 0
@@ -301,7 +317,7 @@ router.post("/cart/clear", verifyTokenExceptLogin, async (req, res) => {
   } catch (error) {
     console.error("Error clearing cart:", error);
     res.status(500).json({
-      error: "Failed to clear cart"
+      error: req.__("error_clear_cart")
     });
   }
 });

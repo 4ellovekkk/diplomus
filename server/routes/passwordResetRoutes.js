@@ -75,6 +75,7 @@ function verifyResetToken(token) {
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
+    const userLang = req.getLocale() || 'en'; // Get user's language preference, default to English
     
     // Find user by email
     const user = await prisma.users.findFirst({
@@ -84,7 +85,9 @@ router.post('/forgot-password', async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'No account found with that email address.'
+        message: userLang === 'ru' ? 
+          'Аккаунт с таким email адресом не найден.' : 
+          'No account found with that email address.'
       });
     }
 
@@ -94,20 +97,39 @@ router.post('/forgot-password', async (req, res) => {
     // Create reset URL
     const resetUrl = `${process.env.APP_URL}/reset-password?token=${encodeURIComponent(resetToken)}`;
     
-    // Email content
+    // Email content based on language
+    const emailContent = {
+      ru: {
+        subject: 'Запрос на сброс пароля',
+        html: `
+          <h1>Запрос на сброс пароля</h1>
+          <p>Вы запросили сброс пароля. Нажмите на ссылку ниже, чтобы сбросить пароль:</p>
+          <a href="${resetUrl}">Сбросить пароль</a>
+          <p>Эта ссылка действительна в течение 1 часа.</p>
+          <p>Если вы не запрашивали сброс пароля, проигнорируйте это письмо.</p>
+        `
+      },
+      en: {
+        subject: 'Password Reset Request',
+        html: `
+          <h1>Password Reset Request</h1>
+          <p>You requested a password reset. Click the link below to reset your password:</p>
+          <a href="${resetUrl}">Reset Password</a>
+          <p>This link will expire in 1 hour.</p>
+          <p>If you didn't request this, please ignore this email.</p>
+        `
+      }
+    };
+
+    const selectedLanguage = emailContent[userLang] || emailContent.en;
+    
+    // Email options
     const mailOptions = {
       from: `"${process.env.SMTP_FROM_NAME}" <${process.env.SMTP_USER}@yandex.ru>`,
       to: email,
-      subject: 'Password Reset Request',
-      html: `
-        <h1>Password Reset Request</h1>
-        <p>You requested a password reset. Click the link below to reset your password:</p>
-        <a href="${resetUrl}">Reset Password</a>
-        <p>This link will expire in 1 hour.</p>
-        <p>If you didn't request this, please ignore this email.</p>
-      `
+      subject: selectedLanguage.subject,
+      html: selectedLanguage.html
     };
-    
 
     // Get transporter and send email
     const transporter = await createTransporter();
@@ -115,13 +137,19 @@ router.post('/forgot-password', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Password reset link has been sent to your email.'
+      message: userLang === 'ru' ? 
+        'Ссылка для сброса пароля отправлена на ваш email.' : 
+        'Password reset link has been sent to your email.'
     });
   } catch (error) {
     console.error('Password reset request error:', error);
+    const errorMessage = req.getLocale() === 'ru' ? 
+      'Ошибка при отправке письма для сброса пароля.' : 
+      'Error sending password reset email.';
+      
     res.status(500).json({
       success: false,
-      message: 'Error sending password reset email.',
+      message: errorMessage,
       error: error.message
     });
   }

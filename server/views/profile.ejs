@@ -103,7 +103,7 @@
                   <div class="d-flex gap-2 mt-3">
                     <button id="editBtn" class="btn" type="button"><%= __('edit') %></button>
                     <button type="submit" id="saveBtn" class="btn d-none"><%= __('save') %></button>
-                    <button type="button" id="cancelBtn" class="btn  d-none"><% __('cancel') %></button>
+                    <button type="button" id="cancelBtn" class="btn  d-none"><%= __('cancel') %></button>
                   </div>
                 </form>
               </div>
@@ -136,8 +136,114 @@
 
   <%- include('./partials/footer'); %>
 
+  <!-- Design Preview Modal -->
+  <div class="modal fade" id="designPreviewModal" tabindex="-1" aria-labelledby="designPreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="designPreviewModalLabel"><%= __('design_preview') %></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+          <img id="designPreviewImage" src="" alt="<%= __('design_preview') %>" style="max-width: 100%; height: auto;">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" data-bs-dismiss="modal"><%= __('close') %></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
-    // Format date according to locale
+    // Global translations object
+    const translations = {
+      // Profile translations
+      validation_error: '<%= __("validation_error") %>',
+      email_exists: '<%= __("email_exists") %>',
+      invalid_email: '<%= __("invalid_email") %>',
+      invalid_phone: '<%= __("invalid_phone") %>',
+      invalid_address: '<%= __("invalid_address") %>',
+
+      // Cart translations
+      text: '<%= __("text") %>',
+      text_color: '<%= __("text_color") %>',
+      font_size_label: '<%= __("font_size_label") %>',
+      size: '<%= __("size") %>',
+      option_color: '<%= __("option_color") %>',
+      option_paper_size: '<%= __("option_paper_size") %>',
+      option_double_sided: '<%= __("option_double_sided") %>',
+      pages_all: '<%= __("pages_all") %>',
+      color_black_white: '<%= __("color_black_white") %>',
+      color_color: '<%= __("color_color") %>',
+      double_sided_yes: '<%= __("double_sided_yes") %>',
+      double_sided_no: '<%= __("double_sided_no") %>',
+      paper_size_a4: '<%= __("paper_size_a4") %>',
+      paper_size_a3: '<%= __("paper_size_a3") %>',
+      paper_size_letter: '<%= __("paper_size_letter") %>',
+      size_small: '<%= __("size_small") %>',
+      size_medium: '<%= __("size_medium") %>',
+      size_large: '<%= __("size_large") %>',
+      size_xl: '<%= __("size_xl") %>',
+      document_printing: '<%= __("document_printing") %>',
+      document_printing_desc: '<%= __("document_printing_desc") %>',
+      custom_tshirt: '<%= __("custom_tshirt") %>',
+      custom_tshirt_desc: '<%= __("custom_tshirt_desc") %>',
+      confirm_clear_cart: '<%= __("confirm_clear_cart") %>',
+      error_update_cart: '<%= __("error_update_cart") %>',
+      error_remove_item: '<%= __("error_remove_item") %>',
+      error_clear_cart: '<%= __("error_clear_cart") %>',
+      checkout_error: '<%= __("checkout_error") %>',
+      redirecting_to_stripe: '<%= __("redirecting_to_stripe") %>',
+      cart_updated: '<%= __("cart_updated") %>',
+      item_removed: '<%= __("item_removed") %>',
+      cart_cleared: '<%= __("cart_cleared") %>',
+      item_removed_name: '<%= __("item_removed_name") %>',
+
+      // Orders translations
+      order_id: '<%= __("order_id") %>',
+      order_date: '<%= __("order_date") %>',
+      order_status: '<%= __("order_status") %>',
+      payment_status: '<%= __("payment_status") %>',
+      total: '<%= __("total") %>',
+      details: '<%= __("details") %>',
+      view_details: '<%= __("view_details") %>',
+      order_items: '<%= __("order_items") %>',
+      service: '<%= __("service") %>',
+      quantity: '<%= __("quantity") %>',
+      price: '<%= __("price") %>',
+      subtotal: '<%= __("subtotal") %>',
+      currency_symbol: '<%= __("currency_symbol") %>',
+      view_receipt: '<%= __("view_receipt") %>',
+      status_pending: '<%= __("status_pending") %>',
+      status_processing: '<%= __("status_processing") %>',
+      status_completed: '<%= __("status_completed") %>',
+      status_cancelled: '<%= __("status_cancelled") %>',
+      payment_status_completed: '<%= __("payment_status_completed") %>',
+      payment_status_pending: '<%= __("payment_status_pending") %>',
+      payment_status_failed: '<%= __("payment_status_failed") %>',
+      option_filename: '<%= __("option_filename") %>',
+      option_pages: '<%= __("option_pages") %>',
+      option_size: '<%= __("option_size") %>'
+    };
+
+    // Global helper functions
+    function showStatusMessage(message, isSuccess = true) {
+      const messagesDiv = document.getElementById('cartMessages');
+      messagesDiv.innerHTML = `
+        <div class="alert alert-${isSuccess ? 'success' : 'danger'} mt-3">
+          ${message}
+        </div>
+      `;
+      
+      // Hide the message after 5 seconds
+      setTimeout(() => {
+        messagesDiv.innerHTML = '';
+      }, 5000);
+    }
+
     function formatDate(dateString, locale) {
       try {
         const date = new Date(dateString);
@@ -154,7 +260,6 @@
       }
     }
 
-    // Add this helper function at the start of your script section
     function formatPrice(price) {
       if (typeof price === 'string') {
         price = parseFloat(price);
@@ -163,6 +268,38 @@
     }
 
     document.addEventListener("DOMContentLoaded", function () {
+      // Initialize Bootstrap components
+      const designModal = new bootstrap.Modal(document.getElementById('designPreviewModal'));
+      const designPreviewImage = document.getElementById('designPreviewImage');
+
+      
+
+      // Add event listeners for design preview buttons
+      function attachDesignPreviewListeners() {
+        document.querySelectorAll('.view-design').forEach(button => {
+          button.addEventListener('click', function() {
+            const cartItem = JSON.parse(this.closest('tr').dataset.cartItem);
+            if (cartItem && cartItem.options && cartItem.options.design) {
+              designPreviewImage.src = cartItem.options.design;
+              designModal.show();
+            }
+          });
+        });
+      }
+
+      // Attach listeners when cart is loaded
+      const cartTab = document.querySelector('a[href="#cart"]');
+      if (cartTab) {
+        cartTab.addEventListener('shown.bs.tab', function () {
+          setTimeout(attachDesignPreviewListeners, 500); // Wait for cart content to load
+        });
+      }
+
+      // If cart tab is active on page load, attach listeners
+      if (window.location.hash === '#cart') {
+        setTimeout(attachDesignPreviewListeners, 500);
+      }
+
       // Format joined date
       const joinedDateElement = document.getElementById('joinedDate');
       if (joinedDateElement) {
@@ -208,18 +345,6 @@
         document.getElementById("editBtn").classList.remove("d-none");
         document.getElementById("saveBtn").classList.add("d-none");
         document.getElementById("cancelBtn").classList.add("d-none");
-      }
-
-      function showStatusMessage(message, isSuccess = true) {
-        const statusDiv = document.getElementById("statusMessage");
-        statusDiv.classList.remove("d-none", "alert-success", "alert-danger");
-        statusDiv.classList.add(isSuccess ? "alert-success" : "alert-danger");
-        statusDiv.textContent = message;
-        
-        // Hide the message after 5 seconds
-        setTimeout(() => {
-          statusDiv.classList.add("d-none");
-        }, 5000);
       }
 
       // Initialize event listeners
@@ -449,6 +574,8 @@
         const response = await fetch('/api/cart/data');
         const data = await response.json();
         
+        //console.log('Cart data:', data);
+
         // Update messages
         const messagesDiv = document.getElementById('cartMessages');
         messagesDiv.innerHTML = '';
@@ -495,21 +622,62 @@
                 </tr>
               </thead>
               <tbody>
-                ${data.cart.map((item, index) => `
-                  <tr>
+                ${data.cart.map((item, index) => {
+                 //console.log('Processing cart item:', item);
+                  const isMerch = item.type === 'merch';
+                  return `
+                  <tr data-cart-item='${JSON.stringify(item)}'>
                     <td>
                       <div class="d-flex flex-column">
-                        <strong>${item.name}</strong>
-                        ${item.service_description ? `
-                          <small class="text-muted">${item.service_description}</small>
-                        ` : ''}
-                        ${item.options && Object.keys(item.options).length > 0 ? `
+                        <strong>${isMerch ? translations.custom_tshirt : translations.document_printing}</strong>
+                        ${isMerch ? `
+                          <small class="text-muted">${translations.custom_tshirt_desc}</small>
+                        ` : `
+                          <small class="text-muted">${translations.document_printing_desc}</small>
+                        `}
+                        ${item.options ? `
                           <div class="mt-1">
                             ${Object.entries(item.options).map(([key, value]) => {
-                              if (key !== 'file') {
-                                return `<span class="badge bg-light text-dark me-1">${key}: ${value}</span>`;
+                              // Skip technical properties
+                              if (['file', 'position', 'imagePosition', 'imageSize', 'type', 'design'].includes(key)) {
+                                return '';
                               }
-                              return '';
+                              
+                              // Handle merch-specific options
+                              if (isMerch) {
+                                switch(key) {
+                                  case 'text':
+                                    return `<span class="badge bg-light text-dark me-1">${translations.text}: ${value}</span>`;
+                                  case 'textColor':
+                                    return `<span class="badge bg-light text-dark me-1">${translations.text_color}: ${value}</span>`;
+                                  case 'fontSize':
+                                    return `<span class="badge bg-light text-dark me-1">${translations.font_size_label}: ${value}px</span>`;
+                                  case 'size':
+                                    return `<span class="badge bg-light text-dark me-1">${translations.size}: ${translations[`size_${value.toLowerCase()}`] || value}</span>`;
+                                  default:
+                                    return '';
+                                }
+                              }
+                              
+                              // Handle printing options
+                              if (key === 'color') {
+                                const colorKey = value === 'black & white' ? 'color_black_white' : 'color_color';
+                                return `<span class="badge bg-light text-dark me-1">${translations.option_color}: ${translations[colorKey]}</span>`;
+                              }
+                              if (key === 'paper_size') {
+                                return `<span class="badge bg-light text-dark me-1">${translations.option_paper_size}: ${translations[`paper_size_${value.toLowerCase()}`] || value}</span>`;
+                              }
+                              if (key === 'double_sided') {
+                                const doubleKey = value === 'No' ? 'double_sided_no' : 'double_sided_yes';
+                                return `<span class="badge bg-light text-dark me-1">${translations.option_double_sided}: ${translations[doubleKey]}</span>`;
+                              }
+                              if (key === 'pages') {
+                                return `<span class="badge bg-light text-dark me-1">${translations.option_pages}: ${translations.pages_all}</span>`;
+                              }
+                              
+                              // Default case for other options
+                              const translatedKey = translations[`option_${key}`] || key;
+                              return `<span class="badge bg-light text-dark me-1">${translatedKey}: ${value}</span>`;
                             }).join('')}
                           </div>
                         ` : ''}
@@ -533,7 +701,7 @@
                       </button>
                     </td>
                   </tr>
-                `).join('')}
+                `}).join('')}
               </tbody>
               <tfoot>
                 <tr>
@@ -556,7 +724,25 @@
           </div>
         `;
 
-        // Add event listeners after content is loaded
+        // After updating cart content, attach event listeners
+        const designModal = new bootstrap.Modal(document.getElementById('designPreviewModal'));
+        const designPreviewImage = document.getElementById('designPreviewImage');
+
+        document.querySelectorAll('.view-design').forEach(button => {
+          button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const index = this.dataset.index;
+            const cartItem = data.cart[index];
+            if (cartItem && cartItem.options && cartItem.options.design) {
+              designPreviewImage.src = cartItem.options.design;
+              designModal.show();
+            } else {
+            //  console.log('No design data found for cart item:', cartItem);
+            }
+          });
+        });
+
+        // Add other event listeners
         attachCartEventListeners();
       } catch (error) {
         console.error('Error loading cart:', error);
@@ -587,14 +773,15 @@
             });
 
             if (!response.ok) {
-              throw new Error('<%= __("error_update_cart") %>');
+              throw new Error(translations.error_update_cart);
             }
 
+            showStatusMessage(translations.cart_updated, true);
             // Reload cart data after successful update
             loadCartData();
           } catch (error) {
             console.error('Error updating quantity:', error);
-            showStatusMessage('<%= __("error_update_cart") %>', false);
+            showStatusMessage(translations.error_update_cart, false);
           }
         });
       });
@@ -603,6 +790,7 @@
       document.querySelectorAll('.remove-item').forEach(button => {
         button.addEventListener('click', async function() {
           const index = this.dataset.index;
+          const cartItem = JSON.parse(this.closest('tr').dataset.cartItem);
 
           try {
             const response = await fetch('/api/cart/remove', {
@@ -614,21 +802,23 @@
             });
 
             if (!response.ok) {
-              throw new Error('<%= __("error_remove_item") %>');
+              throw new Error(translations.error_remove_item);
             }
 
+            const itemName = cartItem.type === 'merch' ? translations.custom_tshirt : translations.document_printing;
+            showStatusMessage(translations.item_removed_name.replace('{name}', itemName), true);
             // Reload cart data after successful removal
             loadCartData();
           } catch (error) {
             console.error('Error removing item:', error);
-            showStatusMessage('<%= __("error_remove_item") %>', false);
+            showStatusMessage(translations.error_remove_item, false);
           }
         });
       });
 
       // Clear cart button
       document.querySelector('.clear-cart')?.addEventListener('click', async function() {
-        if (!confirm('<%= __("confirm_clear_cart") %>')) {
+        if (!confirm(translations.confirm_clear_cart)) {
           return;
         }
 
@@ -638,14 +828,15 @@
           });
 
           if (!response.ok) {
-            throw new Error('<%= __("error_clear_cart") %>');
+            throw new Error(translations.error_clear_cart);
           }
 
+          showStatusMessage(translations.cart_cleared, true);
           // Reload cart data after successful clear
           loadCartData();
         } catch (error) {
           console.error('Error clearing cart:', error);
-          showStatusMessage('<%= __("error_clear_cart") %>', false);
+          showStatusMessage(translations.error_clear_cart, false);
         }
       });
 
@@ -655,7 +846,7 @@
           // Show loading message
           const loadingMessage = document.createElement('div');
           loadingMessage.className = 'alert alert-info mt-3';
-          loadingMessage.textContent = '<%= __("redirecting_to_stripe") %>';
+          loadingMessage.textContent = translations.redirecting_to_stripe;
           document.getElementById('cartMessages').appendChild(loadingMessage);
 
           // Create checkout session
@@ -667,14 +858,14 @@
           });
 
           if (!response.ok) {
-            throw new Error('<%= __("checkout_error") %>');
+            throw new Error(translations.checkout_error);
           }
 
           const { url } = await response.json();
           window.location.href = url;
         } catch (error) {
           console.error('Error initiating checkout:', error);
-          showStatusMessage('<%= __("checkout_error") %>', false);
+          showStatusMessage(translations.checkout_error, false);
         }
       });
     }
@@ -724,57 +915,14 @@
           return;
         }
 
-        // Store translations in variables to avoid repetition
-        const translations = {
-          order_id: '<%= __("order_id") %>',
-          date: '<%= __("date") %>',
-          status: '<%= __("status") %>',
-          payment_status: '<%= __("payment_status") %>',
-          total: '<%= __("total") %>',
-          details: '<%= __("details") %>',
-          view_details: '<%= __("view_details") %>',
-          order_items: '<%= __("order_items") %>',
-          service: '<%= __("service") %>',
-          quantity: '<%= __("quantity") %>',
-          price: '<%= __("price") %>',
-          subtotal: '<%= __("subtotal") %>',
-          currency_symbol: '<%= __("currency_symbol") %>',
-          option_filename: '<%= __("option_filename") %>',
-          option_pages: '<%= __("option_pages") %>',
-          option_color: '<%= __("option_color") %>',
-          option_paper_size: '<%= __("option_paper_size") %>',
-          option_double_sided: '<%= __("option_double_sided") %>',
-          pages_all: '<%= __("pages_all") %>',
-          color_black_white: '<%= __("color_black_white") %>',
-          color_color: '<%= __("color_color") %>',
-          double_sided_yes: '<%= __("double_sided_yes") %>',
-          double_sided_no: '<%= __("double_sided_no") %>',
-          paper_size_a4: '<%= __("paper_size_a4") %>',
-          paper_size_a3: '<%= __("paper_size_a3") %>',
-          paper_size_letter: '<%= __("paper_size_letter") %>',
-          status_pending: '<%= __("status_pending") %>',
-          status_processing: '<%= __("status_processing") %>',
-          status_completed: '<%= __("status_completed") %>',
-          status_cancelled: '<%= __("status_cancelled") %>',
-          payment_status_completed: '<%= __("payment_status_completed") %>',
-          payment_status_pending: '<%= __("payment_status_pending") %>',
-          payment_status_failed: '<%= __("payment_status_failed") %>',
-          custom_tshirt: '<%= __("custom_tshirt") %>',
-          custom_tshirt_desc: '<%= __("custom_tshirt_desc") %>',
-          option_size: '<%= __("option_size") %>',
-          size_small: '<%= __("size_small") %>',
-          size_medium: '<%= __("size_medium") %>',
-          size_large: '<%= __("size_large") %>'
-        };
-
         ordersContentDiv.innerHTML = `
           <div class="table-responsive mt-3">
             <table class="table">
               <thead>
                 <tr>
                   <th>${translations.order_id}</th>
-                  <th>${translations.date}</th>
-                  <th>${translations.status}</th>
+                  <th>${translations.order_date}</th>
+                  <th>${translations.order_status}</th>
                   <th>${translations.payment_status}</th>
                   <th>${translations.total}</th>
                   <th>${translations.details}</th>
@@ -787,12 +935,12 @@
                     <td>${formatDate(order.created_at, document.documentElement.lang)}</td>
                     <td>
                       <span class="badge bg-${getStatusColor(order.status)}">
-                        ${getTranslatedStatus(order.status, translations)}
+                        ${translations[`status_${order.status.toLowerCase()}`] || order.status}
                       </span>
                     </td>
                     <td>
                       <span class="badge bg-${getPaymentStatusColor(order.payment_status)}">
-                        ${getTranslatedPaymentStatus(order.payment_status, translations)}
+                        ${translations[`payment_status_${order.payment_status}`] || order.payment_status}
                       </span>
                     </td>
                     <td>${translations.currency_symbol}${formatPrice(order.total_price)}</td>
@@ -803,7 +951,7 @@
                         </button>
                         ${order.receipt_url ? `
                           <a href="${order.receipt_url}" target="_blank" class="btn btn-sm">
-                            <%= __('view_receipt') %>
+                            ${translations.view_receipt}
                           </a>
                         ` : ''}
                       </div>
@@ -845,11 +993,11 @@
                                               break;
                                             case 'pages':
                                               translatedKey = translations.option_pages;
-                                              translatedValue = value === 'All' ? translations.pages_all : value;
+                                              translatedValue = value === 'all' ? translations.pages_all : value;
                                               break;
                                             case 'color':
                                               translatedKey = translations.option_color;
-                                              translatedValue = value === 'Black & White' ? translations.color_black_white : translations.color_color;
+                                              translatedValue = value === 'black & white' ? translations.color_black_white : translations.color_color;
                                               break;
                                             case 'paper_size':
                                               translatedKey = translations.option_paper_size;
@@ -915,25 +1063,6 @@
         'failed': 'danger'
       };
       return statusColors[status] || 'secondary';
-    }
-
-    function getTranslatedStatus(status, translations) {
-      const statusMap = {
-        'Pending': translations.status_pending,
-        'Processing': translations.status_processing,
-        'Completed': translations.status_completed,
-        'Cancelled': translations.status_cancelled
-      };
-      return statusMap[status] || status;
-    }
-
-    function getTranslatedPaymentStatus(status, translations) {
-      const statusMap = {
-        'completed': translations.payment_status_completed,
-        'pending': translations.payment_status_pending,
-        'failed': translations.payment_status_failed
-      };
-      return statusMap[status] || status;
     }
 
     function toggleOrderDetails(orderId) {

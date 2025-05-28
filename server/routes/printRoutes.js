@@ -110,10 +110,10 @@ router.post("/print", upload.single("document"), async (req, res) => {
       quantity: parseInt(copies) || 1,
       options: {
         filename: req.file.originalname,
-        pages: print_pages && print_pages.trim() ? print_pages : "All",
-        color: color === "true" ? "Color" : "Black & White",
+        pages: print_pages && print_pages.trim() ? print_pages : "all",
+        color: color === "true" ? "color" : "black & white",
         paper_size,
-        double_sided: double_sided === "true" ? "Yes" : "No",
+        double_sided: double_sided === "on" ? "Yes" : "No",
         file: {
           mimetype: req.file.mimetype,
           buffer: req.file.buffer

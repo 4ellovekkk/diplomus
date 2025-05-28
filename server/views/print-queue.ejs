@@ -28,7 +28,7 @@
                                         <h5 class="mb-0"><%= __('order_id') %>: #<%= order.id %></h5>
                                     </div>
                                     <div class="col-auto">
-                                        <span class="status-badge">
+                                        <span class="status-badge badge bg-info">
                                             <%= __('status_processing') %>
                                         </span>
                                     </div>
@@ -41,10 +41,10 @@
                                         <div class="col-md-6">
                                             <p><strong><%= __('customer') %>:</strong> <%= order.user.username %></p>
                                             <p><strong><%= __('email') %>:</strong> <%= order.user.email %></p>
-                                            <p><strong><%= __('order_date') %>:</strong> <%= new Date(order.created_at).toLocaleString() %></p>
+                                            <p><strong><%= __('order_date') %>:</strong> <%= new Date(order.created_at).toLocaleString(locale) %></p>
                                         </div>
                                         <div class="col-md-6">
-                                            <p><strong><%= __('total_price') %>:</strong> <%= order.total_price %> <%= __('currency_symbol') %></p>
+                                            <p><strong><%= __('total_price') %>:</strong> <%= __('currency_symbol') %><%= order.total_price.toFixed(2) %></p>
                                             <p><strong><%= __('payment_status') %>:</strong> 
                                                 <span class="badge bg-success"><%= __('payment_status_completed') %></span>
                                             </p>
@@ -56,36 +56,35 @@
                                     <h6 class="mb-3"><%= __('order_items') %>:</h6>
                                     <% order.order_items.forEach(item => { %>
                                         <div class="item-card">
-                                            <h6><%= item.service.name %></h6>
+                                            <h6><%= item.service.name === "Document Printing" ? __('document_printing') : __('custom_tshirt') %></h6>
                                             <% const options = JSON.parse(item.options) %>
                                             <div class="item-details">
                                                 <% if (item.service.name === "Document Printing") { %>
                                                     <div>
                                                         <p><strong><%= __('filename') %>:</strong> <%= options.filename %></p>
-                                                        <p><strong><%= __('pages') %>:</strong> <%= options.pages %></p>
+                                                        <p><strong><%= __('pages') %>:</strong> <%= options.pages === 'All' ? __('pages_all') : options.pages %></p>
                                                         <p><strong><%= __('quantity') %>:</strong> <%= item.quantity %></p>
                                                     </div>
                                                     <div>
-                                                        <p><strong><%= __('color_mode') %>:</strong> <%= options.color %></p>
-                                                        <p><strong><%= __('paper_size') %>:</strong> <%= options.paper_size %></p>
-                                                        <p><strong><%= __('double_sided') %>:</strong> <%= options.double_sided %></p>
+                                                        <p><strong><%= __('color_mode') %>:</strong> <%= options.color === 'Black & White' ? __('color_black_white') : __('color_color') %></p>
+                                                        <p><strong><%= __('paper_size') %>:</strong> <%= __(`paper_size_${options.paper_size.toLowerCase()}`) %></p>
+                                                        <p><strong><%= __('double_sided') %>:</strong> <%= options.double_sided === 'Yes' ? __('double_sided_yes') : __('double_sided_no') %></p>
                                                     </div>
                                                 <% } else if (item.service.name === "Custom T-Shirt") { %>
                                                     <div>
-                                                        <p><strong><%= __('size') %>:</strong> <%= options.size %></p>
+                                                        <p><strong><%= __('size') %>:</strong> <%= __(`size_${options.size.toLowerCase()}`) %></p>
                                                         <p><strong><%= __('quantity') %>:</strong> <%= item.quantity %></p>
-                                                        <% if (options.design) { %>
-                                                            <% if (options.design.text) { %>
-                                                                <p><strong><%= __('text') %>:</strong> <%= options.design.text %></p>
-                                                                <p><strong><%= __('text_color') %>:</strong> <%= options.design.textColor %></p>
-                                                            <% } %>
+                                                        <% if (options.text) { %>
+                                                            <p><strong><%= __('text') %>:</strong> <%= options.text %></p>
+                                                            <p><strong><%= __('text_color') %>:</strong> <%= options.textColor %></p>
+                                                            <p><strong><%= __('font_size') %>:</strong> <%= options.fontSize %>px</p>
                                                         <% } %>
                                                     </div>
                                                 <% } %>
                                             </div>
                                             
                                             <div class="print-actions">
-                                                <button class="btn btn-print" onclick="printDocument('<%- options.filename || `design_${order.id}_${item.id}.png` %>', <%- order.id %>)">
+                                                <button class="btn btn-print" onclick="printDocument('<%= options.filename || `design_${order.id}_${item.id}.png` %>', <%= order.id %>)">
                                                     <i class="fas fa-print"></i> 
                                                     <%= item.service.name === "Document Printing" ? __('print') : __('print_design') %>
                                                 </button>
@@ -96,7 +95,7 @@
                             </div>
 
                             <div class="order-footer">
-                                <button class="btn btn-complete" onclick="completeOrder(<%- order.id %>)">
+                                <button class="btn btn-complete" onclick="completeOrder(<%= order.id %>)">
                                     <i class="fas fa-check"></i> <%= __('mark_as_completed') %>
                                 </button>
                             </div>
@@ -141,7 +140,7 @@
 
                     alert('<%= __("order_completed_success") %>');
                 } else {
-                    throw new Error('Failed to complete order');
+                    throw new Error('<%= __("error_completing_order") %>');
                 }
             } catch (error) {
                 console.error('Error completing order:', error);
@@ -158,7 +157,7 @@
                 .then(response => {
                     if (!response.ok) {
                         return response.json().then(err => {
-                            throw new Error(err.error || 'Failed to fetch document');
+                            throw new Error(err.error || '<%= __("error_fetching_document") %>');
                         });
                     }
                     return response.blob();

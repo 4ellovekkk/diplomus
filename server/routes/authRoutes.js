@@ -11,14 +11,14 @@ const verifyTokenExceptLogin = require("../middleware/authMiddleware");
 const handleError = (
   res,
   error,
-  title = "An error occurred",
-  message = "Something went wrong",
+  titleKey = "error_occurred",
+  messageKey = "error_something_wrong",
   status = 500,
 ) => {
-  console.error(`${title}:`, error);
+  console.error(`${titleKey}:`, error);
   res.status(status).render("error", {
-    errorTitle: title,
-    errorMessage: message,
+    errorTitle: res.__?.(titleKey) || titleKey,
+    errorMessage: res.__?.(messageKey) || messageKey,
     errorDetails: { code: status, error: error.message },
   });
 };
@@ -31,15 +31,14 @@ router.get("/register", (req, res) => {
 });
 
 // Register a new user
-
 router.post("/register", async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
 
     if (!username || !email || !password) {
       return res.status(400).render("error", {
-        errorTitle: "Missing Fields",
-        errorMessage: "All fields (username, email, password) are required.",
+        errorTitle: res.__("error_missing_fields"),
+        errorMessage: res.__("error_all_fields_required"),
         errorDetails: { code: 400 },
       });
     }
@@ -53,8 +52,8 @@ router.post("/register", async (req, res) => {
 
     if (existingUser) {
       return res.status(409).render("error", {
-        errorTitle: "User Already Exists",
-        errorMessage: "A user with the same username or email already exists.",
+        errorTitle: res.__("error_user_exists"),
+        errorMessage: res.__("error_user_exists_message"),
         errorDetails: { code: 409 },
       });
     }
@@ -71,11 +70,12 @@ router.post("/register", async (req, res) => {
       },
     });
 
-    res.status(201).redirect("/login"); // Or render a success page if needed
+    res.status(201).redirect("/login");
   } catch (error) {
-    handleError(req, res, error, "Registration Failed", "Error creating user");
+    handleError(res, error, "error_registration_failed", "error_creating_user");
   }
 });
+
 // Render login page
 router.get("/login", (req, res) => {
   res.render("login");
@@ -88,8 +88,8 @@ router.post("/login", async (req, res) => {
 
     if (!identifier || !password) {
       return res.status(400).render("error", {
-        errorTitle: "Missing Credentials",
-        errorMessage: "Email/Username and password are required.",
+        errorTitle: res.__("error_missing_credentials"),
+        errorMessage: res.__("error_credentials_required"),
         errorDetails: { code: 400 },
       });
     }
@@ -102,16 +102,16 @@ router.post("/login", async (req, res) => {
 
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
       return res.status(401).render("error", {
-        errorTitle: "Invalid Credentials",
-        errorMessage: "Invalid email/username or password.",
+        errorTitle: res.__("error_invalid_credentials"),
+        errorMessage: res.__("error_invalid_credentials_message"),
         errorDetails: { code: 401 },
       });
     }
 
     if (user.is_locked) {
       return res.status(403).render("error", {
-        errorTitle: "Account Locked",
-        errorMessage: "Your account has been locked. Please contact support.",
+        errorTitle: res.__("error_account_locked"),
+        errorMessage: res.__("error_account_locked_message"),
         errorDetails: { code: 403 },
       });
     }
@@ -129,7 +129,7 @@ router.post("/login", async (req, res) => {
     });
     res.redirect(301, "/");
   } catch (error) {
-    handleError(res, error, "Login Failed", "Error logging in");
+    handleError(res, error, "error_login_failed", "error_login_failed_message");
   }
 });
 
@@ -143,7 +143,7 @@ router.get("/logout", (req, res) => {
     });
     res.render("logout");
   } catch (error) {
-    handleError(res, error, "Logout Failed", "Error logging out");
+    handleError(res, error, "error_logout_failed", "error_logout_failed_message");
   }
 });
 

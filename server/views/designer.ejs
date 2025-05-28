@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= locale %>">
 <head>
   <meta charset="UTF-8">
-  <title>Graphic Design Consultation</title>
+  <title><%= __('graphic_design_title') %></title>
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
     rel="stylesheet"
@@ -16,7 +16,7 @@
 <body>
   <%- include('./partials/header') %>
   <div class="container1">
-    <h1>Book a Graphic Design Consultation</h1>
+    <h1><%= __('book_consultation') %></h1>
 
       <div id="unauthorized-message" style="display: none;">
           <%- include('./partials/unauthorized-alert') %>
@@ -24,44 +24,44 @@
 
       <form action="/consultation" method="POST" enctype="multipart/form-data">
         <div class="form-group">
-          <label for="fullName">Your Name</label>
+          <label for="fullName"><%= __('your_name') %></label>
           <input type="text" id="fullName" name="fullName" required>
         </div>
 
         <div class="form-group">
-          <label for="email">Email Address</label>
+          <label for="email"><%= __('email') %></label>
           <input type="email" id="email" name="email" required>
         </div>
 
         <div class="form-group">
-          <label for="service">Design Service</label>
+          <label for="service"><%= __('design_service') %></label>
           <select id="service" name="service" required>
-            <option value="">Choose a service...</option>
-            <option value="logo">Logo Design</option>
-            <option value="branding">Branding</option>
-            <option value="social">Social Media Graphics</option>
-            <option value="print">Print Materials</option>
+            <option value=""><%= __('choose_service') %></option>
+            <option value="logo"><%= __('logo_design') %></option>
+            <option value="branding"><%= __('branding') %></option>
+            <option value="social"><%= __('social_media_graphics') %></option>
+            <option value="print"><%= __('print_materials') %></option>
           </select>
         </div>
 
         <div class="form-group">
-          <label for="description">Project Description</label>
+          <label for="description"><%= __('project_description') %></label>
           <textarea id="description" name="description" rows="4" required></textarea>
         </div>
 
         <div class="form-group">
-          <label for="referenceFile">Upload Reference File (optional)</label>
+          <label for="referenceFile"><%= __('reference_file_upload') %></label>
           <input type="file" id="referenceFile" name="referenceFile">
-          <div id="fileInfo">PDF, PNG, JPG, max 5MB</div>
+          <div id="fileInfo"><%= __('file_size_limit') %></div>
         </div>
 
         <div class="form-group form-check">
           <label>
-            <input type="checkbox" name="urgent" value="yes"> Urgent request
+            <input type="checkbox" name="urgent" value="yes"> <%= __('urgent_request') %>
           </label>
         </div>
 
-        <button class="btn" type="submit">Submit Consultation Request</button>
+        <button class="btn" type="submit"><%= __('submit_consultation') %></button>
       </form>
     </div>
   </main>
