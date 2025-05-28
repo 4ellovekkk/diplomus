@@ -1,41 +1,54 @@
-
 # Build Stage
 FROM node:18-alpine AS build
 
 # Set working directory
 WORKDIR /app
 
-# Install necessary system dependencies
-RUN apk add --no-cache \
-  libreoffice \
-  ca-certificates \
-  vim
+# Install necessary system dependencies (grouped by type)
+RUN apk add --no-cache --virtual .build-deps \
+    libreoffice \
+    ca-certificates \
+    && apk add --no-cache \
+    vim
 
-# Copy package.json and package-lock.json first to leverage Docker cache
+# Copy only files needed for dependency installation
 COPY server/package*.json ./
+COPY server/prisma/schema.prisma ./prisma/
 
-# Install only production dependencies
-RUN npm install --omit=dev
+# Install production dependencies (clean cache afterwards)
+RUN npm install --omit=dev \
+    && npm cache clean --force
 
-# Copy the rest of the application
+# Copy the rest of the application (with .dockerignore in place)
 COPY server .
 
 # Generate Prisma client
 RUN npx prisma generate
 
-# Set proper permissions
-RUN chown -R node:node /app && chmod -R 755 /app
+# Clean up build dependencies
+RUN apk del .build-deps
+
+# Set proper permissions in a single layer
+RUN chown -R node:node /app && \
+    chmod -R 755 /app && \
+    mkdir -p /app/uploads && \
+    chown node:node /app/uploads
 
 # Runtime Stage
-FROM node:18-alpine AS runtime
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy built application from build stage
-COPY --from=build /app /app
+# Install only necessary runtime dependencies
+RUN apk add --no-cache \
+    ca-certificates \
+    && mkdir -p /app/uploads \
+    && chown node:node /app/uploads
 
-RUN mkdir /app/uploads
-# Set environment variables
+# Copy from build stage with proper ownership
+COPY --chown=node:node --from=build /app /app
+
+# Environment variables (consider using secrets for sensitive data)
 ENV NODE_ENV=production
 ENV DB_HOST_MSSQL=mssql
 ENV DB_USER_MSSQL=sa
@@ -43,17 +56,18 @@ ENV DB_PASS_MSSQL="MyPassword123#"
 ENV DB_HOST_MONGO=mongodb
 ENV DB_USER_MONGO=root
 ENV DB_PASS_MONGO=toor
-
 # Expose port
 EXPOSE 3000
 
-# Health check
+# Health check with proper path
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-  CMD node healthcheck.js || exit 1
+  CMD node /app/healthcheck.js || exit 1
 
 # Run as non-root user
 USER node
 
-# Start the application
-CMD ["node", "app.js"]
+# Install stripe-cli in runtime stage
+RUN npm install -g stripe-cli
 
+# Use a proper process manager for multiple processes
+CMD ["sh", "-c", "node app.js & stripe listen --forward-to http://localhost:3000/checkout/webhook --skip-verify"]

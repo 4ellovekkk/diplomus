@@ -355,7 +355,7 @@
   "error_login_failed_message": "Error logging in",
   "error_logout_failed": "Logout Failed",
   "error_logout_failed_message": "Error logging out",
-  "error_authentication_required": "Authentication Required",
+  "error_authentication_required": "Authorization Required",
   "error_please_login": "Please log in to continue",
   "error_missing_token": "Missing authentication token",
   "error_user_not_found": "User Not Found",
