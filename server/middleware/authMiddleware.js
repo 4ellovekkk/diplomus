@@ -1,6 +1,19 @@
 const jwt = require("jsonwebtoken");
 const { PrismaClient } = require("@prisma/client");
+const i18n = require("i18n");
+const path = require("path");
+
 const prisma = new PrismaClient();
+
+// Configure i18n
+i18n.configure({
+  locales: ["en", "ru"],
+  directory: path.join(__dirname, "../public/locales"),
+  defaultLocale: "en",
+  cookie: "locale",
+  autoReload: true,
+  updateFiles: false,
+});
 
 const allowedPaths = [
   "/api/login",
@@ -32,6 +45,14 @@ const allowedPaths = [
 ];
 
 const verifyTokenExceptLogin = (req, res, next) => {
+  // Get locale from cookie or default to 'en'
+  const locale = req.cookies?.locale || 'en';
+  
+  // Set locale for this request
+  req.setLocale(locale);
+  res.locals.__ = req.__;
+  res.locals.locale = locale;
+
   // Allow access to static files
   if (req.path.startsWith('/styles/') || 
       req.path.startsWith('/images/') || 
@@ -57,14 +78,15 @@ const verifyTokenExceptLogin = (req, res, next) => {
     if (req.path.startsWith('/api/') || req.path.startsWith('/auth/')) {
       return res.status(401).json({
         success: false,
-        message: 'Authentication required'
+        message: res.__('error_authentication_required')
       });
     }
     // For regular routes, render error page
     return res.status(401).render("error", {
-      errorTitle: "Authentication Required",
-      errorMessage: "Please log in to continue",
-      errorDetails: { code: 401, info: "Missing authentication token" },
+      errorTitle: res.__('error_authentication_required'),
+      errorMessage: res.__('error_please_login'),
+      errorDetails: { code: 401, info: res.__('error_missing_token') },
+      locale
     });
   }
 
@@ -80,14 +102,15 @@ const verifyTokenExceptLogin = (req, res, next) => {
           if (req.path.startsWith('/api/') || req.path.startsWith('/auth/')) {
             return res.status(401).json({
               success: false,
-              message: 'User not found'
+              message: res.__('error_user_not_found')
             });
           }
           // For regular routes, render error page
           return res.status(401).render("error", {
-            errorTitle: "User Not Found",
-            errorMessage: "No user associated with this token.",
+            errorTitle: res.__('error_user_not_found'),
+            errorMessage: res.__('error_no_user_for_token'),
             errorDetails: { code: 401, userId: decoded.userId },
+            locale
           });
         }
         next();
@@ -98,14 +121,15 @@ const verifyTokenExceptLogin = (req, res, next) => {
         if (req.path.startsWith('/api/') || req.path.startsWith('/auth/')) {
           return res.status(500).json({
             success: false,
-            message: 'Internal server error'
+            message: res.__('error_internal_server')
           });
         }
         // For regular routes, render error page
         return res.status(500).render("error", {
-          errorTitle: "Internal Server Error",
-          errorMessage: "Could not validate user from token.",
+          errorTitle: res.__('error_internal_server'),
+          errorMessage: res.__('error_validate_user'),
           errorDetails: { code: 500, error: err.message },
+          locale
         });
       });
   } catch (err) {
@@ -114,14 +138,15 @@ const verifyTokenExceptLogin = (req, res, next) => {
     if (req.path.startsWith('/api/') || req.path.startsWith('/auth/')) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid token'
+        message: res.__('error_invalid_token')
       });
     }
     // For regular routes, render error page
     return res.status(400).render("error", {
-      errorTitle: "Invalid Token",
-      errorMessage: "JWT token could not be verified.",
+      errorTitle: res.__('error_invalid_token'),
+      errorMessage: res.__('error_token_verification'),
       errorDetails: { code: 400, error: err.message },
+      locale
     });
   }
 };

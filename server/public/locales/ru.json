@@ -378,5 +378,14 @@
   "error_login_failed": "Ошибка входа",
   "error_login_failed_message": "Ошибка при входе в систему",
   "error_logout_failed": "Ошибка выхода",
-  "error_logout_failed_message": "Ошибка при выходе из системы"
+  "error_logout_failed_message": "Ошибка при выходе из системы",
+  "error_authentication_required": "Требуется авторизация",
+  "error_please_login": "Пожалуйста, войдите в систему, чтобы продолжить",
+  "error_missing_token": "Отсутствует токен аутентификации",
+  "error_user_not_found": "Пользователь не найден",
+  "error_no_user_for_token": "Не найден пользователь, связанный с этим токеном.",
+  "error_internal_server": "Внутренняя ошибка сервера",
+  "error_validate_user": "Не удалось проверить пользователя по токену.",
+  "error_invalid_token": "Недействительный токен",
+  "error_token_verification": "Не удалось проверить JWT токен."
 }

@@ -354,6 +354,14 @@
   "error_login_failed": "Login Failed",
   "error_login_failed_message": "Error logging in",
   "error_logout_failed": "Logout Failed",
-  "error_logout_failed_message": "Error logging out"
-
+  "error_logout_failed_message": "Error logging out",
+  "error_authentication_required": "Authentication Required",
+  "error_please_login": "Please log in to continue",
+  "error_missing_token": "Missing authentication token",
+  "error_user_not_found": "User Not Found",
+  "error_no_user_for_token": "No user associated with this token.",
+  "error_internal_server": "Internal Server Error",
+  "error_validate_user": "Could not validate user from token.",
+  "error_invalid_token": "Invalid Token",
+  "error_token_verification": "JWT token could not be verified."
 }
