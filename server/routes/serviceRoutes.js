@@ -8,11 +8,52 @@ const mammoth = require("mammoth");
 const path = require("path");
 const fs = require("fs");
 const libre = require("libreoffice-convert");
-const upload = multer({ dest: "uploads/" });
+const nodemailer = require('nodemailer');
 
-const prisma = new PrismaClient();
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = 'uploads/';
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
+
+// Initialize Prisma Client
+let prisma;
+try {
+  prisma = new PrismaClient();
+} catch (error) {
+  console.error('Failed to initialize Prisma client:', error);
+  process.exit(1);
+}
+
 const router = express.Router();
 const verifyTokenExceptLogin = require("../middleware/authMiddleware");
+
+// Configure email transporter with existing Yandex SMTP
+const transporter = nodemailer.createTransport({
+  host: 'smtp.yandex.ru',
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  },
+  tls: {
+    rejectUnauthorized: false,
+    minVersion: 'TLSv1.2'
+  }
+});
 
 const convertToPdf = (inputPath, outputPath) => {
   return new Promise((resolve, reject) => {
@@ -504,24 +545,13 @@ router.delete('/services/:id', verifyTokenExceptLogin, async (req, res) => {
 
     // Check if service exists
     const existingService = await prisma.services.findUnique({
-      where: { id: parseInt(id) },
-      include: {
-        order_items: true
-      }
+      where: { id: parseInt(id) }
     });
 
     if (!existingService) {
       return res.status(404).json({
         success: false,
         message: 'Service not found'
-      });
-    }
-
-    // Check if there are any orders using this service
-    if (existingService.order_items.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Cannot delete service: There are existing orders that use this service'
       });
     }
 
@@ -542,10 +572,125 @@ router.delete('/services/:id', verifyTokenExceptLogin, async (req, res) => {
         message: 'Authentication failed'
       });
     }
-    // Handle any other errors
     res.status(500).json({
       success: false,
       message: 'Failed to delete service'
+    });
+  }
+});
+
+// Add consultation route
+router.post("/consultation", upload.single("referenceFile"), async (req, res) => {
+  try {
+    // Test Prisma connection
+    try {
+      const testQuery = await prisma.services.findFirst();
+      console.log('Prisma connection test:', testQuery ? 'successful' : 'no records found');
+    } catch (error) {
+      console.error('Prisma connection test failed:', error);
+      throw new Error('Database connection failed');
+    }
+
+    const { fullName, email, service, description, urgent } = req.body;
+    const locale = req.getLocale();
+
+    // Save consultation request to database using your existing table structure
+    const consultation = await prisma.consultations.create({
+      data: {
+        fullName,
+        email,
+        service,
+        description,
+        urgent: urgent === 'yes',
+        referenceFile: req.file ? req.file.filename : null
+      }
+    });
+
+    // Email templates for different languages
+    const emailTemplates = {
+      en: {
+        subject: 'Design Consultation Request Confirmation',
+        body: `
+Dear ${fullName},
+
+Thank you for requesting a design consultation with our team. We have received your request for ${service} service.
+
+Here's what happens next:
+1. Our design team will review your request
+2. We will contact you within 24 hours to schedule your consultation
+3. During the consultation, we'll discuss your project in detail and provide initial recommendations
+
+If you have any questions in the meantime, please don't hesitate to contact us.
+
+Best regards,
+Print Center Team
+        `
+      },
+      ru: {
+        subject: 'Подтверждение запроса на консультацию по дизайну',
+        body: `
+Уважаемый(ая) ${fullName},
+
+Благодарим вас за запрос на консультацию по дизайну с нашей командой. Мы получили ваш запрос на услугу ${service}.
+
+Что будет дальше:
+1. Наша команда дизайнеров рассмотрит ваш запрос
+2. Мы свяжемся с вами в течение 24 часов для планирования консультации
+3. Во время консультации мы детально обсудим ваш проект и предоставим первоначальные рекомендации
+
+Если у вас возникнут вопросы, пожалуйста, не стесняйтесь обращаться к нам.
+
+С наилучшими пожеланиями,
+Команда Print Center
+        `
+      }
+    };
+
+    // Get template based on locale
+    const template = emailTemplates[locale] || emailTemplates.en;
+
+    // Send confirmation email
+    await transporter.sendMail({
+      from: {
+        name: 'Print Center',
+        address: `${process.env.SMTP_USER}@yandex.ru`
+      },
+      to: email,
+      subject: template.subject,
+      text: template.body
+    });
+
+    // Translate service names for response message
+    const serviceTranslations = {
+      en: {
+        logo: 'Logo Design',
+        branding: 'Branding',
+        social: 'Social Media Graphics',
+        print: 'Print Materials'
+      },
+      ru: {
+        logo: 'Дизайн логотипа',
+        branding: 'Брендинг',
+        social: 'Графика для социальных сетей',
+        print: 'Печатные материалы'
+      }
+    };
+
+    const translatedService = serviceTranslations[locale]?.[service] || service;
+
+    res.json({
+      success: true,
+      message: res.__('consultation_request_received'),
+      service: translatedService,
+      consultationId: consultation.id
+    });
+
+  } catch (error) {
+    console.error('Consultation request error:', error);
+    res.status(500).json({
+      success: false,
+      message: res.__('consultation_request_error'),
+      error: error.message
     });
   }
 });

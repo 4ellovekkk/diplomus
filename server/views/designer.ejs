@@ -18,80 +18,191 @@
   <div class="container1">
     <h1><%= __('book_consultation') %></h1>
 
-      <div id="unauthorized-message" style="display: none;">
-          <%- include('./partials/unauthorized-alert') %>
+    <div id="unauthorized-message" style="display: none;">
+      <%- include('./partials/unauthorized-alert') %>
+    </div>
+
+    <div id="success-message" class="alert alert-success" style="display: none;">
+      <%= __('consultation_request_success') %>
+    </div>
+
+    <div id="error-message" class="alert alert-danger" style="display: none;">
+      <%= __('consultation_request_error') %>
+    </div>
+
+    <form id="consultationForm" action="/consultation" method="POST" enctype="multipart/form-data" novalidate>
+      <div class="form-group">
+        <label for="fullName"><%= __('your_name') %></label>
+        <input type="text" id="fullName" name="fullName" required>
+        <div class="invalid-feedback">
+          <%= __('please_enter_name') %>
+        </div>
       </div>
 
-      <form action="/consultation" method="POST" enctype="multipart/form-data">
-        <div class="form-group">
-          <label for="fullName"><%= __('your_name') %></label>
-          <input type="text" id="fullName" name="fullName" required>
+      <div class="form-group">
+        <label for="email"><%= __('email') %></label>
+        <input type="email" id="email" name="email" required>
+        <div class="invalid-feedback">
+          <%= __('please_enter_valid_email') %>
         </div>
+      </div>
 
-        <div class="form-group">
-          <label for="email"><%= __('email') %></label>
-          <input type="email" id="email" name="email" required>
+      <div class="form-group">
+        <label for="service"><%= __('design_service') %></label>
+        <select id="service" name="service" required>
+          <option value=""><%= __('choose_service') %></option>
+          <option value="logo"><%= __('logo_design') %></option>
+          <option value="branding"><%= __('branding') %></option>
+          <option value="social"><%= __('social_media_graphics') %></option>
+          <option value="print"><%= __('print_materials') %></option>
+        </select>
+        <div class="invalid-feedback">
+          <%= __('please_select_service') %>
         </div>
+      </div>
 
-        <div class="form-group">
-          <label for="service"><%= __('design_service') %></label>
-          <select id="service" name="service" required>
-            <option value=""><%= __('choose_service') %></option>
-            <option value="logo"><%= __('logo_design') %></option>
-            <option value="branding"><%= __('branding') %></option>
-            <option value="social"><%= __('social_media_graphics') %></option>
-            <option value="print"><%= __('print_materials') %></option>
-          </select>
+      <div class="form-group">
+        <label for="description"><%= __('project_description') %></label>
+        <textarea id="description" name="description" rows="4" required></textarea>
+        <div class="invalid-feedback">
+          <%= __('please_enter_description') %>
         </div>
+      </div>
 
-        <div class="form-group">
-          <label for="description"><%= __('project_description') %></label>
-          <textarea id="description" name="description" rows="4" required></textarea>
+      <div class="form-group">
+        <label for="referenceFile"><%= __('reference_file_upload') %></label>
+        <input type="file" id="referenceFile" name="referenceFile">
+        <div id="fileInfo"><%= __('file_size_limit') %></div>
+        <div class="invalid-feedback">
+          <%= __('invalid_file_format') %>
         </div>
+      </div>
 
-        <div class="form-group">
-          <label for="referenceFile"><%= __('reference_file_upload') %></label>
-          <input type="file" id="referenceFile" name="referenceFile">
-          <div id="fileInfo"><%= __('file_size_limit') %></div>
-        </div>
+      <div class="form-group form-check">
+        <label>
+          <input type="checkbox" name="urgent" value="yes"> <%= __('urgent_request') %>
+        </label>
+      </div>
 
-        <div class="form-group form-check">
-          <label>
-            <input type="checkbox" name="urgent" value="yes"> <%= __('urgent_request') %>
-          </label>
-        </div>
-
-        <button class="btn" type="submit"><%= __('submit_consultation') %></button>
-      </form>
-    </div>
-  </main>
+      <button class="btn" type="submit"><%= __('submit_consultation') %></button>
+    </form>
+  </div>
 
   <script>
   document.addEventListener('DOMContentLoaded', function() {
-      const designForm = document.querySelector('form');
-      const unauthorizedMessage = document.getElementById('unauthorized-message');
+    const form = document.getElementById('consultationForm');
+    const unauthorizedMessage = document.getElementById('unauthorized-message');
+    const successMessage = document.getElementById('success-message');
+    const errorMessage = document.getElementById('error-message');
+    const fileInput = document.getElementById('referenceFile');
 
-      if (designForm) {
-          designForm.addEventListener('submit', async function(e) {
-              e.preventDefault();
+    // Validate file type and size
+    function validateFile(file) {
+      const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
+      const maxSize = 5 * 1024 * 1024; // 5MB
 
-              try {
-                  const response = await fetch('/api/cart/data');
-                  if (response.ok) {
-                      // User is logged in, submit the form
-                      this.submit();
-                  } else {
-                      // User is not logged in, show error message
-                      unauthorizedMessage.style.display = 'block';
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }
-              } catch (error) {
-                  console.error('Error checking authentication:', error);
-                  unauthorizedMessage.style.display = 'block';
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-              }
-          });
+      if (file) {
+        if (!validTypes.includes(file.type)) {
+          fileInput.setCustomValidity('<%= __("invalid_file_format") %>');
+          return false;
+        }
+        if (file.size > maxSize) {
+          fileInput.setCustomValidity('<%= __("file_too_large") %>');
+          return false;
+        }
+        fileInput.setCustomValidity('');
       }
+      return true;
+    }
+
+    // Add validation styles to form fields
+    function validateField(field) {
+      if (!field.validity.valid) {
+        field.classList.add('is-invalid');
+        field.classList.remove('is-valid');
+      } else {
+        field.classList.add('is-valid');
+        field.classList.remove('is-invalid');
+      }
+    }
+
+    // Add input event listeners for real-time validation
+    form.querySelectorAll('input, select, textarea').forEach(field => {
+      field.addEventListener('input', () => validateField(field));
+      field.addEventListener('blur', () => validateField(field));
+    });
+
+    // File input validation
+    fileInput.addEventListener('change', function(e) {
+      validateFile(this.files[0]);
+      validateField(this);
+    });
+
+    if (form) {
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Validate all fields
+        let isValid = true;
+        form.querySelectorAll('input, select, textarea').forEach(field => {
+          if (field.required && !field.validity.valid) {
+            isValid = false;
+            validateField(field);
+          }
+        });
+
+        // Validate file if one is selected
+        if (fileInput.files.length > 0 && !validateFile(fileInput.files[0])) {
+          isValid = false;
+          validateField(fileInput);
+        }
+
+        if (!isValid) {
+          errorMessage.textContent = '<%= __("please_fix_errors") %>';
+          errorMessage.style.display = 'block';
+          return;
+        }
+
+        try {
+          // First check if user is authenticated
+          const authCheck = await fetch('/api/cart/data');
+          if (!authCheck.ok) {
+            unauthorizedMessage.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+          }
+
+          // If authenticated, submit the form
+          const formData = new FormData(this);
+          const response = await fetch('/api/consultation', {
+            method: 'POST',
+            body: formData
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            successMessage.style.display = 'block';
+            errorMessage.style.display = 'none';
+            form.reset();
+            form.querySelectorAll('.is-valid').forEach(field => {
+              field.classList.remove('is-valid');
+            });
+          } else {
+            errorMessage.textContent = result.message || '<%= __("consultation_request_error") %>';
+            errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
+          }
+
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (error) {
+          console.error('Error submitting form:', error);
+          errorMessage.style.display = 'block';
+          successMessage.style.display = 'none';
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+    }
   });
   </script>
   <%- include('./partials/footer') %>

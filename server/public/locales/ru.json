@@ -387,5 +387,16 @@
   "error_internal_server": "Внутренняя ошибка сервера",
   "error_validate_user": "Не удалось проверить пользователя по токену.",
   "error_invalid_token": "Недействительный токен",
-  "error_token_verification": "Не удалось проверить JWT токен."
+  "error_token_verification": "Не удалось проверить JWT токен.",
+  "access_denied": "Доступ запрещен",
+  "consultation_request_received": "Ваш запрос на консультацию получен. Мы свяжемся с вами в ближайшее время!",
+  "consultation_request_error": "Произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз.",
+  "consultation_request_success": "Спасибо! Мы получили ваш запрос на консультацию и скоро свяжемся с вами.",
+  "please_enter_name": "Пожалуйста, введите ваше имя",
+  "please_enter_valid_email": "Пожалуйста, введите корректный email адрес",
+  "please_select_service": "Пожалуйста, выберите услугу",
+  "please_enter_description": "Пожалуйста, опишите ваш проект",
+  "invalid_file_format": "Неверный формат файла. Загрузите файл в формате PDF, PNG или JPG",
+  "file_too_large": "Файл слишком большой. Максимальный размер 5МБ",
+  "please_fix_errors": "Пожалуйста, исправьте ошибки в форме"
 }

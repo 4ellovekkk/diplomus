@@ -138,15 +138,12 @@ passport.use(
 
 //routes
 app.use("/api", authRouter);
-// app.use("/api", orderRoutes);
 app.use("/api", cartRoutes);
 app.use("/api", userRoutes);
 app.use("/api", serviceRoutes);
 app.use("/", profileRoutes);
 app.use("/", printRoutes);
 app.use('/auth', passwordResetRoutes);
-
-// Special handling for checkout routes
 app.use("/checkout", checkoutRoutes);
 
 //basic routes
@@ -154,11 +151,17 @@ app.use("/checkout", checkoutRoutes);
 connectToMongo();
 app.get("/", async (req, res) => {
   try {
-    const locale = req.cookies.locale || "en"; // fallback to 'en'
+    const locale = req.getLocale();
+    const translations = require(`./public/locales/${locale}.json`);
 
     // Check if token exists
     if (!req.cookies.token) {
-      return res.render("index", { user: null, locale });
+      return res.render("index", { 
+        user: null, 
+        locale,
+        translations,
+        t: req.__
+      });
     }
 
     // Verify token
@@ -176,16 +179,28 @@ app.get("/", async (req, res) => {
     });
 
     // Render with user and locale
-    res.render("index", { user, locale });
+    res.render("index", { 
+      user, 
+      locale,
+      translations,
+      t: req.__
+    });
   } catch (error) {
     console.error("Error in root route:", error);
 
     // Clear invalid token
     res.clearCookie("token");
 
-    // Render without user, but still pass locale
-    const locale = req.cookies.locale || "en";
-    res.render("index", { user: null, locale });
+    // Render without user, but with locale support
+    const locale = req.getLocale();
+    const translations = require(`./public/locales/${locale}.json`);
+    
+    res.render("index", { 
+      user: null, 
+      locale,
+      translations,
+      t: req.__
+    });
   }
 });
 app.get(
@@ -213,9 +228,10 @@ app.get("/admin", async (req, res) => {
     // Check authorization (admin only)
     if (currentUser.role !== "admin") {
       return res.status(403).render("error", {
-        errorTitle: "Access Denied",
-        errorMessage: "Forbidden: Admin access required",
-        errorDetails: "You are not permited to access this page",
+        errorTitle: res.__('access_denied'),
+        errorMessage: res.__('access_denied_admin'),
+        errorDetails: res.__('access_denied_details'),
+        locale: req.getLocale()
       });
     }
 
@@ -243,9 +259,9 @@ app.get("/admin", async (req, res) => {
         defaultLocale: i18n.getLocale(),
         languages: i18n.getLocales()
       },
-      t: req.__,  // Pass translation function
+      t: req.__,
       locale: req.getLocale(),
-      translations // Pass translations for client-side
+      translations
     });
   } catch (error) {
     console.error("Admin route error:", error);
@@ -326,10 +342,14 @@ app.get("/api/changelog", async (req, res) => {
         limit: limitNumber,
         totalPages: Math.ceil(totalEntries / limitNumber),
       },
+      message: res.__('changelog_fetched_successfully')
     });
   } catch (err) {
     console.error("Error fetching changelog:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ 
+      success: false,
+      error: res.__('error_internal_server')
+    });
   }
 });
 // About route with optional user data
@@ -347,11 +367,21 @@ app.get("/about", async (req, res) => {
         },
       });
     }
-    res.render("about", { user });
+    res.render("about", { 
+      user,
+      locale: req.getLocale(),
+      translations: require(`./public/locales/${req.getLocale()}.json`),
+      t: req.__
+    });
   } catch (error) {
     console.error("About route error:", error);
     res.clearCookie("token");
-    res.render("about", { user: null });
+    res.render("about", { 
+      user: null,
+      locale: req.getLocale(),
+      translations: require(`./public/locales/${req.getLocale()}.json`),
+      t: req.__
+    });
   }
 });
 
@@ -373,51 +403,50 @@ app.get(
       if (!user) {
         user = await prisma.users.create({
           data: {
-            username: email.split('@')[0], // Use email prefix instead of displayName
+            username: email.split('@')[0],
             email,
-            password_hash: "", // No password required for OAuth
+            password_hash: "",
             role: "customer",
             is_locked: false,
           },
         });
       }
 
-      // Generate a JWT token
-
-      const token = jwt.sign({ userId: user.id, role: user.role }, "lexa", {
+      const token = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET, {
         expiresIn: "1h",
       });
 
       res.cookie("token", token, {
         httpOnly: true,
         maxAge: 3600000,
-        sameSite: "none", // Change from "strict" if cross-site
-        secure: true, // Required if sameSite is none
+        sameSite: "none",
+        secure: true,
       });
       res.redirect(301, "/profile");
     } catch (error) {
       console.error("Google OAuth error:", error);
       res.redirect("/login");
     }
-  },
+  }
 );
 // Set user locale and redirect back
 app.get("/set-locale", (req, res) => {
   const { lang, redirectTo } = req.query;
 
-  // Validate language
   if (!lang || !["en", "ru"].includes(lang)) {
-    return res.status(400).send("Invalid language");
+    return res.status(400).render("error", {
+      errorTitle: res.__('error_invalid_language'),
+      errorMessage: res.__('error_invalid_language_message'),
+      locale: req.getLocale()
+    });
   }
 
-  // Set locale cookie
   res.cookie("locale", lang, {
-    maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+    maxAge: 1000 * 60 * 60 * 24 * 30,
     httpOnly: false,
     sameSite: "strict",
   });
 
-  // Redirect back to previous page or home
   const redirectUrl = redirectTo || "/";
   res.redirect(redirectUrl);
 });

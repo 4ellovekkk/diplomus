@@ -363,5 +363,15 @@
   "error_internal_server": "Internal Server Error",
   "error_validate_user": "Could not validate user from token.",
   "error_invalid_token": "Invalid Token",
-  "error_token_verification": "JWT token could not be verified."
+  "error_token_verification": "JWT token could not be verified.",
+  "consultation_request_received": "Your consultation request has been received. We'll contact you soon!",
+  "consultation_request_error": "There was an error processing your request. Please try again.",
+  "consultation_request_success": "Thank you! We have received your consultation request and will contact you shortly.",
+  "please_enter_name": "Please enter your name",
+  "please_enter_valid_email": "Please enter a valid email address",
+  "please_select_service": "Please select a service",
+  "please_enter_description": "Please enter a project description",
+  "invalid_file_format": "Invalid file format. Please upload a PDF, PNG, or JPG file",
+  "file_too_large": "File is too large. Maximum size is 5MB",
+  "please_fix_errors": "Please fix the errors in the form"
 }

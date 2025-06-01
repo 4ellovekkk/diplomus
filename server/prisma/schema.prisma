@@ -101,3 +101,17 @@ model users {
   Changelog_Changelog_userIdTousers    Changelog[] @relation("Changelog_userIdTousers")
   orders                               orders[]
 }
+
+model consultations {
+  id            Int      @id(map: "PK__consulta__3213E83FFF6A4934") @default(autoincrement())
+  fullName      String   @db.NVarChar(255)
+  email         String   @db.NVarChar(255)
+  service       String   @db.NVarChar(100)
+  description   String   @db.NVarChar(Max)
+  urgent        Boolean  @default(false, map: "DF__consultat__urgen__06CD04F7")
+  referenceFile String?  @db.NVarChar(255)
+  createdAt     DateTime @default(now(), map: "DF__consultat__creat__07C12930")
+  updatedAt     DateTime @default(now(), map: "DF__consultat__updat__08B54D69")
+
+  @@index([email], map: "IX_consultations_email")
+}
