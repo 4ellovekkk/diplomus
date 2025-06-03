@@ -68,6 +68,25 @@ const verifyTokenExceptLogin = (req, res, next) => {
   const isCheckoutSuccess = req.path === '/checkout/success' && req.query.session_id;
   
   if (isAllowedPath || isCheckoutSuccess) {
+    // For checkout success, ensure token and locale are preserved
+    if (isCheckoutSuccess) {
+      if (req.query.token) {
+        res.cookie('token', req.query.token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        });
+      }
+      if (req.query.locale) {
+        res.cookie('locale', req.query.locale, {
+          httpOnly: false,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 365 * 24 * 60 * 60 * 1000 // 1 year
+        });
+      }
+    }
     return next();
   }
 

@@ -56,7 +56,7 @@
                                     <h6 class="mb-3"><%= __('order_items') %>:</h6>
                                     <% order.order_items.forEach(item => { %>
                                         <div class="item-card">
-                                            <h6><%= item.service.name === "Document Printing" ? __('document_printing') : __('custom_tshirt') %></h6>
+                                            <h6><%= item.service.name  === "Document Printing" ? __('document_printing') : __('custom_tshirt') %></h6>
                                             <% const options = JSON.parse(item.options) %>
                                             <div class="item-details">
                                                 <% if (item.service.name === "Document Printing") { %>

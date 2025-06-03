@@ -110,6 +110,7 @@ router.post("/create-checkout-session", verifyTokenExceptLogin, async (req, res)
 
     // Get the current token from the request
     const currentToken = req.cookies.token || req.headers["authorization"] || req.query.token;
+    const currentLocale = req.cookies?.locale || 'en';
 
     console.log('User found:', user.email);
 
@@ -123,11 +124,13 @@ router.post("/create-checkout-session", verifyTokenExceptLogin, async (req, res)
       line_items: lineItems,
       customer_email: user.email,
       mode: 'payment',
-      success_url: `${domain}/checkout/success?session_id={CHECKOUT_SESSION_ID}&token=${currentToken}`,
-      cancel_url: `${domain}/?token=${currentToken}&payment_cancelled=true`,
+      success_url: `${domain}/checkout/success?session_id={CHECKOUT_SESSION_ID}&token=${currentToken}&locale=${currentLocale}`,
+      cancel_url: `${domain}/?token=${currentToken}&payment_cancelled=true&locale=${currentLocale}`,
       metadata: {
         user_id: user.id.toString(),
-        cart: JSON.stringify(metadataCart) // Store simplified cart data in metadata
+        cart: JSON.stringify(metadataCart),
+        token: currentToken,
+        locale: currentLocale
       },
     });
 
@@ -152,10 +155,13 @@ router.get("/success", async (req, res) => {
     const session = await stripe.checkout.sessions.retrieve(req.query.session_id, {
       expand: ['payment_intent', 'line_items']
     });
-    const token = req.query.token;
+    
+    // Get token and locale from query params or session metadata
+    const token = req.query.token || session.metadata.token;
+    const locale = req.query.locale || session.metadata.locale || 'en';
     
     if (session.payment_status !== 'paid') {
-      return res.redirect(`/?token=${token}&payment_failed=true`);
+      return res.redirect(`/?token=${token}&payment_failed=true&locale=${locale}`);
     }
 
     // Get the user ID from the session metadata
@@ -310,17 +316,33 @@ router.get("/success", async (req, res) => {
     req.session.cart = [];
     req.session.pendingCart = [];
     req.session.cartSuccess = req.__("order_success");
-    await req.session.save();
+    
+    // Set token cookie with proper options
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
 
-    // Log the successful order creation
-    console.log('Order created successfully:', {
-      orderId: result.order.id,
-      paymentId: result.payment.id,
-      items: result.orderItems.length
+    // Set locale cookie
+    res.cookie('locale', locale, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 365 * 24 * 60 * 60 * 1000 // 1 year
+    });
+
+    // Save session before redirect
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) reject(err);
+        resolve();
+      });
     });
 
     // Redirect to homepage with success message
-    res.redirect(`/?token=${token}&payment_success=true&order_id=${result.order.id}`);
+    res.redirect(`/?payment_success=true&order_id=${result.order.id}`);
   } catch (error) {
     console.error('Error processing successful payment:', error);
     console.error('Detailed error:', {
@@ -332,7 +354,8 @@ router.get("/success", async (req, res) => {
     });
     req.session.cartError = req.__("order_error");
     const token = req.query.token || '';
-    res.redirect(`/?token=${token}&payment_error=true`);
+    const locale = req.query.locale || 'en';
+    res.redirect(`/?token=${token}&payment_error=true&locale=${locale}`);
   }
 });
 

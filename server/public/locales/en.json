@@ -373,5 +373,6 @@
   "please_enter_description": "Please enter a project description",
   "invalid_file_format": "Invalid file format. Please upload a PDF, PNG, or JPG file",
   "file_too_large": "File is too large. Maximum size is 5MB",
-  "please_fix_errors": "Please fix the errors in the form"
+  "please_fix_errors": "Please fix the errors in the form",
+  "view_design": "View Design"
 }
