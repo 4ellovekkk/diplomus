@@ -7,7 +7,10 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 .DS_Store
-
+*.docx
+*.png
+*.jpg
+*.bkp
 #ide files
 .idea
 
