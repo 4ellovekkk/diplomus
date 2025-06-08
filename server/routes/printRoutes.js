@@ -234,8 +234,15 @@ router.post("/complete-order/:orderId", async (req, res) => {
 // Route to get print file
 router.get("/get-print-file/:orderId", async (req, res) => {
   try {
+    console.log('Received request for print file:', {
+      orderId: req.params.orderId,
+      path: req.path,
+      method: req.method
+    });
+
     // Check if user is logged in and is staff/admin
     if (!req.cookies?.token) {
+      console.log('No token found in cookies');
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -246,6 +253,7 @@ router.get("/get-print-file/:orderId", async (req, res) => {
     });
 
     if (!user || !['admin', 'employee'].includes(user.role)) {
+      console.log('User not authorized:', { userId: decoded.userId, role: user?.role });
       return res.status(403).json({ error: "Forbidden" });
     }
 
@@ -273,39 +281,49 @@ router.get("/get-print-file/:orderId", async (req, res) => {
       options: orderItem.options
     });
 
-    // Parse the options to get the type
+    // Parse the options
     const options = JSON.parse(orderItem.options);
-    const itemType = options.type || 'service';
-    console.log('Item type:', itemType);
-
+    console.log('Parsed options:', options);
     let file;
-    if (itemType === 'service') {
+
+    if (orderItem.service.name === "Document Printing") {
+      console.log('Looking for print file in MongoDB');
       // Get the print file from MongoDB
-      console.log('Looking for print file in MongoDB:', {
-        orderId,
-        orderItemId: orderItem.id
-      });
       file = await PrintFile.findOne({ 
         orderId: orderId,
         orderItemId: orderItem.id
       });
-    } else if (itemType === 'merch') {
+    } else if (orderItem.service.name === "Custom merch design") {
+      console.log('Looking for merch design in MongoDB');
       // Get the merch design from MongoDB
-      console.log('Looking for merch design in MongoDB:', {
-        orderId,
-        orderItemId: orderItem.id
-      });
-      file = await MerchDesign.findOne({
-        orderId: orderId,
-        orderItemId: orderItem.id
-      });
+      if (options.designId) {
+        console.log('Looking up design by ID:', options.designId);
+        file = await MerchDesign.findById(options.designId);
+        
+        if (!file) {
+          console.log('Design not found by ID, trying to find by order info');
+          // Fallback to finding by order info
+          file = await MerchDesign.findOne({
+            orderId: orderId,
+            orderItemId: orderItem.id
+          });
+        }
+      } else {
+        console.log('No designId found, looking up design by order and item IDs');
+        // Fallback to old method if designId is not present
+        file = await MerchDesign.findOne({
+          orderId: orderId,
+          orderItemId: orderItem.id
+        });
+      }
     }
 
     if (!file) {
       console.log('File not found in MongoDB for:', {
         orderId,
         orderItemId: orderItem.id,
-        type: itemType
+        service: orderItem.service.name,
+        designId: options.designId
       });
       return res.status(404).json({ error: "File not found in order" });
     }

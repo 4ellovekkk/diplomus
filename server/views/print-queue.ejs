@@ -10,6 +10,82 @@
     <title><%= __('print_queue_title') %></title>
     <%- include('./partials/favicon') %>
 
+    <style>
+        .size-chart-btn {
+            font-size: 0.875rem;
+            text-decoration: underline;
+            background: none;
+            border: none;
+            color: #0d6efd;
+            padding: 0;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        .size-chart-btn:hover {
+            color: #0a58ca;
+        }
+        .size-table {
+            width: 100%;
+            margin-top: 1rem;
+            border-collapse: collapse;
+        }
+        .size-table th, .size-table td {
+            border: 1px solid #dee2e6;
+            padding: 0.75rem;
+            text-align: center;
+        }
+        .size-table th {
+            background-color: #f8f9fa;
+        }
+        .measurement-note {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 1rem;
+        }
+        /* Merch design styles */
+        .merch-design-details {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+        .design-preview {
+            max-width: 200px;
+            margin-top: 1rem;
+        }
+        .design-preview img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+        .item-card {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .print-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+        .btn-print {
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-print:hover {
+            background-color: #0b5ed7;
+        }
+    </style>
+
 </head>
 <body>
     <%- include('./partials/header') %>
@@ -71,20 +147,25 @@
                                                         <p><strong><%= __('double_sided') %>:</strong> <%= options.double_sided === 'Yes' ? __('double_sided_yes') : __('double_sided_no') %></p>
                                                     </div>
                                                 <% } else if (item.service.name === "Custom T-Shirt") { %>
-                                                    <div>
-                                                        <p><strong><%= __('size') %>:</strong> <%= __(`size_${options.size.toLowerCase()}`) %></p>
-                                                        <p><strong><%= __('quantity') %>:</strong> <%= item.quantity %></p>
-                                                        <% if (options.text) { %>
-                                                            <p><strong><%= __('text') %>:</strong> <%= options.text %></p>
-                                                            <p><strong><%= __('text_color') %>:</strong> <%= options.textColor %></p>
-                                                            <p><strong><%= __('font_size') %>:</strong> <%= options.fontSize %>px</p>
+                                                    <div class="merch-design-details">
+                                                        <div>
+                                                            <p><strong><%= __('size') %>:</strong> <%= __(`size_${options.size.toLowerCase()}`) %></p>
+                                                            <p><strong><%= __('quantity') %>:</strong> <%= item.quantity %></p>
+                                                            <% if (options.designId) { %>
+                                                                <p><strong><%= __('design_id') %>:</strong> <%= options.designId %></p>
+                                                            <% } %>
+                                                        </div>
+                                                        <% if (options.design) { %>
+                                                            <div class="design-preview">
+                                                                <img src="<%= options.design %>" alt="<%= __('design_preview') %>" class="img-thumbnail">
+                                                            </div>
                                                         <% } %>
                                                     </div>
                                                 <% } %>
                                             </div>
                                             
                                             <div class="print-actions">
-                                                <button class="btn btn-print" onclick="printDocument('<%= options.filename || `design_${order.id}_${item.id}.png` %>', <%= order.id %>)">
+                                                <button class="btn btn-print" onclick="printDocument('<%= options.filename || `design_${order.id}_${item.id}.png` %>', <%= order.id %>, '<%= item.service.name %>')">
                                                     <i class="fas fa-print"></i> 
                                                     <%= item.service.name === "Document Printing" ? __('print') : __('print_design') %>
                                                 </button>
@@ -148,7 +229,7 @@
             }
         }
 
-        function printDocument(filename, orderId) {
+        function printDocument(filename, orderId, serviceName) {
             const iframe = document.createElement('iframe');
             iframe.style.display = 'none';
             document.body.appendChild(iframe);

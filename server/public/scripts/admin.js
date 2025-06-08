@@ -513,7 +513,7 @@ function updateServicePricesTable() {
                  step="0.01"
                  style="max-width: 100px;"
                  onchange="updateServicePrice(${service.id}, this.value)">
-          <span class="input-group-text">₽</span>
+          <span class="input-group-text">$</span>
         </div>
       </td>
       <td>

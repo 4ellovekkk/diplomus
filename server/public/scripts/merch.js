@@ -270,26 +270,55 @@ document.addEventListener('DOMContentLoaded', function () {
             const designImage = await captureDesign();
             console.log('Design captured:', designImage.substring(0, 100) + '...');
 
-            // Send to server
+            // Prepare design details
+            const designDetails = {
+                text: textOverlay.textContent.trim() || null,
+                textColor: textColorPicker.value,
+                fontSize: fontSize.value,
+                position: {
+                    x: parseFloat(textOverlay.style.left) || 50,
+                    y: parseFloat(textOverlay.style.top) || 50
+                },
+                imagePosition: customImage.style.display !== 'none' ? {
+                    x: parseFloat(imageWrapper.style.left) || 50,
+                    y: parseFloat(imageWrapper.style.top) || 20
+                } : null,
+                imageSize: customImage.style.display !== 'none' ? {
+                    width: customImage.offsetWidth,
+                    height: customImage.offsetHeight
+                } : null
+            };
+
+            // Save the design first
+            const saveResponse = await fetch('/api/save-merch-design', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    designData: designImage,
+                    designDetails: designDetails
+                })
+            });
+
+            if (!saveResponse.ok) {
+                throw new Error('Failed to save design');
+            }
+
+            const { designId } = await saveResponse.json();
+
+            // Send to cart with design ID and all details
             const cartData = {
                 options: {
                     size: tshirtSize.value,
-                    text: textOverlay.textContent.trim() || null,
-                    textColor: textColorPicker.value,
-                    fontSize: fontSize.value,
-                    position: {
-                        x: parseFloat(textOverlay.style.left) || 50,
-                        y: parseFloat(textOverlay.style.top) || 50
-                    },
-                    imagePosition: customImage.style.display !== 'none' ? {
-                        x: parseFloat(imageWrapper.style.left) || 50,
-                        y: parseFloat(imageWrapper.style.top) || 20
-                    } : null,
-                    imageSize: customImage.style.display !== 'none' ? {
-                        width: customImage.offsetWidth,
-                        height: customImage.offsetHeight
-                    } : null,
-                    design: designImage
+                    designId: designId,
+                    design: designImage,
+                    text: designDetails.text,
+                    textColor: designDetails.textColor,
+                    fontSize: designDetails.fontSize,
+                    position: designDetails.position,
+                    imagePosition: designDetails.imagePosition,
+                    imageSize: designDetails.imageSize
                 }
             };
 

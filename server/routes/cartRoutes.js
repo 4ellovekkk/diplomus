@@ -6,6 +6,7 @@ const router = express.Router();
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const verifyToken = require('../middleware/authMiddleware');
+const MerchDesign = require("../models_mongo/merchDesign");
 
 // Helper function to handle errors and redirect to profile
 const handleError = (req, res, error, message = "An error occurred") => {
@@ -47,7 +48,7 @@ router.get("/cart/data", verifyTokenExceptLogin, async (req, res) => {
             options: {
               ...item.options,
               type: 'merch',
-              design: item.options.design // Ensure design data is preserved
+              design: item.options.design // Keep the design data
             }
           };
         }
@@ -63,14 +64,6 @@ router.get("/cart/data", verifyTokenExceptLogin, async (req, res) => {
         };
       })
     );
-
-    console.log('Cart with details:', cartWithDetails.map(item => ({
-      ...item,
-      options: item.options ? {
-        ...item.options,
-        design: item.options.design ? 'design_data_exists' : 'no_design_data'
-      } : 'no_options'
-    })));
 
     // Make cart data available to client-side JavaScript
     const responseData = {
@@ -88,13 +81,8 @@ router.get("/cart/data", verifyTokenExceptLogin, async (req, res) => {
     delete req.session.cartSuccess;
     delete req.session.cartError;
   } catch (error) {
-    console.error('Error loading cart:', error);
-    res.status(500).json({
-      error: req.__("error_loading_cart"),
-      cart: [],
-      cartTotal: 0,
-      itemCount: 0
-    });
+    console.error('Error getting cart data:', error);
+    res.status(500).json({ error: 'Failed to get cart data' });
   }
 });
 
@@ -128,8 +116,6 @@ router.post("/cart/add-merch", verifyTokenExceptLogin, async (req, res) => {
       req.session.cart = [];
     }
 
-    console.log('Adding merch to cart with design:', options.design.substring(0, 100) + '...');
-
     // Create the cart item
     const cartItem = {
       type: 'merch',
@@ -146,20 +132,13 @@ router.post("/cart/add-merch", verifyTokenExceptLogin, async (req, res) => {
         position: options.position || null,
         imagePosition: options.imagePosition || null,
         imageSize: options.imageSize || null,
-        design: options.design // Store the base64 design data
+        design: options.design, // Store the base64 design data
+        designId: options.designId // Store the design ID
       }
     };
 
     // Add to cart
     req.session.cart.push(cartItem);
-
-    console.log('Merch added to cart successfully. Cart item:', {
-      ...cartItem,
-      options: {
-        ...cartItem.options,
-        design: cartItem.options.design ? 'design_data_exists' : 'no_design_data'
-      }
-    });
 
     req.session.cartSuccess = "T-shirt added to cart";
     req.session.save(() => {
@@ -320,6 +299,45 @@ router.post("/cart/clear", verifyTokenExceptLogin, async (req, res) => {
       error: req.__("error_clear_cart")
     });
   }
+});
+
+// Save merch design
+router.post("/save-merch-design", verifyTokenExceptLogin, async (req, res) => {
+    try {
+        const { designData, designDetails } = req.body;
+        
+        // Convert base64 to buffer
+        const base64Data = designData.replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(base64Data, 'base64');
+
+        // Create new design document without order information
+        const design = await MerchDesign.create({
+            filename: `design-${Date.now()}.jpg`,
+            contentType: 'image/jpeg',
+            data: buffer,
+            designType: designDetails.imagePosition ? 'combined' : 'text',
+            designDetails: designDetails,
+            uploadedAt: new Date(),
+            orderId: null, // Explicitly set to null
+            orderItemId: null // Explicitly set to null
+        });
+
+        console.log('Design saved successfully:', {
+            designId: design._id,
+            filename: design.filename
+        });
+
+        res.json({
+            success: true,
+            designId: design._id
+        });
+    } catch (error) {
+        console.error('Error saving merch design:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to save design'
+        });
+    }
 });
 
 module.exports = router;

@@ -233,7 +233,7 @@
   "add_service_modal_title": "Добавление новой услуги",
   "service_name_label": "Название услуги",
   "service_description_label": "Описание",
-  "base_price_label": "Базовая цена (₽)",
+  "base_price_label": "Базовая цена ($)",
   "add": "Добавить услугу",
   
   "failed_to_fetch_users": "Не удалось загрузить пользователей",

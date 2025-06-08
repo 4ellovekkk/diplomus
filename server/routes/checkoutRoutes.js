@@ -244,7 +244,8 @@ router.get("/success", async (req, res) => {
             ...(options.fontSize && { fontSize: options.fontSize }),
             ...(options.position && { position: options.position }),
             ...(options.imagePosition && { imagePosition: options.imagePosition }),
-            ...(options.imageSize && { imageSize: options.imageSize })
+            ...(options.imageSize && { imageSize: options.imageSize }),
+            ...(options.designId && { designId: options.designId })
           };
 
           const orderItem = await prisma.order_items.create({
@@ -278,31 +279,58 @@ router.get("/success", async (req, res) => {
           }
           
           // If this is a merch order with a design, store it in MongoDB
-          if (cartItem.type === 'merch' && options.design) {
-            console.log('Storing merch design:', {
-              orderId: order.id,
-              orderItemId: orderItem.id,
-              hasDesign: !!options.design
+          if (cartItem.type === 'merch' && options.designId) {
+            console.log('Updating merch design with order information:', {
+                orderId: order.id,
+                orderItemId: orderItem.id,
+                designId: options.designId,
+                designDetails: {
+                    text: options.text,
+                    textColor: options.textColor,
+                    fontSize: options.fontSize,
+                    position: options.position,
+                    imagePosition: options.imagePosition,
+                    imageSize: options.imageSize
+                }
             });
 
-            await MerchDesign.create({
-              orderId: order.id,
-              orderItemId: orderItem.id,
-              filename: `design_${order.id}_${orderItem.id}.png`,
-              contentType: 'image/png',
-              data: Buffer.from(options.design.split(',')[1], 'base64'),
-              designType: options.text ? 'text' : 'image',
-              designDetails: {
-                text: options.text || null,
-                textColor: options.textColor || null,
-                fontSize: options.fontSize || null,
-                position: options.position || null,
-                imagePosition: options.imagePosition || null,
-                imageSize: options.imageSize || null
-              }
-            });
+            try {
+                // Update the existing design document with order information and design details
+                const updatedDesign = await MerchDesign.findByIdAndUpdate(
+                    options.designId,
+                    {
+                        orderId: order.id,
+                        orderItemId: orderItem.id,
+                        filename: `design_${order.id}_${orderItem.id}.png`,
+                        designType: options.text ? 'text' : 'image',
+                        designDetails: {
+                            text: options.text || null,
+                            textColor: options.textColor || null,
+                            fontSize: options.fontSize || null,
+                            position: options.position || null,
+                            imagePosition: options.imagePosition || null,
+                            imageSize: options.imageSize || null
+                        }
+                    },
+                    { new: true } // Return the updated document
+                );
 
-            console.log('Merch design stored successfully');
+                if (!updatedDesign) {
+                    console.error('Failed to update design:', {
+                        designId: options.designId,
+                        orderId: order.id,
+                        orderItemId: orderItem.id
+                    });
+                } else {
+                    console.log('Merch design updated successfully:', {
+                        designId: updatedDesign._id,
+                        orderId: updatedDesign.orderId,
+                        orderItemId: updatedDesign.orderItemId
+                    });
+                }
+            } catch (error) {
+                console.error('Error updating merch design:', error);
+            }
           }
 
           return orderItem;

@@ -73,6 +73,7 @@
     let pdfDoc = null;
     let currentPage = 1;
     let isAuthorized = false;
+    let printPagesInput;
 
     // Check if user is authorized
     async function checkAuthorization() {
@@ -220,13 +221,13 @@
     document.addEventListener('DOMContentLoaded', function() {
         const printForm = document.getElementById('printForm');
         const unauthorizedMessage = document.getElementById('unauthorized-message');
+        printPagesInput = document.getElementById('print_pages');
 
         printForm.addEventListener('submit', async function(e) {
             e.preventDefault();
 
             // Validate page range first
             const pagesField = document.getElementById('print_pages').value.trim();
-            const printPagesInput = document.getElementById('print_pages');
             const errorDiv = document.getElementById('print_pages_error');
             printPagesInput.classList.remove('is-invalid');
             errorDiv.textContent = '';
