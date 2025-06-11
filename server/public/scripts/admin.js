@@ -201,10 +201,11 @@ function editUser(userId) {
       const user = data.user;
       // Populate the fields in the modal form
       document.getElementById("viewUserId").value = user.id;
+      document.getElementById("viewUserId").readOnly = true; // Make ID field read-only
       document.getElementById("viewUsername").value = user.username;
       document.getElementById("viewEmail").value = user.email;
       document.getElementById("viewRole").value = user.role || "customer";
-      document.getElementById("viewStatus").value = user.status;
+      // Remove status field
       document.getElementById("viewCreatedAt").value = new Date(
         user.createdAt,
       ).toLocaleString();
@@ -468,22 +469,22 @@ async function fetchServices() {
         window.location.href = '/login';
         return;
       } else if (response.status === 403) {
-        alert('Access denied: Admin privileges required');
+        alert(t('access_denied_admin'));
         return;
       }
       const data = await response.json();
-      throw new Error(data.message || 'Failed to fetch services');
+      throw new Error(data.message || t('failed_to_fetch_services'));
     }
     const data = await response.json();
     if (data.success) {
       services = data.services;
       updateServicePricesTable();
     } else {
-      throw new Error(data.message || 'Failed to fetch services');
+      throw new Error(data.message || t('failed_to_fetch_services'));
     }
   } catch (error) {
     console.error('Error fetching services:', error);
-    alert('Error loading services: ' + error.message);
+    alert(t('error_loading_services') + ': ' + error.message);
   }
 }
 
@@ -494,7 +495,7 @@ function updateServicePricesTable() {
 
   if (!services || services.length === 0) {
     const row = document.createElement('tr');
-    row.innerHTML = '<td colspan="5" class="text-center">No services found</td>';
+    row.innerHTML = `<td colspan="5" class="text-center">${t('no_services_found')}</td>`;
     tableBody.appendChild(row);
     return;
   }
@@ -545,11 +546,11 @@ async function updateServicePrice(serviceId, newPrice) {
         window.location.href = '/login';
         return;
       } else if (response.status === 403) {
-        alert('Access denied: Admin privileges required');
+        alert(t('access_denied_admin'));
         return;
       }
       const data = await response.json();
-      throw new Error(data.message || 'Failed to update service price');
+      throw new Error(data.message || t('failed_to_update_service_price'));
     }
 
     const data = await response.json();
@@ -559,13 +560,13 @@ async function updateServicePrice(serviceId, newPrice) {
       if (serviceIndex !== -1) {
         services[serviceIndex] = data.service;
       }
-      alert('Price updated successfully');
+      alert(t('price_updated_successfully'));
     } else {
-      throw new Error(data.message || 'Failed to update service price');
+      throw new Error(data.message || t('failed_to_update_service_price'));
     }
   } catch (error) {
     console.error('Error updating service price:', error);
-    alert('Error updating price: ' + error.message);
+    alert(t('error_updating_price') + ': ' + error.message);
     // Refresh the table to show original values
     fetchServices();
   }
@@ -576,16 +577,16 @@ async function editService(serviceId) {
   try {
     const service = services.find(s => s.id === serviceId);
     if (!service) {
-      throw new Error('Service not found');
+      throw new Error(t('service_not_found'));
     }
 
-    const newName = prompt('Enter new service name:', service.name);
+    const newName = prompt(t('enter_new_service_name'), service.name);
     if (newName === null) return; // User cancelled
 
-    const newDescription = prompt('Enter new service description:', service.description || '');
+    const newDescription = prompt(t('enter_new_service_description'), service.description || '');
     if (newDescription === null) return; // User cancelled
 
-    const newPrice = prompt('Enter new service price:', service.price);
+    const newPrice = prompt(t('enter_new_service_price'), service.price);
     if (newPrice === null) return; // User cancelled
 
     const response = await fetch(`/api/services/${serviceId}`, {
@@ -605,11 +606,11 @@ async function editService(serviceId) {
         window.location.href = '/login';
         return;
       } else if (response.status === 403) {
-        alert('Access denied: Admin privileges required');
+        alert(t('access_denied_admin'));
         return;
       }
       const data = await response.json();
-      throw new Error(data.message || 'Failed to update service');
+      throw new Error(data.message || t('failed_to_update_service'));
     }
 
     const data = await response.json();
@@ -620,13 +621,13 @@ async function editService(serviceId) {
         services[serviceIndex] = data.service;
       }
       updateServicePricesTable();
-      alert('Service updated successfully');
+      alert(t('service_updated_successfully'));
     } else {
-      throw new Error(data.message || 'Failed to update service');
+      throw new Error(data.message || t('failed_to_update_service'));
     }
   } catch (error) {
     console.error('Error updating service:', error);
-    alert('Error updating service: ' + error.message);
+    alert(t('error_updating_service') + ': ' + error.message);
   }
 }
 
@@ -696,7 +697,7 @@ async function submitNewService(event) {
 
 // Function to delete a service
 async function deleteService(serviceId) {
-  if (!confirm('Are you sure you want to delete this service? This action cannot be undone.')) {
+  if (!confirm(t('confirm_delete_service'))) {
     return;
   }
 
@@ -715,25 +716,25 @@ async function deleteService(serviceId) {
         window.location.href = '/login';
         return;
       } else if (response.status === 403) {
-        alert('Access denied: Admin privileges required');
+        alert(t('access_denied_admin'));
         return;
       } else if (response.status === 400 && data.message.includes('existing orders')) {
-        alert('Cannot delete this service because it has existing orders. Consider disabling or archiving the service instead.');
+        alert(t('cannot_delete_service_with_orders'));
         return;
       }
-      throw new Error(data.message || 'Failed to delete service');
+      throw new Error(data.message || t('failed_to_delete_service'));
     }
 
     if (data.success) {
       services = services.filter(s => s.id !== serviceId);
       updateServicePricesTable();
-      alert('Service deleted successfully');
+      alert(t('service_deleted_successfully'));
     } else {
-      throw new Error(data.message || 'Failed to delete service');
+      throw new Error(data.message || t('failed_to_delete_service'));
     }
   } catch (error) {
     console.error('Error deleting service:', error);
-    alert('Error deleting service: ' + error.message);
+    alert(t('error_deleting_service') + ': ' + error.message);
   }
 }
 

@@ -9,7 +9,42 @@
     </tr>
     <% cart.forEach(item => { %>
         <tr>
-            <td><%= item.name %></td>
+            <td>
+                <%= item.name %>
+                <% if (item.options) { %>
+                    <br>
+                    <small>
+                        <% if (item.options.filename) { %>
+                            <%= __('filename') %>: <%= item.options.filename %><br>
+                        <% } %>
+                    
+                        <% if (item.options.print_pages && item.options.totalDocumentPages) { %>
+                            <%= __('print_pages') %>: <%= item.options.print_pages %> <%= __('of') %> <%= item.options.totalDocumentPages %> <%= __('pages') %><br>
+                            <script>alert('Condition: print_pages AND totalDocumentPages')</script>
+                        <% } else if (item.options.print_pages) { %>
+                            <%= __('print_pages') %>: <%= item.options.print_pages %><br>
+                            <script>alert('Condition: print_pages ONLY')</script>
+                        <% } else if (item.options.totalDocumentPages) { %>
+                            <%= __('total_pages') %>: <%= item.options.totalDocumentPages %> <%= __('pages') %><br>
+                            <script>alert('Condition: totalDocumentPages ONLY')</script>
+                        <% } %>
+                        
+                    
+                        <% if (item.options.color) { %>
+                            <%= __('color_mode') %>: <%= item.options.color %><br>
+                        <% } %>
+                    
+                        <% if (item.options.paper_size) { %>
+                            <%= __('paper_size') %>: <%= item.options.paper_size %><br>
+                        <% } %>
+                    
+                        <% if (item.options.double_sided) { %>
+                            <%= __('double_sided') %>: <%= item.options.double_sided %><br>
+                        <% } %>
+                    </small>
+                    
+                <% } %>
+            </td>
             <td><%= item.quantity %></td>
             <td><%= item.price %></td>
             <td><%= (item.price * item.quantity).toFixed(2) %></td>

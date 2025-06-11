@@ -234,7 +234,8 @@ router.get("/success", async (req, res) => {
           const orderItemOptions = {
             type: cartItem.type || 'service',
             ...(options.filename && { filename: options.filename }),
-            ...(options.pages && { pages: options.pages }),
+            ...(options.print_pages && { print_pages: options.print_pages }),
+            ...(options.totalDocumentPages && { totalDocumentPages: options.totalDocumentPages }),
             ...(options.color && { color: options.color }),
             ...(options.paper_size && { paper_size: options.paper_size }),
             ...(options.double_sided && { double_sided: options.double_sided }),

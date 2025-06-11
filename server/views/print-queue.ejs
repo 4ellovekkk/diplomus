@@ -133,18 +133,39 @@
                                     <% order.order_items.forEach(item => { %>
                                         <div class="item-card">
                                             <h6><%= item.service.name  === "Document Printing" ? __('document_printing') : __('custom_tshirt') %></h6>
-                                            <% const options = JSON.parse(item.options) %>
+                                            <% 
+                                            // Ensure options is properly parsed
+                                            const options = typeof item.options === 'string' ? JSON.parse(item.options) : item.options;
+                                            %>
                                             <div class="item-details">
                                                 <% if (item.service.name === "Document Printing") { %>
                                                     <div>
                                                         <p><strong><%= __('filename') %>:</strong> <%= options.filename %></p>
-                                                        <p><strong><%= __('pages') %>:</strong> <%= options.pages === 'All' ? __('pages_all') : options.pages %></p>
+                                                        <p><strong><%= __('print_pages') %>:</strong> 
+                                                            <% if (options.print_pages === 'all') { %>
+                                                                <%= __('pages_all') %>
+                                                            <% } else if (options.print_pages && options.totalDocumentPages) { %>
+                                                                <%= options.print_pages %>
+                                                            <% } else if (options.print_pages) { %>
+                                                                <%= options.print_pages %>
+                                                            <% } else if (options.totalDocumentPages) { %>
+                                                                <%= __('total_pages') %>: <%= options.totalDocumentPages %>
+                                                            <% } else { %>
+                                                                <%= __('pages_all') %>
+                                                            <% } %>                                                            
+                                                        </p>
                                                         <p><strong><%= __('quantity') %>:</strong> <%= item.quantity %></p>
                                                     </div>
                                                     <div>
-                                                        <p><strong><%= __('color_mode') %>:</strong> <%= options.color === 'Black & White' ? __('color_black_white') : __('color_color') %></p>
-                                                        <p><strong><%= __('paper_size') %>:</strong> <%= __(`paper_size_${options.paper_size.toLowerCase()}`) %></p>
-                                                        <p><strong><%= __('double_sided') %>:</strong> <%= options.double_sided === 'Yes' ? __('double_sided_yes') : __('double_sided_no') %></p>
+                                                        <p><strong><%= __('color_mode') %>:</strong> 
+                                                            <%= options.color === 'color' ? __('color_color') : __('color_black_white') %>
+                                                        </p>
+                                                        <p><strong><%= __('paper_size') %>:</strong> 
+                                                            <%= __(`paper_size_${options.paper_size.toLowerCase()}`) %>
+                                                        </p>
+                                                        <p><strong><%= __('double_sided') %>:</strong> 
+                                                            <%= options.double_sided === 'No' ? __('double_sided_no') : __('double_sided_yes') %>
+                                                        </p>
                                                     </div>
                                                 <% } else if (item.service.name === "Custom T-Shirt") { %>
                                                     <div class="merch-design-details">

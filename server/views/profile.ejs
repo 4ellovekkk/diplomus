@@ -201,6 +201,18 @@
       item_removed: '<%= __("item_removed") %>',
       cart_cleared: '<%= __("cart_cleared") %>',
       item_removed_name: '<%= __("item_removed_name") %>',
+      print_pages: '<%= __("print_pages") %>',
+      total_pages: '<%= __("total_pages") %>',
+      of: '<%= __("of") %>',
+      pages: '<%= __("pages") %>',
+      filename: '<%= __("filename") %>',
+      color_mode: '<%= __("color_mode") %>',
+      paper_size: '<%= __("paper_size") %>',
+      double_sided: '<%= __("double_sided") %>',
+      option_filename: '<%= __("option_filename") %>',
+      option_pages: '<%= __("option_pages") %>',
+      option_size: '<%= __("option_size") %>',
+      totalDocumentPages: '<%= __("totalDocumentPages") %>',
 
       // Orders translations
       order_id: '<%= __("order_id") %>',
@@ -671,8 +683,17 @@
                                 const doubleKey = value === 'No' ? 'double_sided_no' : 'double_sided_yes';
                                 return `<span class="badge bg-light text-dark me-1">${translations.option_double_sided}: ${translations[doubleKey]}</span>`;
                               }
-                              if (key === 'pages') {
-                                return `<span class="badge bg-light text-dark me-1">${translations.option_pages}: ${translations.pages_all}</span>`;
+                              if (key === 'print_pages') {
+                                if (item.options.totalDocumentPages) {
+                                  // return `<span class="badge bg-light text-dark me-1">${translations.print_pages}: ${value} ${translations.of} ${item.options.totalDocumentPages} ${translations.pages}</span>`;
+                                }
+                                return `<span class="badge bg-light text-dark me-1">${translations.print_pages}: ${value}</span>`;
+                              }
+                              if (key === 'totalDocumentPages') {
+                                return `<span class="badge bg-light text-dark me-1">${translations.total_pages}: ${value}</span>`;
+                              }
+                              if (key === 'filename') {
+                                return `<span class="badge bg-light text-dark me-1">${translations.filename}: ${value}</span>`;
                               }
                               
                               // Default case for other options

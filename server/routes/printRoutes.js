@@ -81,6 +81,7 @@ router.post("/print", upload.single("document"), async (req, res) => {
     }
 
     const { print_pages, copies, color, paper_size, double_sided, totalDocumentPages } = req.body;
+    console.log(req.body);
 
     // Get the document printing service
     const service = await prisma.services.findUnique({
@@ -110,8 +111,9 @@ router.post("/print", upload.single("document"), async (req, res) => {
       quantity: parseInt(copies) || 1,
       options: {
         filename: req.file.originalname,
-        pages: print_pages && print_pages.trim() ? print_pages : "all",
-        color: color === "true" ? "color" : "black & white",
+        print_pages: print_pages || "all",
+        totalDocumentPages: totalDocumentPages,
+        color: color === "color" ? "color" : "black & white",
         paper_size,
         double_sided: double_sided === "on" ? "Yes" : "No",
         file: {
