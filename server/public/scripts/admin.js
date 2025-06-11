@@ -165,7 +165,6 @@ function viewUser(id) {
       document.getElementById("viewUsername").value = user.username || placeholder;
       document.getElementById("viewEmail").value = user.email || placeholder;
       document.getElementById("viewRole").value = user.role || "customer";
-      document.getElementById("viewStatus").value = user.is_locked ? t("locked") : t("active");
       document.getElementById("viewCreatedAt").value = user.created_at
         ? new Date(user.created_at).toLocaleString()
         : placeholder;
@@ -200,12 +199,15 @@ function editUser(userId) {
     .then((data) => {
       const user = data.user;
       // Populate the fields in the modal form
-      document.getElementById("viewUserId").value = user.id;
-      document.getElementById("viewUserId").readOnly = true; // Make ID field read-only
+      const idField = document.getElementById("viewUserId");
+      idField.value = user.id;
+      idField.readOnly = true;
+      idField.disabled = true;
+      idField.classList.add('bg-light'); // Add a visual indication that it's disabled
+      
       document.getElementById("viewUsername").value = user.username;
       document.getElementById("viewEmail").value = user.email;
       document.getElementById("viewRole").value = user.role || "customer";
-      // Remove status field
       document.getElementById("viewCreatedAt").value = new Date(
         user.createdAt,
       ).toLocaleString();
