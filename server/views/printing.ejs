@@ -37,10 +37,10 @@
             margin: 0 10px;
         }
         /* Custom file input styling */
-        .custom-file-input::-webkit-file-upload-button {
+        /* .custom-file-input::-webkit-file-upload-button {
             visibility: hidden;
             width: 0;
-        }
+        } */
         .custom-file-input::before {
             content: '<%= __("choose_file") %>';
             display: inline-block;
@@ -66,6 +66,16 @@
             color: #6c757d;
             margin-top: 0.25rem;
         }
+        /* Hide default "No file chosen" text */
+        .custom-file-input::-webkit-file-upload-button {
+            visibility: hidden;
+            width: 0;
+        }
+        .custom-file-input::file-selector-button {
+            visibility: hidden;
+            width: 0;
+        }
+       
     </style>
     <%- include('./partials/favicon') %>
 <script>
@@ -181,6 +191,7 @@
         if (fileInput.files.length > 0) {
             const file = fileInput.files[0];
             fileInfo.textContent = "<%= __('file_name') %>: " + file.name + ", <%= __('file_size') %>: " + (file.size / 1024).toFixed(2) + " KB";
+            fileInput.setAttribute('placeholder', file.name);
 
             pagesInput.value = "<%= __('detecting') %>";
             
@@ -213,6 +224,7 @@
             fileInfo.textContent = '';
             pagesInput.value = '';
             totalPages = 0;
+            fileInput.setAttribute('placeholder', fileInput.dataset.placeholder);
             document.getElementById('preview-section').style.display = 'none';
         }
     }
@@ -220,13 +232,18 @@
     document.addEventListener('DOMContentLoaded', function() {
         const printForm = document.getElementById('printForm');
         const unauthorizedMessage = document.getElementById('unauthorized-message');
+        const printPagesInput = document.getElementById('print_pages');
+        const pagesInput = document.getElementById('pages');
+        const fileInput = document.getElementById('document');
+
+        // Set initial placeholder text
+        fileInput.setAttribute('placeholder', fileInput.dataset.placeholder);
 
         printForm.addEventListener('submit', async function(e) {
             e.preventDefault();
 
             // Validate page range first
-            const pagesField = document.getElementById('print_pages').value.trim();
-            const printPagesInput = document.getElementById('print_pages');
+            const pagesField = printPagesInput.value.trim();
             const errorDiv = document.getElementById('print_pages_error');
             printPagesInput.classList.remove('is-invalid');
             errorDiv.textContent = '';
@@ -329,9 +346,9 @@
             <div class="preview-container">
                 <canvas id="preview-canvas"></canvas>
                 <div class="preview-controls">
-                    <button type="button" class="btn btn-secondary" id="prev-page">Previous</button>
-                    <span class="page-number">Page <span id="current-page">1</span> of <span id="total-pages">1</span></span>
-                    <button type="button" class="btn btn-secondary" id="next-page">Next</button>
+                    <button type="button" class="btn " id="prev-page"><%= __('previous') %></button>
+                    <span class="page-number"><%= __('page') %> <span id="current-page">1</span> <%= __('of') %> <span id="total-pages">1</span></span>
+                    <button type="button" class="btn " id="next-page"><%= __('next') %></button>
                 </div>
             </div>
         </div>

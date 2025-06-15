@@ -58,12 +58,12 @@
     ymaps.ready(init);
     function init() {
         const map = new ymaps.Map("map", {
-            center: [55.7558, 37.6176],
+            center: [53.834766, 27.614212],
             zoom: 15,
             type: 'yandex#map',
         });
 
-        const placemark = new ymaps.Placemark([55.7558, 37.6176], {
+        const placemark = new ymaps.Placemark([53.834766, 27.614212], {
             hintContent: '<%= __('map_hint') %>',
             balloonContent: '<%= __('map_balloon') %>'
         });

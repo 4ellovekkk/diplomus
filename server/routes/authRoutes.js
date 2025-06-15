@@ -70,7 +70,7 @@ router.post("/register", async (req, res) => {
       },
     });
 
-    res.status(201).redirect("/login");
+    res.status(201).redirect("/api/login");
   } catch (error) {
     handleError(res, error, "error_registration_failed", "error_creating_user");
   }

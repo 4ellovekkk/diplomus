@@ -330,10 +330,11 @@ router.get('/services', verifyTokenExceptLogin, async (req, res) => {
       select: { role: true }
     });
 
-    if (user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Unauthorized: Admin access required'
+    if (!user || user.role !== 'admin') {
+      return res.status(403).render("error", {
+        errorTitle: res.__("access_denied"),
+        errorMessage: res.__("access_denied_message"),
+        errorDetails: { code: 403 }
       });
     }
 
@@ -341,22 +342,24 @@ router.get('/services', verifyTokenExceptLogin, async (req, res) => {
       orderBy: { id: 'asc' }
     });
 
-    res.json({
-      success: true,
-      services
+    res.render("admin", {
+      services,
+      user: { role: user.role },
+      locale: req.locale || 'en'
     });
   } catch (error) {
-    console.error('Error fetching services:', error);
-    // Ensure we always send a JSON response
+    console.error('Error loading admin page:', error);
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Authentication failed'
+      return res.status(401).render("error", {
+        errorTitle: res.__("unauthorized_title"),
+        errorMessage: res.__("unauthorized_message"),
+        errorDetails: { code: 401 }
       });
     }
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch services'
+    res.status(500).render("error", {
+      errorTitle: res.__("error_something_wrong"),
+      errorMessage: res.__("error_loading_admin_page"),
+      errorDetails: { code: 500 }
     });
   }
 });

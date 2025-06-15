@@ -90,12 +90,38 @@
                     </div>
                     <div class="col-md-6">
                       <label for="avatar" class="form-label"><%= __('change_avatar') %></label>
-                      <input type="file" name="avatar" id="avatar" accept="image/*" class="form-control">
-                      <button type="button" id="uploadAvatarBtn" class="btn">
-                        <%= __('upload') %>
-                      </button>
+                        <input type="file" 
+                               name="avatar" 
+                               id="avatar" 
+                               accept="image/*" 
+                               class="form-control custom-file-input"
+                               aria-describedby="avatarHelp"
+                               style="display: none;">
+                        <input type="text" 
+                               class="form-control file-name-display" 
+                               readonly 
+                               placeholder="<%= __('choose_file') %>">
+                        
+                      <button type="button" 
+                                class="btn custom-file-button">
+                          <%= __('browse') %>
+                        </button>
+                        <button type="button" 
+                                id="uploadAvatarBtn" 
+                                class="btn ">
+                          <%= __('upload') %>
+                        </button>
+                      <div id="avatarHelp" class="form-text text-muted">
+                        <%= __('avatar_help_text') %>
+                      </div>
                       <div class="progress d-none mt-2" id="avatarUploadProgress">
-                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" 
+                             style="width: 0%" 
+                             aria-valuenow="0" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -238,7 +264,13 @@
       payment_status_failed: '<%= __("payment_status_failed") %>',
       option_filename: '<%= __("option_filename") %>',
       option_pages: '<%= __("option_pages") %>',
-      option_size: '<%= __("option_size") %>'
+      option_size: '<%= __("option_size") %>',
+      avatar_upload_error: '<%= __("avatar_upload_error") %>',
+      avatar_file_too_large: '<%= __("avatar_file_too_large") %>',
+      avatar_invalid_format: '<%= __("avatar_invalid_format") %>',
+      avatar_upload_success: '<%= __("avatar_upload_success") %>',
+      choose_file: '<%= __("choose_file") %>',
+      browse: '<%= __("browse") %>'
     };
 
     // Global helper functions
@@ -450,7 +482,20 @@
         const progressBarInner = progressBar.querySelector('.progress-bar');
         
         if (!file) {
-          showStatusMessage('Please select a file first', false);
+          showStatusMessage(translations.avatar_upload_error, false);
+          return;
+        }
+
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+          showStatusMessage(translations.avatar_file_too_large, false);
+          return;
+        }
+
+        // Validate file type
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!validTypes.includes(file.type)) {
+          showStatusMessage(translations.avatar_invalid_format, false);
           return;
         }
 
@@ -471,20 +516,17 @@
           // First check if response is JSON
           const contentType = response.headers.get('content-type');
           if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('Server returned unexpected response');
+            throw new Error(translations.avatar_upload_error);
           }
 
           const result = await response.json();
 
           if (!response.ok) {
-            throw new Error(result.message || 'Upload failed');
+            throw new Error(result.message || translations.avatar_upload_error);
           }
 
           progressBarInner.style.width = '100%';
-          showStatusMessage('Avatar updated successfully! Page will refresh in 2 seconds...', true);
-          setTimeout(() => {
-            location.reload();
-          }, 2000);
+          showStatusMessage(translations.avatar_upload_success, true);
           
           // Update avatar preview without page reload
           const avatarImg = document.querySelector('.profile-avatar img');
@@ -495,9 +537,14 @@
             location.reload();
           }
           
+          // Add a small delay before refreshing to show the success message
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+          
         } catch (error) {
           progressBar.classList.add('d-none');
-          showStatusMessage(error.message || 'Avatar upload failed', false);
+          showStatusMessage(error.message || translations.avatar_upload_error, false);
           console.error('Upload error:', error);
         }
       });
@@ -520,6 +567,23 @@
 
       // Initial data setup
       restoreUserData();
+
+      // Custom file input handling
+      const fileInput = document.getElementById('avatar');
+      const fileNameDisplay = document.querySelector('.file-name-display');
+      const customFileButton = document.querySelector('.custom-file-button');
+
+      customFileButton.addEventListener('click', function() {
+        fileInput.click();
+      });
+
+      fileInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+          fileNameDisplay.value = this.files[0].name;
+        } else {
+          fileNameDisplay.value = translations.choose_file;
+        }
+      });
     });
 
     // Handle cart tab activation
@@ -642,64 +706,62 @@
                     <td>
                       <div class="d-flex flex-column">
                         <strong>${isMerch ? translations.custom_tshirt : translations.document_printing}</strong>
-                        ${isMerch ? `
-                          <small class="text-muted">${translations.custom_tshirt_desc}</small>
+                        ${isMerch ? `                          <small class="text-muted">${translations.custom_tshirt_desc}</small>
                         ` : `
                           <small class="text-muted">${translations.document_printing_desc}</small>
                         `}
                         ${item.options ? `
                           <div class="mt-1">
-                            ${Object.entries(item.options).map(([key, value]) => {
-                              // Skip technical properties
-                              if (['file', 'position', 'imagePosition', 'imageSize', 'type', 'design'].includes(key)) {
-                                return '';
-                              }
-                              
-                              // Handle merch-specific options
-                              if (isMerch) {
+                            ${Object.entries(item.options)
+                              .filter(([key]) => !['file', 'position', 'imagePosition', 'imageSize', 'type', 'design', 'designId'].includes(key))
+                              .map(([key, value]) => {
+                                let translatedKey;
+                                let translatedValue;
+                                
                                 switch(key) {
-                                  case 'text':
-                                    return `<span class="badge bg-light text-dark me-1">${translations.text}: ${value}</span>`;
-                                  case 'textColor':
-                                    return `<span class="badge bg-light text-dark me-1">${translations.text_color}: ${value}</span>`;
-                                  case 'fontSize':
-                                    return `<span class="badge bg-light text-dark me-1">${translations.font_size_label}: ${value}px</span>`;
+                                  case 'filename':
+                                    translatedKey = translations.option_filename;
+                                    translatedValue = value;
+                                    break;
+                                  case 'pages':
+                                    translatedKey = translations.option_pages;
+                                    translatedValue = value === 'all' ? translations.pages_all : value;
+                                    break;
+                                  case 'color':
+                                    translatedKey = translations.option_color;
+                                    translatedValue = value === 'black & white' ? translations.color_black_white : translations.color_color;
+                                    break;
+                                  case 'paper_size':
+                                    translatedKey = translations.option_paper_size;
+                                    translatedValue = translations[`paper_size_${value.toLowerCase()}`] || value;
+                                    break;
+                                  case 'double_sided':
+                                    translatedKey = translations.option_double_sided;
+                                    translatedValue = value === 'Yes' ? translations.double_sided_yes : translations.double_sided_no;
+                                    break;
                                   case 'size':
-                                    return `<span class="badge bg-light text-dark me-1">${translations.size}: ${translations[`size_${value.toLowerCase()}`] || value}</span>`;
+                                    translatedKey = translations['option_size'] || 'Size';
+                                    translatedValue = translations[`size_${value.toLowerCase()}`] || value;
+                                    break;
+                                  case 'text':
+                                    translatedKey = translations.text;
+                                    translatedValue = value;
+                                    break;
+                                  case 'textColor':
+                                    translatedKey = translations.text_color;
+                                    translatedValue = value;
+                                    break;
+                                  case 'fontSize':
+                                    translatedKey = translations.font_size_label;
+                                    translatedValue = `${value}px`;
+                                    break;
                                   default:
-                                    return '';
+                                    translatedKey = translations[`option_${key}`] || translations[key] || key;
+                                    translatedValue = value;
                                 }
-                              }
-                              
-                              // Handle printing options
-                              if (key === 'color') {
-                                const colorKey = value === 'black & white' ? 'color_black_white' : 'color_color';
-                                return `<span class="badge bg-light text-dark me-1">${translations.option_color}: ${translations[colorKey]}</span>`;
-                              }
-                              if (key === 'paper_size') {
-                                return `<span class="badge bg-light text-dark me-1">${translations.option_paper_size}: ${translations[`paper_size_${value.toLowerCase()}`] || value}</span>`;
-                              }
-                              if (key === 'double_sided') {
-                                const doubleKey = value === 'No' ? 'double_sided_no' : 'double_sided_yes';
-                                return `<span class="badge bg-light text-dark me-1">${translations.option_double_sided}: ${translations[doubleKey]}</span>`;
-                              }
-                              if (key === 'print_pages') {
-                                if (item.options.totalDocumentPages) {
-                                  // return `<span class="badge bg-light text-dark me-1">${translations.print_pages}: ${value} ${translations.of} ${item.options.totalDocumentPages} ${translations.pages}</span>`;
-                                }
-                                return `<span class="badge bg-light text-dark me-1">${translations.print_pages}: ${value}</span>`;
-                              }
-                              if (key === 'totalDocumentPages') {
-                                return `<span class="badge bg-light text-dark me-1">${translations.total_pages}: ${value}</span>`;
-                              }
-                              if (key === 'filename') {
-                                return `<span class="badge bg-light text-dark me-1">${translations.filename}: ${value}</span>`;
-                              }
-                              
-                              // Default case for other options
-                              const translatedKey = translations[`option_${key}`] || key;
-                              return `<span class="badge bg-light text-dark me-1">${translatedKey}: ${value}</span>`;
-                            }).join('')}
+                                
+                                return `<br><small>${translatedKey}: ${translatedValue}</small>`;
+                              }).join('')}
                           </div>
                         ` : ''}
                       </div>
@@ -1002,7 +1064,7 @@
                                         <small class="text-muted d-block">${translations.custom_tshirt_desc}</small>
                                       ` : ''}
                                       ${Object.entries(item.options)
-                                        .filter(([key]) => !['file', 'type', 'item_name', 'item_description'].includes(key))
+                                        .filter(([key]) => !['file', 'position', 'imagePosition', 'imageSize', 'type', 'design', 'designId'].includes(key))
                                         .map(([key, value]) => {
                                           let translatedKey;
                                           let translatedValue;
@@ -1031,6 +1093,18 @@
                                             case 'size':
                                               translatedKey = translations['option_size'] || 'Size';
                                               translatedValue = translations[`size_${value.toLowerCase()}`] || value;
+                                              break;
+                                            case 'text':
+                                              translatedKey = translations.text;
+                                              translatedValue = value;
+                                              break;
+                                            case 'textColor':
+                                              translatedKey = translations.text_color;
+                                              translatedValue = value;
+                                              break;
+                                            case 'fontSize':
+                                              translatedKey = translations.font_size_label;
+                                              translatedValue = `${value}px`;
                                               break;
                                             default:
                                               translatedKey = translations[`option_${key}`] || translations[key] || key;

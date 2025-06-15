@@ -24,6 +24,8 @@
       <h1 class="text-danger mb-3"><%= errorTitle || __('error_something_wrong') %></h1>
       <% if (errorMessage) { %>
         <p class="text-muted mb-4"><%= errorMessage %></p>
+      <% } else if (errorCode === 403) { %>
+        <p class="text-muted mb-4"><%= __('access_denied_message') %></p>
       <% } %>
       <a href="/" class="btn"><%= __('back_to_home') %></a>
     </div>

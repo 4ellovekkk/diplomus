@@ -142,9 +142,13 @@ router.post("/print", upload.single("document"), async (req, res) => {
 // Printing Queue Page Route
 router.get("/print-queue", async (req, res) => {
   try {
-    // Check if user is logged in and is staff/admin
+    // Check if user is logged in
     if (!req.cookies?.token) {
-      return res.redirect("/login");
+      return res.status(401).render("error", {
+        errorTitle: res.__("unauthorized_title"),
+        errorMessage: res.__("unauthorized_message"),
+        errorDetails: { code: 401 }
+      });
     }
 
     const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
@@ -154,7 +158,11 @@ router.get("/print-queue", async (req, res) => {
     });
 
     if (!user || !['admin', 'employee'].includes(user.role)) {
-      return res.redirect("/");
+      return res.status(403).render("error", {
+        errorTitle: res.__("access_denied"),
+        errorMessage: res.__("access_denied_message"),
+        errorDetails: { code: 403 }
+      });
     }
 
     // Fetch all orders in PROCESSING status with related data
@@ -190,7 +198,18 @@ router.get("/print-queue", async (req, res) => {
     });
   } catch (error) {
     console.error("Error loading print queue:", error);
-    res.status(500).send("Error loading print queue");
+    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+      return res.status(401).render("error", {
+        errorTitle: res.__("unauthorized_title"),
+        errorMessage: res.__("unauthorized_message"),
+        errorDetails: { code: 401 }
+      });
+    }
+    res.status(500).render("error", {
+      errorTitle: res.__("error_something_wrong"),
+      errorMessage: res.__("error_loading_print_queue"),
+      errorDetails: { code: 500 }
+    });
   }
 });
 
