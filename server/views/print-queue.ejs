@@ -10,6 +10,9 @@
     <title><%= __('print_queue_title') %></title>
     <%- include('./partials/favicon') %>
 
+    <!-- Add Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <style>
         .size-chart-btn {
             font-size: 0.875rem;
@@ -248,11 +251,118 @@
         </div>
     </div>
 
+    <!-- Complete Order Modal -->
+    <div class="modal fade" id="completeOrderModal" tabindex="-1" aria-labelledby="completeOrderModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="completeOrderModalLabel"><%= __('complete_order') %></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><%= __('confirm_complete_order') %></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal"><%= __('cancel') %></button>
+                    <button type="button" class="btn" id="confirmCompleteBtn">
+                        <i class="fas fa-check"></i> <%= __('confirm') %>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="successModalLabel"><%= __('success') %></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><%= __('order_completed_success') %></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal"><%= __('ok') %></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="errorModalLabel"><%= __('error') %></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="errorModalMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal"><%= __('ok') %></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <%- include('./partials/footer') %>
 
     <script>
+        // Define completeOrder function in global scope
+        function completeOrder(orderId) {
+            const completeOrderModal = new bootstrap.Modal(document.getElementById('completeOrderModal'));
+            document.getElementById('confirmCompleteBtn').dataset.orderId = orderId;
+            completeOrderModal.show();
+        }
+
         // Add filter functionality
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Bootstrap modals
+            const completeOrderModal = new bootstrap.Modal(document.getElementById('completeOrderModal'));
+            const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+            const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+
+            // Handle complete order confirmation
+            document.getElementById('confirmCompleteBtn').addEventListener('click', async function() {
+                const orderId = this.dataset.orderId;
+                if (orderId) {
+                    try {
+                        const response = await fetch(`/complete-order/${orderId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (response.ok) {
+                            const orderCard = document.getElementById(`order-${orderId}`);
+                            orderCard.remove();
+
+                            if (document.querySelectorAll('.order-card').length === 0) {
+                                document.getElementById('orders-container').innerHTML = `
+                                    <div class="alert alert-info">
+                                        <%= __('no_orders_in_queue') %>
+                                    </div>
+                                `;
+                            }
+
+                            completeOrderModal.hide();
+                            successModal.show();
+                        } else {
+                            throw new Error('<%= __("error_completing_order") %>');
+                        }
+                    } catch (error) {
+                        console.error('Error completing order:', error);
+                        document.getElementById('errorModalMessage').textContent = error.message || '<%= __("error_completing_order") %>';
+                        completeOrderModal.hide();
+                        errorModal.show();
+                    }
+                }
+            });
+
             const filterButtons = document.querySelectorAll('.filter-buttons .btn');
             const orderCards = document.querySelectorAll('.order-card');
 
@@ -304,41 +414,6 @@
                 });
             });
         });
-
-        async function completeOrder(orderId) {
-            if (!confirm('<%= __("confirm_complete_order") %>')) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`/complete-order/${orderId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (response.ok) {
-                    const orderCard = document.getElementById(`order-${orderId}`);
-                    orderCard.remove();
-
-                    if (document.querySelectorAll('.order-card').length === 0) {
-                        document.getElementById('orders-container').innerHTML = `
-                            <div class="alert alert-info">
-                                <%= __('no_orders_in_queue') %>
-                            </div>
-                        `;
-                    }
-
-                    alert('<%= __("order_completed_success") %>');
-                } else {
-                    throw new Error('<%= __("error_completing_order") %>');
-                }
-            } catch (error) {
-                console.error('Error completing order:', error);
-                alert('<%= __("error_completing_order") %>');
-            }
-        }
 
         function printDocument(filename, orderId, serviceName) {
             const iframe = document.createElement('iframe');

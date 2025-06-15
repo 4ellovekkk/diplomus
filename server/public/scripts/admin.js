@@ -228,26 +228,62 @@ function editUser(userId) {
 
 // Function to delete user
 function deleteUser(userId) {
-  if (!confirm(t("confirm_delete_user"))) return;
+  const deleteUserModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+  const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+  const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
 
-  fetch(`/api/users/${userId}`, { method: "DELETE" })
-    .then((response) => {
-      if (!response.ok) throw new Error(t("failed_to_delete_user"));
-      return response.json();
-    })
-    .then((data) => {
+  // Store the user ID in the confirm button's dataset
+  document.getElementById('confirmDeleteBtn').dataset.userId = userId;
+  deleteUserModal.show();
+}
+
+// Add event listener for delete confirmation
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+    const userId = this.dataset.userId;
+    const deleteUserModal = bootstrap.Modal.getInstance(document.getElementById('deleteUserModal'));
+    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+    const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+
+    try {
+      const response = await fetch(`/api/users/${userId}`, { 
+        method: "DELETE",
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        // Handle specific error cases
+        if (response.status === 404) {
+          throw new Error(t('user_not_found'));
+        } else if (response.status === 403) {
+          throw new Error(t('access_denied_admin'));
+        } else if (data.message && data.message.includes('existing orders')) {
+          throw new Error(t('cannot_delete_user_with_orders'));
+        } else {
+          throw new Error(data.message || t('failed_to_delete_user'));
+        }
+      }
+      
       if (data.success) {
-        alert(t("user_deleted_successfully"));
+        deleteUserModal.hide();
+        document.getElementById('successModalMessage').textContent = t('user_deleted_successfully');
+        successModal.show();
         fetchUsers(currentPage);
       } else {
-        throw new Error(data.message || t("failed_to_delete_user"));
+        throw new Error(data.message || t('failed_to_delete_user'));
       }
-    })
-    .catch((error) => {
+    } catch (error) {
       console.error("Error deleting user:", error);
-      alert(t("error_deleting_user") + ": " + error.message);
-    });
-}
+      deleteUserModal.hide();
+      document.getElementById('errorModalMessage').textContent = error.message;
+      errorModal.show();
+    }
+  });
+});
 
 // Function to toggle user lock status
 function toggleUserLock(userId) {

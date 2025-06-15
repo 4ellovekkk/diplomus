@@ -38,13 +38,13 @@
             <% } %>
           </div>
           <div class="item-quantity">
-            <form action="/api/cart/update" method="POST" style="display: inline;">
+            <form action="/api/cart/update" method="POST" style="display: inline;" onsubmit="return validateQuantity(this, <%= item.quantity %>)">
               <input type="hidden" name="index" value="<%= index %>">
               <input type="hidden" name="quantity" value="<%= item.quantity - 1 %>">
               <button type="submit" class="quantity-btn" <%= item.quantity <= 1 ? 'disabled' : '' %>>-</button>
             </form>
-            <span><%= item.quantity %></span>
-            <form action="/api/cart/update" method="POST" style="display: inline;">
+            <span class="quantity-display" data-quantity="<%= item.quantity %>" contenteditable="false" unselectable="on" style="-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;"><%= item.quantity %></span>
+            <form action="/api/cart/update" method="POST" style="display: inline;" onsubmit="return validateQuantity(this, parseInt(<%= item.quantity %>))">
               <input type="hidden" name="index" value="<%= index %>">
               <input type="hidden" name="quantity" value="<%= item.quantity + 1 %>">
               <button type="submit" class="quantity-btn">+</button>
@@ -119,6 +119,89 @@
     .options-container button:hover {
         background: #0056b3;
     }
+    .quantity-display {
+        display: inline-block;
+        min-width: 30px;
+        text-align: center;
+        padding: 0 10px;
+        pointer-events: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
 </style>
+
+<script>
+// Prevent any interaction with quantity display
+document.querySelectorAll('.quantity-display').forEach(display => {
+  // Prevent all possible ways of editing
+  display.addEventListener('keydown', (e) => e.preventDefault());
+  display.addEventListener('keyup', (e) => e.preventDefault());
+  display.addEventListener('keypress', (e) => e.preventDefault());
+  display.addEventListener('paste', (e) => e.preventDefault());
+  display.addEventListener('drop', (e) => e.preventDefault());
+  display.addEventListener('cut', (e) => e.preventDefault());
+  display.addEventListener('copy', (e) => e.preventDefault());
+  display.addEventListener('contextmenu', (e) => e.preventDefault());
+  display.addEventListener('mousedown', (e) => e.preventDefault());
+  display.addEventListener('mouseup', (e) => e.preventDefault());
+  display.addEventListener('click', (e) => e.preventDefault());
+  display.addEventListener('input', (e) => e.preventDefault());
+  display.addEventListener('change', (e) => e.preventDefault());
+  
+  // Make it visually clear it's not editable
+  display.style.cursor = 'default';
+  display.style.backgroundColor = 'transparent';
+});
+
+function validateQuantity(form, currentQuantity) {
+  console.log('=== Quantity Update Debug ===');
+  console.log('Current Quantity:', currentQuantity);
+  console.log('Form:', form);
+  
+  const quantityInput = form.querySelector('input[name="quantity"]');
+  console.log('Quantity Input Element:', quantityInput);
+  console.log('Raw Input Value:', quantityInput.value);
+  
+  const newQuantity = parseInt(quantityInput.value);
+  console.log('Parsed New Quantity:', newQuantity);
+  console.log('Is NaN:', isNaN(newQuantity));
+  console.log('Is <= 0:', newQuantity <= 0);
+  
+  if (isNaN(newQuantity) || newQuantity <= 0) {
+    console.log('Validation Failed: Invalid Quantity');
+    alert('Quantity must be greater than 0');
+    // Reset the quantity display to the current valid quantity
+    const quantityDisplay = form.parentElement.querySelector('.quantity-display');
+    console.log('Quantity Display Element:', quantityDisplay);
+    if (quantityDisplay) {
+      console.log('Resetting to current quantity:', currentQuantity);
+      quantityDisplay.textContent = currentQuantity;
+    }
+    return false;
+  }
+  
+  console.log('Validation Passed: Proceeding with update');
+  return true;
+}
+
+// Add debug logging for quantity display events
+document.querySelectorAll('.quantity-display').forEach(display => {
+  const events = ['keydown', 'keyup', 'keypress', 'paste', 'drop', 'cut', 'copy', 
+                 'contextmenu', 'mousedown', 'mouseup', 'click', 'input', 'change'];
+  
+  events.forEach(eventType => {
+    display.addEventListener(eventType, (e) => {
+      console.log(`Prevented ${eventType} event on quantity display`);
+      e.preventDefault();
+    });
+  });
+  
+  // Make it visually clear it's not editable
+  display.style.cursor = 'default';
+  display.style.backgroundColor = 'transparent';
+});
+</script>
 
 <%- include('partials/footer') %> 

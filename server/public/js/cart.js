@@ -45,8 +45,39 @@ const cart = {
 
   async updateQuantity(index, quantity) {
     try {
-      // Show loading state for the specific item
+      console.log('=== Cart.js Quantity Update Debug ===');
+      console.log('Index:', index);
+      console.log('Requested Quantity:', quantity);
+      
+      // Get current item quantity
       const itemElement = document.querySelector(`[data-index="${index}"]`);
+      console.log('Item Element:', itemElement);
+      
+      const currentQuantity = itemElement ? parseInt(itemElement.querySelector('.quantity-display').dataset.quantity) : 0;
+      console.log('Current Quantity from Dataset:', currentQuantity);
+
+      // Validate quantity - ensure it's a positive number
+      if (isNaN(quantity) || quantity <= 0) {
+        console.log('Validation Failed: Invalid Quantity');
+        console.log('Is NaN:', isNaN(quantity));
+        console.log('Is <= 0:', quantity <= 0);
+        
+        this.showError(t('invalid_quantity'));
+        // Reset the quantity display to the current valid quantity
+        if (itemElement) {
+          const quantityDisplay = itemElement.querySelector('.quantity-display');
+          console.log('Quantity Display Element:', quantityDisplay);
+          if (quantityDisplay) {
+            console.log('Resetting to current quantity:', currentQuantity);
+            quantityDisplay.textContent = currentQuantity;
+          }
+        }
+        return null;
+      }
+
+      console.log('Validation Passed: Proceeding with API call');
+
+      // Show loading state for the specific item
       if (itemElement) {
         itemElement.style.opacity = '0.5';
         itemElement.style.pointerEvents = 'none';
@@ -62,15 +93,31 @@ const cart = {
           quantity
         })
       });
+      console.log('API Response Status:', response.status);
+      
       const result = await response.json();
+      console.log('API Response:', result);
+      
       if (!result.success) {
-        throw new Error(result.message || 'Failed to update quantity');
+        console.log('API Call Failed:', result.message);
+        throw new Error(result.message || t('failed_to_update_quantity'));
       }
+      
+      console.log('Update Successful, Updating UI');
       this.updateCartUI(result);
       return result;
     } catch (error) {
       console.error('Error updating cart item:', error);
-      this.showError('Failed to update quantity');
+      this.showError(t('error_updating_quantity'));
+      // Reset the quantity display to the current valid quantity
+      const itemElement = document.querySelector(`[data-index="${index}"]`);
+      if (itemElement) {
+        const quantityDisplay = itemElement.querySelector('.quantity-display');
+        if (quantityDisplay) {
+          console.log('Error Recovery: Resetting to dataset quantity:', quantityDisplay.dataset.quantity);
+          quantityDisplay.textContent = quantityDisplay.dataset.quantity;
+        }
+      }
       return null;
     } finally {
       // Remove loading state
@@ -174,7 +221,7 @@ const cart = {
             </div>
             <div class="item-quantity">
               <button onclick="cart.updateQuantity(${index}, ${item.quantity - 1})" class="quantity-btn" ${item.quantity <= 1 ? 'disabled' : ''}>-</button>
-              <span>${item.quantity}</span>
+              <span class="quantity-display">${item.quantity}</span>
               <button onclick="cart.updateQuantity(${index}, ${item.quantity + 1})" class="quantity-btn">+</button>
             </div>
             <div class="item-price">

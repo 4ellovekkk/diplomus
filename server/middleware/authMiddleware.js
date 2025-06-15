@@ -41,7 +41,8 @@ const allowedPaths = [
   "/auth/forgot-password",
   "/auth/reset-password",
   "/auth/verify-reset-token",
-  "/login"
+  "/login",
+  "/styles"
 ];
 
 const verifyTokenExceptLogin = (req, res, next) => {

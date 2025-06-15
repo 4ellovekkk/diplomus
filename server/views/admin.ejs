@@ -273,6 +273,63 @@
     </div>
   </div>
 
+  <!-- Delete User Confirmation Modal -->
+  <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteUserModalLabel"><%= t('delete_user') %></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t('close') %>"></button>
+        </div>
+        <div class="modal-body">
+          <p><%= t('confirm_delete_user') %></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" data-bs-dismiss="modal"><%= t('cancel') %></button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+            <i class="bi bi-trash"></i> <%= t('delete') %>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="successModalLabel"><%= t('success') %></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t('close') %>"></button>
+        </div>
+        <div class="modal-body">
+          <p id="successModalMessage"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" data-bs-dismiss="modal"><%= t('ok') %></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Modal -->
+  <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="errorModalLabel"><%= t('error') %></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t('close') %>"></button>
+        </div>
+        <div class="modal-body">
+          <p id="errorModalMessage"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" data-bs-dismiss="modal"><%= t('ok') %></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Initialize translations for client-side JavaScript -->
   <script>
     // Initialize translations object

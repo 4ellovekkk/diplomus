@@ -19,9 +19,9 @@ const handleError = (
   status = 500,
 ) => {
   console.error(title, error);
-  const wantsHTML = req.accepts("html");
+  const acceptsHTML = req.headers.accept && req.headers.accept.includes('text/html');
 
-  if (wantsHTML) {
+  if (acceptsHTML) {
     res.status(status).render("error", {
       errorTitle: title,
       errorMessage: message,
@@ -410,21 +410,57 @@ router.post(
 router.delete("/users/:id", verifyTokenExceptLogin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    if (isNaN(id))
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid user ID" });
-
-    await prisma.users.delete({ where: { id } });
-
-    res.json({ success: true, message: "User deleted successfully" });
-  } catch (error) {
-    if (error.code === "P2025") {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+    if (isNaN(id)) {
+      return handleError(
+        req,
+        res,
+        new Error("Invalid ID"),
+        "Invalid Input",
+        "User ID must be a number",
+        400
+      );
     }
-    handleError(res, error, "Error deleting user");
+
+    // Check if user exists before deleting
+    const user = await prisma.users.findUnique({ where: { id } });
+    if (!user) {
+      return handleError(
+        req,
+        res,
+        new Error("User not found"),
+        "Not Found",
+        "User not found",
+        404
+      );
+    }
+
+    try {
+      await prisma.users.delete({ where: { id } });
+      res.json({ success: true, message: "User deleted successfully" });
+    } catch (deleteError) {
+      // Check if error is due to foreign key constraint
+      if (deleteError.code === 'P2003') {
+        return handleError(
+          req,
+          res,
+          deleteError,
+          "Cannot Delete User",
+          "This user cannot be deleted because they have existing orders. Please delete or reassign their orders first.",
+          400
+        );
+      }
+      throw deleteError; // Re-throw if it's a different error
+    }
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    handleError(
+      req,
+      res,
+      error,
+      "Error deleting user",
+      "Failed to delete user",
+      500
+    );
   }
 });
 

@@ -134,7 +134,8 @@
   "update": "Update",
   "proceed_to_checkout": "Proceed to Checkout",
   "clear_cart": "Clear Cart",
-  "confirm_clear_cart": "Are you sure you want to clear your cart?",
+  "confirm_clear_cart": "Clear Cart",
+  "clear_cart_confirmation_message": "Are you sure you want to clear your cart? This action cannot be undone.",
   "cart_updated": "Cart updated successfully",
   "item_removed": "Item removed from cart",
   "cart_cleared": "Cart cleared successfully",
@@ -422,5 +423,9 @@
   "urgent_request":"Urgent request",
   "submit_consultation":"Book consultation",
   "all_orders":"All orders",
-  "no_orders_of_type":"There is no orders with this type"
+  "no_orders_of_type":"There is no orders with this type",
+  "cannot_delete_user_with_orders": "Cannot delete this user because they have existing orders. Please delete or reassign their orders first.",
+  "invalid_quantity": "Quantity cannot be negative",
+  "failed_to_update_quantity": "Failed to update quantity",
+  "error_updating_quantity": "Error updating quantity"
 }
