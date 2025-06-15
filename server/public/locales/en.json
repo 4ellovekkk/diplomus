@@ -420,5 +420,7 @@
   "print_materials": "Materials available for printing",
   "project_description":"Describe your project",
   "urgent_request":"Urgent request",
-  "submit_consultation":"Book consultation"
+  "submit_consultation":"Book consultation",
+  "all_orders":"All orders",
+  "no_orders_of_type":"There is no orders with this type"
 }

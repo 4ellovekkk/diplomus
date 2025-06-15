@@ -84,6 +84,30 @@
         .btn-print:hover {
             background-color: #0b5ed7;
         }
+        .filter-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+        .filter-buttons .btn {
+            padding: 0.5rem 1.5rem;
+            border: 1px solid #dee2e6;
+            background-color: #fff;
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+        .filter-buttons .btn:hover,
+        .filter-buttons .btn.active {
+            background-color: #0d6efd;
+            color: #fff;
+            border-color: #0d6efd;
+        }
+        .order-card {
+            transition: opacity 0.3s ease;
+        }
+        .order-card.hidden {
+            display: none;
+        }
     </style>
 
 </head>
@@ -94,6 +118,18 @@
         <div class="container">
             <h1 class="page-title"><%= __('print_queue_title') %></h1>
             
+            <div class="filter-buttons mb-4">
+                <button class="btn active" data-filter="all">
+                    <%= __('all_orders') %>
+                </button>
+                <button class="btn" data-filter="Document Printing">
+                    <%= __('document_printing') %>
+                </button>
+                <button class="btn" data-filter="Custom T-Shirt">
+                    <%= __('custom_tshirt') %>
+                </button>
+            </div>
+
             <% if (orders && orders.length > 0) { %>
                 <div id="orders-container">
                     <% orders.forEach(order => { %>
@@ -215,6 +251,60 @@
     <%- include('./partials/footer') %>
 
     <script>
+        // Add filter functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterButtons = document.querySelectorAll('.filter-buttons .btn');
+            const orderCards = document.querySelectorAll('.order-card');
+
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Update active state of buttons
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+
+                    const filter = this.dataset.filter;
+                    console.log('Selected filter:', filter);
+
+                    orderCards.forEach(card => {
+                        const orderItems = card.querySelectorAll('.item-card');
+                        let shouldShow = false;
+
+                        if (filter === 'all') {
+                            shouldShow = true;
+                        } else {
+                            orderItems.forEach(item => {
+                                const serviceName = item.querySelector('h6').textContent.trim();
+                                console.log('Comparing:', serviceName, 'with filter:', filter);
+                                // Check if the service name matches the filter
+                                if (serviceName === filter || 
+                                    (filter === 'Document Printing' && serviceName === '<%= __("document_printing") %>') ||
+                                    (filter === 'Custom T-Shirt' && serviceName === '<%= __("custom_tshirt") %>')) {
+                                    shouldShow = true;
+                                }
+                            });
+                        }
+
+                        card.classList.toggle('hidden', !shouldShow);
+                    });
+
+                    // Check if any orders are visible
+                    const visibleOrders = document.querySelectorAll('.order-card:not(.hidden)');
+                    const noOrdersMessage = document.querySelector('.alert-info');
+                    
+                    if (visibleOrders.length === 0) {
+                        if (!noOrdersMessage) {
+                            const message = document.createElement('div');
+                            message.className = 'alert alert-info';
+                            message.textContent = '<%= __("no_orders_of_type") %>';
+                            document.getElementById('orders-container').appendChild(message);
+                        }
+                    } else if (noOrdersMessage) {
+                        noOrdersMessage.remove();
+                    }
+                });
+            });
+        });
+
         async function completeOrder(orderId) {
             if (!confirm('<%= __("confirm_complete_order") %>')) {
                 return;
