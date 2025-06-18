@@ -1,6 +1,5 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
-const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcryptjs");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -9,6 +8,7 @@ const path = require("path");
 const fs = require("fs");
 const libre = require("libreoffice-convert");
 const nodemailer = require('nodemailer');
+const { PrismaClient } = require("@prisma/client");
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -28,14 +28,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// Initialize Prisma Client
-let prisma;
-try {
-  prisma = new PrismaClient();
-} catch (error) {
-  console.error('Failed to initialize Prisma client:', error);
-  process.exit(1);
-}
+// Use Prisma client directly
+const prisma = new PrismaClient();
 
 const router = express.Router();
 const verifyTokenExceptLogin = require("../middleware/authMiddleware");
@@ -93,6 +87,56 @@ const handleError = (
     });
   }
 };
+
+// Helper function to translate service names
+function translateServiceName(serviceName, req) {
+  if (!serviceName) return req.__('service_unknown') || 'Unknown Service';
+  
+  // Map service names to translation keys
+  const serviceNameMap = {
+    'Document Printing': 'service_document_printing',
+    'Custom T-Shirt': 'service_custom_tshirt',
+    'Unknown Service': 'service_unknown',
+    'Logo Design': 'service_logo_design',
+    'Branding': 'service_branding',
+    'Social Media Graphics': 'service_social_media_graphics',
+    'Print Materials': 'service_print_materials',
+    'Graphic Design Consultation': 'service_graphic_design_consultation',
+    'Custom merch design': 'service_custom_merch_design',
+    'Custom Merch Design': 'service_custom_merch_design',
+    'Photocopy': 'service_photocopy',
+    'Printing': 'service_printing',
+    'Merch Design': 'service_merch_design',
+    'Xerox Copy Service': 'service_xerox_copy',
+    'Merch': 'merch',
+    'Grapic designer consultation': 'service_graphic_designer_consultation',
+    'Graphic Designer Consultation': 'service_graphic_designer_consultation',
+    'Unknown Product': 'service_unknown_product'
+  };
+  
+  const translationKey = serviceNameMap[serviceName];
+  return translationKey ? req.__(translationKey) : serviceName;
+}
+
+// Helper function to translate service descriptions
+function translateServiceDescription(serviceName, originalDescription, req) {
+  if (!serviceName) return originalDescription || '—';
+  
+  // Map service names to description translation keys
+  const serviceDescriptionMap = {
+    'Document Printing': 'service_description_document_printing',
+    'Custom merch design': 'service_description_custom_merch_design',
+    'Custom Merch Design': 'service_description_custom_merch_design',
+    'Grapic designer consultation': 'service_description_graphic_designer_consultation',
+    'Graphic Designer Consultation': 'service_description_graphic_designer_consultation',
+    'Graphic Design Consultation': 'service_description_graphic_designer_consultation',
+    'Unknown Product': 'service_description_unknown_product'
+  };
+  
+  const translationKey = serviceDescriptionMap[serviceName];
+  return translationKey ? req.__(translationKey) : (originalDescription || '—');
+}
+
 router.get("/services", async (req, res) => {
   try {
     const services = await prisma.services.findMany({
@@ -107,9 +151,18 @@ router.get("/services", async (req, res) => {
       }
     });
 
+    // Translate service names and descriptions
+    const translatedServices = services
+      .filter(service => service.name !== 'Unknown Product') // Hide Unknown Product from admin panel
+      .map(service => ({
+        ...service,
+        name: translateServiceName(service.name, res),
+        description: translateServiceDescription(service.name, service.description, res)
+      }));
+
     res.json({
       success: true,
-      services: services
+      services: translatedServices
     });
 
   } catch (error) {
@@ -320,49 +373,7 @@ router.get("/graphic-design", async (req, res) => {
   }
 });
 
-// Get all services
-router.get('/services', verifyTokenExceptLogin, async (req, res) => {
-  try {
-    // Verify user is admin
-    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
-    const user = await prisma.users.findUnique({
-      where: { id: decoded.userId },
-      select: { role: true }
-    });
-
-    if (!user || user.role !== 'admin') {
-      return res.status(403).render("error", {
-        errorTitle: res.__("access_denied"),
-        errorMessage: res.__("access_denied_message"),
-        errorDetails: { code: 403 }
-      });
-    }
-
-    const services = await prisma.services.findMany({
-      orderBy: { id: 'asc' }
-    });
-
-    res.render("admin", {
-      services,
-      user: { role: user.role },
-      locale: req.locale || 'en'
-    });
-  } catch (error) {
-    console.error('Error loading admin page:', error);
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
-      return res.status(401).render("error", {
-        errorTitle: res.__("unauthorized_title"),
-        errorMessage: res.__("unauthorized_message"),
-        errorDetails: { code: 401 }
-      });
-    }
-    res.status(500).render("error", {
-      errorTitle: res.__("error_something_wrong"),
-      errorMessage: res.__("error_loading_admin_page"),
-      errorDetails: { code: 500 }
-    });
-  }
-});
+// NOTE: Removed conflicting route that was rendering admin page
 
 // Update service price
 router.patch('/services/:id/price', verifyTokenExceptLogin, async (req, res) => {
@@ -418,7 +429,7 @@ router.patch('/services/:id/price', verifyTokenExceptLogin, async (req, res) => 
 });
 
 // Update service details
-router.put('/api/services/:id', verifyTokenExceptLogin, async (req, res) => {
+router.put('/services/:id', verifyTokenExceptLogin, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, price } = req.body;
@@ -527,6 +538,66 @@ router.post('/services', verifyTokenExceptLogin, async (req, res) => {
   }
 });
 
+// Check if service has orders before deletion
+router.get('/services/:id/check-orders', verifyTokenExceptLogin, async (req, res) => {
+  try {
+    // Verify user is admin
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+    const user = await prisma.users.findUnique({
+      where: { id: decoded.userId },
+      select: { role: true }
+    });
+
+    if (user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: res.__('access_denied_admin') || 'Access denied: Admin access required'
+      });
+    }
+
+    const { id } = req.params;
+    const serviceId = parseInt(id);
+
+    // Check if service exists
+    const existingService = await prisma.services.findUnique({
+      where: { id: serviceId }
+    });
+
+    if (!existingService) {
+      return res.status(404).json({
+        success: false,
+        message: res.__('service_not_found') || 'Service not found'
+      });
+    }
+
+    // Check if there are any existing orders for this service
+    const orderCount = await prisma.order_items.count({
+      where: { service_id: serviceId }
+    });
+
+    res.json({
+      success: true,
+      orderCount: orderCount,
+      hasOrders: orderCount > 0,
+      serviceName: existingService.name
+    });
+  } catch (error) {
+    console.error('Error checking service orders:', error);
+    
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: res.__('error_authentication_failed') || 'Authentication failed'
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: res.__('error_checking_service_orders') || 'Failed to check service orders'
+    });
+  }
+});
+
 // Delete service
 router.delete('/services/:id', verifyTokenExceptLogin, async (req, res) => {
   try {
@@ -540,44 +611,79 @@ router.delete('/services/:id', verifyTokenExceptLogin, async (req, res) => {
     if (user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Unauthorized: Admin access required'
+        message: res.__('access_denied_admin') || 'Access denied: Admin access required'
       });
     }
 
     const { id } = req.params;
+    const serviceId = parseInt(id);
 
     // Check if service exists
     const existingService = await prisma.services.findUnique({
-      where: { id: parseInt(id) }
+      where: { id: serviceId }
     });
 
     if (!existingService) {
       return res.status(404).json({
         success: false,
-        message: 'Service not found'
+        message: res.__('service_not_found') || 'Service not found'
+      });
+    }
+
+    // Check if there are any existing orders for this service
+    const existingOrders = await prisma.order_items.findFirst({
+      where: { service_id: serviceId },
+      select: { id: true }
+    });
+
+    if (existingOrders) {
+      // Get count of orders for better error message
+      const orderCount = await prisma.order_items.count({
+        where: { service_id: serviceId }
+      });
+
+      return res.status(400).json({
+        success: false,
+        message: res.__('cannot_delete_service_with_orders_detailed', {
+          serviceName: translateServiceName(existingService.name, res),
+          orderCount: orderCount,
+          orderPlural: orderCount > 1 ? res.__('orders') : res.__('order')
+        }) || `Cannot delete service "${translateServiceName(existingService.name, res)}" because it has ${orderCount} existing order${orderCount > 1 ? 's' : ''}. Please delete or reassign the orders first, or consider disabling the service instead.`,
+        orderCount: orderCount,
+        serviceName: existingService.name
       });
     }
 
     // Delete the service
     await prisma.services.delete({
-      where: { id: parseInt(id) }
+      where: { id: serviceId }
     });
 
     res.json({
       success: true,
-      message: 'Service deleted successfully'
+      message: res.__('service_deleted_successfully_detailed', { serviceName: translateServiceName(existingService.name, res) }) || `Service "${translateServiceName(existingService.name, res)}" deleted successfully`
     });
   } catch (error) {
     console.error('Error deleting service:', error);
+    
+    // Handle specific Prisma errors
+    if (error.code === 'P2003') {
+      return res.status(400).json({
+        success: false,
+        message: res.__('cannot_delete_service_referenced_by_orders') || 'Cannot delete service because it is referenced by existing orders. Please delete or reassign the orders first.'
+      });
+    }
+    
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
-        message: 'Authentication failed'
+        message: res.__('error_authentication_failed') || 'Authentication failed'
       });
     }
+    
     res.status(500).json({
       success: false,
-      message: 'Failed to delete service'
+      message: res.__('failed_to_delete_service') || 'Failed to delete service'
     });
   }
 });
@@ -613,10 +719,10 @@ router.post("/consultation", upload.single("referenceFile"), async (req, res) =>
     const emailTemplates = {
       en: {
         subject: 'Design Consultation Request Confirmation',
-        body: `
+        body: (fullName, serviceName) => `
 Dear ${fullName},
 
-Thank you for requesting a design consultation with our team. We have received your request for ${service} service.
+Thank you for requesting a design consultation with our team. We have received your request for ${serviceName} service.
 
 Here's what happens next:
 1. Our design team will review your request
@@ -631,10 +737,10 @@ Print Center Team
       },
       ru: {
         subject: 'Подтверждение запроса на консультацию по дизайну',
-        body: `
+        body: (fullName, serviceName) => `
 Уважаемый(ая) ${fullName},
 
-Благодарим вас за запрос на консультацию по дизайну с нашей командой. Мы получили ваш запрос на услугу ${service}.
+Благодарим вас за запрос на консультацию по дизайну с нашей командой. Мы получили ваш запрос на услугу ${serviceName}.
 
 Что будет дальше:
 1. Наша команда дизайнеров рассмотрит ваш запрос
@@ -652,6 +758,17 @@ Print Center Team
     // Get template based on locale
     const template = emailTemplates[locale] || emailTemplates.en;
 
+    // Translate service name for email
+    const serviceNameMap = {
+      logo: 'Logo Design',
+      branding: 'Branding',
+      social: 'Social Media Graphics',
+      print: 'Print Materials'
+    };
+
+    const originalServiceName = serviceNameMap[service] || service;
+    const translatedServiceName = translateServiceName(originalServiceName, res);
+
     // Send confirmation email
     await transporter.sendMail({
       from: {
@@ -660,31 +777,13 @@ Print Center Team
       },
       to: email,
       subject: template.subject,
-      text: template.body
+      text: template.body(fullName, translatedServiceName)
     });
-
-    // Translate service names for response message
-    const serviceTranslations = {
-      en: {
-        logo: 'Logo Design',
-        branding: 'Branding',
-        social: 'Social Media Graphics',
-        print: 'Print Materials'
-      },
-      ru: {
-        logo: 'Дизайн логотипа',
-        branding: 'Брендинг',
-        social: 'Графика для социальных сетей',
-        print: 'Печатные материалы'
-      }
-    };
-
-    const translatedService = serviceTranslations[locale]?.[service] || service;
 
     res.json({
       success: true,
       message: res.__('consultation_request_received'),
-      service: translatedService,
+      service: translatedServiceName,
       consultationId: consultation.id
     });
 

@@ -10,6 +10,8 @@ const session = require("express-session");
 const verifyTokenExceptLogin = require("./middleware/authMiddleware");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const i18n = require("i18n");
+const bcrypt = require("bcrypt");
+const { v4: uuidv4 } = require("uuid");
 require("dotenv").config();
 //routes import
 const authRouter = require("./routes/authRoutes");
@@ -23,15 +25,53 @@ const passwordResetRoutes = require('./routes/passwordResetRoutes');
 
 //additional imports
 const app = express();
-const prisma = new PrismaClient();
+
+// Create Prisma client with connection management
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL || "sqlserver://localhost:1433;database=print_center;user=sa;password=MyPassword123#;trustServerCertificate=true"
+    }
+  },
+  log: ['query', 'info', 'warn', 'error'],
+});
+
+// Database connection management
+async function connectDatabase() {
+  try {
+    await prisma.$connect();
+    console.log('✅ Database connected successfully');
+  } catch (error) {
+    console.error('❌ Database connection failed:', error);
+    process.exit(1);
+  }
+}
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('Shutting down gracefully...');
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('Shutting down gracefully...');
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+// Make prisma available globally
+global.prisma = prisma;
+
 const Avatar = require("./models_mongo/avatar.js");
 const Document = require("./models_mongo/documents.js");
 const mongoose = require("mongoose");
 async function connectToMongo() {
   try {
     await mongoose.connect("mongodb://localhost:27017/print_center");
+    console.log('✅ MongoDB connected successfully');
   } catch (err) {
-    console.error("MongoDB connection failed:", err.message);
+    console.error("❌ MongoDB connection failed:", err.message);
     process.exit(1); // Stop the app if DB fails
   }
 }
@@ -42,6 +82,55 @@ app.use(
     saveUninitialized: true,
   }),
 );
+
+// Helper function to translate service names
+function translateServiceName(serviceName, req) {
+  if (!serviceName) return req.__('service_unknown') || 'Unknown Service';
+  
+  // Map service names to translation keys
+  const serviceNameMap = {
+    'Document Printing': 'service_document_printing',
+    'Custom T-Shirt': 'service_custom_tshirt',
+    'Unknown Service': 'service_unknown',
+    'Logo Design': 'service_logo_design',
+    'Branding': 'service_branding',
+    'Social Media Graphics': 'service_social_media_graphics',
+    'Print Materials': 'service_print_materials',
+    'Graphic Design Consultation': 'service_graphic_design_consultation',
+    'Custom merch design': 'service_custom_merch_design',
+    'Custom Merch Design': 'service_custom_merch_design',
+    'Photocopy': 'service_photocopy',
+    'Printing': 'service_printing',
+    'Merch Design': 'service_merch_design',
+    'Xerox Copy Service': 'service_xerox_copy',
+    'Merch': 'merch',
+    'Grapic designer consultation': 'service_graphic_designer_consultation',
+    'Graphic Designer Consultation': 'service_graphic_designer_consultation',
+    'Unknown Product': 'service_unknown_product'
+  };
+  
+  const translationKey = serviceNameMap[serviceName];
+  return translationKey ? req.__(translationKey) : serviceName;
+}
+
+// Helper function to translate service descriptions
+function translateServiceDescription(serviceName, originalDescription, req) {
+  if (!serviceName) return originalDescription || '—';
+  
+  // Map service names to description translation keys
+  const serviceDescriptionMap = {
+    'Document Printing': 'service_description_document_printing',
+    'Custom merch design': 'service_description_custom_merch_design',
+    'Custom Merch Design': 'service_description_custom_merch_design',
+    'Grapic designer consultation': 'service_description_graphic_designer_consultation',
+    'Graphic Designer Consultation': 'service_description_graphic_designer_consultation',
+    'Graphic Design Consultation': 'service_description_graphic_designer_consultation',
+    'Unknown Product': 'service_description_unknown_product'
+  };
+  
+  const translationKey = serviceDescriptionMap[serviceName];
+  return translationKey ? req.__(translationKey) : (originalDescription || '—');
+}
 
 // Configure i18n
 i18n.configure({
@@ -148,7 +237,7 @@ app.use("/checkout", checkoutRoutes);
 
 //basic routes
 
-connectToMongo();
+// Root route
 app.get("/", async (req, res) => {
   try {
     const locale = req.getLocale();
@@ -203,10 +292,13 @@ app.get("/", async (req, res) => {
     });
   }
 });
+
+// Google OAuth route
 app.get(
   "/auth/google",
   passport.authenticate("google", { scope: ["profile", "email"] }),
 );
+
 // Admin route with authentication and authorization check
 app.get("/admin", async (req, res) => {
   try {
@@ -270,6 +362,7 @@ app.get("/admin", async (req, res) => {
   }
 });
 
+// Changelog API route
 app.get("/api/changelog", async (req, res) => {
   try {
     const {
@@ -349,14 +442,187 @@ app.get("/api/changelog", async (req, res) => {
       },
       message: res.__('changelog_fetched_successfully')
     });
-  } catch (err) {
-    console.error("Error fetching changelog:", err);
-    res.status(500).json({ 
+  } catch (error) {
+    console.error('Error fetching changelog:', error);
+    res.status(500).json({
       success: false,
-      error: res.__('error_internal_server')
+      message: res.__('error_fetching_changelog') || 'Error fetching changelog'
     });
   }
 });
+
+// Order Statistics API route
+app.get("/api/order-statistics", async (req, res) => {
+  try {
+    // Check if user is logged in and is admin
+    if (!req.cookies?.token) {
+      return res.status(401).json({ 
+        success: false, 
+        message: res.__('unauthorized') || 'Unauthorized' 
+      });
+    }
+
+    const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+    const user = await prisma.users.findUnique({
+      where: { id: decoded.userId },
+      select: { role: true }
+    });
+
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ 
+        success: false, 
+        message: res.__('access_denied_admin') || 'Access denied: Admin required' 
+      });
+    }
+
+    // Get date range from query parameters (default to last 30 days)
+    const { period = '30' } = req.query;
+    const days = parseInt(period);
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // Fetch order statistics by service type
+    const orderStats = await prisma.order_items.groupBy({
+      by: ['service_id'],
+      where: {
+        created_at: {
+          gte: startDate
+        }
+      },
+      _count: {
+        id: true
+      },
+      _sum: {
+        quantity: true,
+        subtotal: true
+      }
+    });
+
+    // Get service details for each statistic and group them
+    const serviceDetails = await Promise.all(
+      orderStats.map(async (stat) => {
+        const service = await prisma.services.findUnique({
+          where: { id: stat.service_id },
+          select: { name: true, description: true }
+        });
+
+        return {
+          service_id: stat.service_id,
+          original_service_name: service?.name || 'Unknown Service',
+          service_name: translateServiceName(service?.name, req),
+          service_description: translateServiceDescription(service?.name, service?.description, req),
+          order_count: stat._count.id,
+          total_quantity: stat._sum.quantity || 0,
+          total_revenue: parseFloat(stat._sum.subtotal?.toString() || '0'),
+          average_order_value: stat._count.id > 0 ? 
+            parseFloat((stat._sum.subtotal / stat._count.id).toString()) : 0
+        };
+      })
+    );
+
+    // Group services into categories
+    const groupedStatistics = [];
+    const merchServices = [];
+    const printServices = [];
+
+    serviceDetails.forEach(stat => {
+      // Check if this is a merch service using the original service name
+      const isMerchService = 
+        stat.original_service_name === 'Custom T-Shirt' || 
+        stat.original_service_name === 'Unknown Service' || 
+        stat.original_service_name === 'Unknown Product' ||
+        stat.original_service_name.toLowerCase().includes('merch') || 
+        stat.original_service_name.toLowerCase().includes('tshirt') ||
+        stat.original_service_name.toLowerCase().includes('design');
+
+      if (isMerchService) {
+        merchServices.push(stat);
+      } else {
+        printServices.push(stat);
+      }
+    });
+
+    // Combine merch services into one category
+    if (merchServices.length > 0) {
+      const totalMerchOrders = merchServices.reduce((sum, stat) => sum + stat.order_count, 0);
+      const totalMerchQuantity = merchServices.reduce((sum, stat) => sum + stat.total_quantity, 0);
+      const totalMerchRevenue = merchServices.reduce((sum, stat) => sum + stat.total_revenue, 0);
+      const averageMerchOrderValue = totalMerchOrders > 0 ? totalMerchRevenue / totalMerchOrders : 0;
+
+      groupedStatistics.push({
+        service_id: 'merch',
+        service_name: translateServiceName('Merch', req),
+        service_description: 'Custom merchandise and design services',
+        order_count: totalMerchOrders,
+        total_quantity: totalMerchQuantity,
+        total_revenue: totalMerchRevenue,
+        average_order_value: averageMerchOrderValue
+      });
+    }
+
+    // Add print services as individual categories
+    printServices.forEach(stat => {
+      // Skip Unknown Product as it's now grouped with merch
+      if (stat.original_service_name !== 'Unknown Product') {
+        groupedStatistics.push({
+          service_id: stat.service_id,
+          service_name: stat.service_name,
+          service_description: stat.service_description,
+          order_count: stat.order_count,
+          total_quantity: stat.total_quantity,
+          total_revenue: stat.total_revenue,
+          average_order_value: stat.average_order_value
+        });
+      }
+    });
+
+    // Get overall statistics
+    const totalOrders = await prisma.order_items.count({
+      where: {
+        created_at: {
+          gte: startDate
+        }
+      }
+    });
+
+    const totalRevenue = await prisma.order_items.aggregate({
+      where: {
+        created_at: {
+          gte: startDate
+        }
+      },
+      _sum: {
+        subtotal: true
+      }
+    });
+
+    const overallStats = {
+      total_orders: totalOrders,
+      total_revenue: parseFloat(totalRevenue._sum.subtotal?.toString() || '0'),
+      average_order_value: totalOrders > 0 ? 
+        parseFloat((totalRevenue._sum.subtotal / totalOrders).toString()) : 0
+    };
+
+    res.json({
+      success: true,
+      data: {
+        period_days: days,
+        period_start: startDate,
+        period_end: new Date(),
+        service_statistics: groupedStatistics,
+        overall_statistics: overallStats
+      },
+      message: res.__('order_statistics_fetched_successfully') || 'Order statistics fetched successfully'
+    });
+  } catch (error) {
+    console.error('Error fetching order statistics:', error);
+    res.status(500).json({
+      success: false,
+      message: res.__('error_fetching_order_statistics') || 'Error fetching order statistics'
+    });
+  }
+});
+
 // About route with optional user data
 app.get("/about", async (req, res) => {
   try {
@@ -390,7 +656,7 @@ app.get("/about", async (req, res) => {
   }
 });
 
-// Services route with optional user data
+// Google OAuth callback
 app.get(
   "/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
@@ -444,6 +710,7 @@ app.get(
     }
   }
 );
+
 // Set user locale and redirect back
 app.get("/set-locale", (req, res) => {
   const { lang, redirectTo } = req.query;
@@ -490,6 +757,22 @@ app.get('/reset-password', (req, res) => {
   });
 });
 
-https.createServer(credentials, app).listen(3000, () => {
-  console.log("HTTPS Server running on port 3000");
-});
+// Initialize databases and start server
+async function startServer() {
+  try {
+    // Connect to databases first
+    await connectDatabase();
+    await connectToMongo();
+    
+    // Start HTTPS server
+    https.createServer(credentials, app).listen(3000, () => {
+      console.log("✅ HTTPS Server running on port 3000");
+    });
+  } catch (error) {
+    console.error("❌ Failed to start server:", error);
+    process.exit(1);
+  }
+}
+
+// Start the server
+startServer();

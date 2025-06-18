@@ -1,6 +1,55 @@
 // Get translation function from window object
 const t = window.t || ((key) => key);
 
+// Helper function to translate service names
+function translateServiceName(serviceName) {
+  if (!serviceName) return t('service_unknown');
+  
+  // Map service names to translation keys
+  const serviceNameMap = {
+    'Document Printing': 'service_document_printing',
+    'Custom T-Shirt': 'service_custom_tshirt',
+    'Unknown Service': 'service_unknown',
+    'Logo Design': 'service_logo_design',
+    'Branding': 'service_branding',
+    'Social Media Graphics': 'service_social_media_graphics',
+    'Print Materials': 'service_print_materials',
+    'Graphic Design Consultation': 'service_graphic_design_consultation',
+    'Custom merch design': 'service_custom_merch_design',
+    'Custom Merch Design': 'service_custom_merch_design',
+    'Photocopy': 'service_photocopy',
+    'Printing': 'service_printing',
+    'Merch Design': 'service_merch_design',
+    'Xerox Copy Service': 'service_xerox_copy',
+    'Merch': 'merch',
+    'Grapic designer consultation': 'service_graphic_designer_consultation',
+    'Graphic Designer Consultation': 'service_graphic_designer_consultation',
+    'Unknown Product': 'service_unknown_product'
+  };
+  
+  const translationKey = serviceNameMap[serviceName];
+  return translationKey ? t(translationKey) : serviceName;
+}
+
+// Helper function to translate service descriptions
+function translateServiceDescription(serviceName, originalDescription) {
+  if (!serviceName) return originalDescription || '—';
+  
+  // Map service names to description translation keys
+  const serviceDescriptionMap = {
+    'Document Printing': 'service_description_document_printing',
+    'Custom merch design': 'service_description_custom_merch_design',
+    'Custom Merch Design': 'service_description_custom_merch_design',
+    'Grapic designer consultation': 'service_description_graphic_designer_consultation',
+    'Graphic Designer Consultation': 'service_description_graphic_designer_consultation',
+    'Graphic Design Consultation': 'service_description_graphic_designer_consultation',
+    'Unknown Product': 'service_description_unknown_product'
+  };
+  
+  const translationKey = serviceDescriptionMap[serviceName];
+  return translationKey ? t(translationKey) : (originalDescription || '—');
+}
+
 // Function to show message block
 function showMessage(message, type = 'info', duration = 3000) {
   const messageBlock = document.getElementById('messageBlock');
@@ -75,7 +124,7 @@ function updateUserTable(users) {
 
   if (users.length === 0) {
     const row = document.createElement("tr");
-    row.innerHTML = `<td colspan="7" style="text-align: center;">${t("no_users_found")}</td>`;
+    row.innerHTML = `<td colspan="5" style="text-align: center;">${t("no_users_found")}</td>`;
     tableBody.appendChild(row);
     return;
   }
@@ -83,16 +132,11 @@ function updateUserTable(users) {
   users.forEach((user) => {
     const row = document.createElement("tr");
 
-    // Format the date for display
-    const createdAt = new Date(user.created_at);
-    const formattedDate = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, "0")}-${String(createdAt.getDate()).padStart(2, "0")}`;
-
     row.innerHTML = `
       <td>${user.username}</td>
       <td>${user.email}</td>
       <td>${user.role}</td>
       <td>${user.is_locked ? t("locked") : t("active")}</td>
-      <td>${formattedDate}</td>
       <td>
         <button class="btn btn-sm btn-outline-primary me-1" title="${t("view")}" onclick="viewUser(${user.id})">
           <i class="bi bi-eye"></i>
@@ -180,9 +224,6 @@ function viewUser(id) {
       document.getElementById("viewUsername").value = user.username || placeholder;
       document.getElementById("viewEmail").value = user.email || placeholder;
       document.getElementById("viewRole").value = user.role || "customer";
-      document.getElementById("viewCreatedAt").value = user.created_at
-        ? new Date(user.created_at).toLocaleString()
-        : placeholder;
 
       // Set optional fields with fallback
       document.getElementById("viewName").value = user.name || placeholder;
@@ -221,9 +262,6 @@ function editUser(userId) {
       document.getElementById("viewUsername").value = user.username;
       document.getElementById("viewEmail").value = user.email;
       document.getElementById("viewRole").value = user.role || "customer";
-      document.getElementById("viewCreatedAt").value = new Date(
-        user.createdAt,
-      ).toLocaleString();
       document.getElementById("viewName").value = user.name || ""; // Set 'name' if available
       document.getElementById("viewPhone").value = user.phone || ""; // Set 'phone' if available
       document.getElementById("viewAddress").value = user.address || ""; // Set 'address' if available
@@ -402,13 +440,12 @@ async function fetchChangelog(page = 1) {
 
     if (data.length === 0) {
       const row = document.createElement("tr");
-      row.innerHTML = `<td colspan="7">${t("no_results_found")}</td>`;
+      row.innerHTML = `<td colspan="6">${t("no_results_found")}</td>`;
       tbody.appendChild(row);
     } else {
       data.forEach((entry) => {
         const row = document.createElement("tr");
         row.innerHTML = `
-          <td>${entry.id}</td>
           <td>${entry.users_Changelog_userIdTousers?.username || t('unknown_user')}</td>
           <td>${entry.field}</td>
           <td>${entry.changedAt}</td>
@@ -521,7 +558,7 @@ async function fetchServices() {
         window.location.href = '/login';
         return;
       } else if (response.status === 403) {
-        alert(t('access_denied_admin'));
+        showMessage(t('access_denied_admin'), 'error');
         return;
       }
       const data = await response.json();
@@ -536,7 +573,7 @@ async function fetchServices() {
     }
   } catch (error) {
     console.error('Error fetching services:', error);
-    alert(t('error_loading_services') + ': ' + error.message);
+    showMessage(t('error_loading_services') + ': ' + error.message, 'error');
   }
 }
 
@@ -547,7 +584,7 @@ function updateServicePricesTable() {
 
   if (!services || services.length === 0) {
     const row = document.createElement('tr');
-    row.innerHTML = `<td colspan="5" class="text-center">${t('no_services_found')}</td>`;
+    row.innerHTML = `<td colspan="4" class="text-center">${t('no_services_found')}</td>`;
     tableBody.appendChild(row);
     return;
   }
@@ -555,9 +592,8 @@ function updateServicePricesTable() {
   services.forEach(service => {
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>${service.id}</td>
-      <td>${service.name}</td>
-      <td>${service.description || '—'}</td>
+      <td>${translateServiceName(service.name)}</td>
+      <td>${translateServiceDescription(service.name, service.description)}</td>
       <td>
         <div class="input-group">
           <input type="number" class="form-control form-control-sm" 
@@ -598,7 +634,7 @@ async function updateServicePrice(serviceId, newPrice) {
         window.location.href = '/login';
         return;
       } else if (response.status === 403) {
-        alert(t('access_denied_admin'));
+        showMessage(t('access_denied_admin'), 'error');
         return;
       }
       const data = await response.json();
@@ -612,13 +648,13 @@ async function updateServicePrice(serviceId, newPrice) {
       if (serviceIndex !== -1) {
         services[serviceIndex] = data.service;
       }
-      alert(t('price_updated_successfully'));
+      showMessage(t('price_updated_successfully'), 'success');
     } else {
       throw new Error(data.message || t('failed_to_update_service_price'));
     }
   } catch (error) {
     console.error('Error updating service price:', error);
-    alert(t('error_updating_price') + ': ' + error.message);
+    showMessage(t('error_updating_price') + ': ' + error.message, 'error');
     // Refresh the table to show original values
     fetchServices();
   }
@@ -632,54 +668,21 @@ async function editService(serviceId) {
       throw new Error(t('service_not_found'));
     }
 
-    const newName = prompt(t('enter_new_service_name'), service.name);
-    if (newName === null) return; // User cancelled
+    // Populate the edit modal with current service data
+    document.getElementById('editServiceName').value = service.name;
+    document.getElementById('editServiceDescription').value = service.description || '';
+    document.getElementById('editServicePrice').value = service.price;
 
-    const newDescription = prompt(t('enter_new_service_description'), service.description || '');
-    if (newDescription === null) return; // User cancelled
+    // Store the service ID in the modal's dataset
+    const modal = document.getElementById('editServiceModal');
+    modal.dataset.serviceId = serviceId;
 
-    const newPrice = prompt(t('enter_new_service_price'), service.price);
-    if (newPrice === null) return; // User cancelled
-
-    const response = await fetch(`/api/services/${serviceId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        name: newName,
-        description: newDescription,
-        price: newPrice
-      })
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        window.location.href = '/login';
-        return;
-      } else if (response.status === 403) {
-        alert(t('access_denied_admin'));
-        return;
-      }
-      const data = await response.json();
-      throw new Error(data.message || t('failed_to_update_service'));
-    }
-
-    const data = await response.json();
-    if (data.success) {
-      // Update the local services array
-      const serviceIndex = services.findIndex(s => s.id === serviceId);
-      if (serviceIndex !== -1) {
-        services[serviceIndex] = data.service;
-      }
-      updateServicePricesTable();
-      alert(t('service_updated_successfully'));
-    } else {
-      throw new Error(data.message || t('failed_to_update_service'));
-    }
+    // Show the modal
+    const editModal = new bootstrap.Modal(modal);
+    editModal.show();
   } catch (error) {
-    console.error('Error updating service:', error);
-    alert(t('error_updating_service') + ': ' + error.message);
+    console.error('Error preparing service edit:', error);
+    showMessage(t('error_preparing_service_edit') + ': ' + error.message, 'error');
   }
 }
 
@@ -693,12 +696,12 @@ async function submitNewService(event) {
     const price = document.getElementById('servicePrice').value;
 
     if (!name) {
-      alert(t('service_name_required'));
+      showMessage(t('service_name_required'), 'error');
       return;
     }
 
     if (!price || isNaN(parseFloat(price)) || parseFloat(price) < 0) {
-      alert(t('invalid_price'));
+      showMessage(t('invalid_price'), 'error');
       return;
     }
 
@@ -719,7 +722,7 @@ async function submitNewService(event) {
         window.location.href = '/login';
         return;
       } else if (response.status === 403) {
-        alert(t('access_denied_admin'));
+        showMessage(t('access_denied_admin'), 'error');
         return;
       }
       const data = await response.json();
@@ -737,56 +740,65 @@ async function submitNewService(event) {
       modal.hide();
       document.getElementById('addServiceForm').reset();
       
-      alert(t('service_created_successfully'));
+      showMessage(t('service_created_successfully'), 'success');
     } else {
       throw new Error(data.message || t('failed_to_create_service'));
     }
   } catch (error) {
     console.error('Error creating service:', error);
-    alert(t('error_creating_service') + ': ' + error.message);
+    showMessage(t('error_creating_service') + ': ' + error.message, 'error');
   }
 }
 
 // Function to delete a service
 async function deleteService(serviceId) {
-  if (!confirm(t('confirm_delete_service'))) {
-    return;
-  }
-
   try {
-    const response = await fetch(`/api/services/${serviceId}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        window.location.href = '/login';
-        return;
-      } else if (response.status === 403) {
-        alert(t('access_denied_admin'));
-        return;
-      } else if (response.status === 400 && data.message.includes('existing orders')) {
-        alert(t('cannot_delete_service_with_orders'));
-        return;
-      }
-      throw new Error(data.message || t('failed_to_delete_service'));
+    const service = services.find(s => s.id === serviceId);
+    if (!service) {
+      throw new Error(t('service_not_found'));
     }
 
-    if (data.success) {
-      services = services.filter(s => s.id !== serviceId);
-      updateServicePricesTable();
-      alert(t('service_deleted_successfully'));
-    } else {
-      throw new Error(data.message || t('failed_to_delete_service'));
+    // Check if service has orders before showing confirmation
+    const checkResponse = await fetch(`/api/services/${serviceId}/check-orders`);
+    let orderCount = 0;
+    let hasOrders = false;
+    
+    if (checkResponse.ok) {
+      const checkData = await checkResponse.json();
+      if (checkData.success) {
+        orderCount = checkData.orderCount || 0;
+        hasOrders = orderCount > 0;
+      }
     }
+
+    // Set the confirmation message
+    let message = t('confirm_delete_service_message', { name: translateServiceName(service.name) });
+    
+    if (hasOrders) {
+      // Use translation with parameters for multilingual support
+      message = t('cannot_delete_service_with_orders_detailed', {
+        serviceName: translateServiceName(service.name),
+        orderCount: orderCount,
+        orderPlural: orderCount > 1 ? t('orders') : t('order')
+      });
+      
+      // Show error message and don't show delete modal
+      showMessage(message, 'error');
+      return;
+    }
+
+    document.getElementById('deleteServiceMessage').textContent = message;
+
+    // Store the service ID in the modal's dataset
+    const modal = document.getElementById('deleteServiceModal');
+    modal.dataset.serviceId = serviceId;
+
+    // Show the modal
+    const deleteModal = new bootstrap.Modal(modal);
+    deleteModal.show();
   } catch (error) {
-    console.error('Error deleting service:', error);
-    alert(t('error_deleting_service') + ': ' + error.message);
+    console.error('Error preparing service deletion:', error);
+    showMessage(t('error_preparing_service_deletion') + ': ' + error.message, 'error');
   }
 }
 
@@ -795,4 +807,241 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchUsers();
   fetchChangelog();
   fetchServices();
+  fetchOrderStatistics();
+
+  // Add event listeners for service modals
+  const saveEditServiceBtn = document.getElementById('saveEditServiceBtn');
+  const confirmDeleteServiceBtn = document.getElementById('confirmDeleteServiceBtn');
+
+  // Save edit service button
+  saveEditServiceBtn?.addEventListener('click', async function() {
+    const modal = document.getElementById('editServiceModal');
+    const serviceId = modal.dataset.serviceId;
+    
+    try {
+      const name = document.getElementById('editServiceName').value.trim();
+      const description = document.getElementById('editServiceDescription').value.trim();
+      const price = document.getElementById('editServicePrice').value;
+
+      if (!name) {
+        showMessage(t('service_name_required'), 'error');
+        return;
+      }
+
+      if (!price || isNaN(parseFloat(price)) || parseFloat(price) < 0) {
+        showMessage(t('invalid_price'), 'error');
+        return;
+      }
+
+      const response = await fetch(`/api/services/${serviceId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          description,
+          price: parseFloat(price)
+        })
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          window.location.href = '/login';
+          return;
+        } else if (response.status === 403) {
+          showMessage(t('access_denied_admin'), 'error');
+          return;
+        }
+        const data = await response.json();
+        throw new Error(data.message || t('failed_to_update_service'));
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        // Update the local services array
+        const serviceIndex = services.findIndex(s => s.id === parseInt(serviceId));
+        if (serviceIndex !== -1) {
+          services[serviceIndex] = data.service;
+        }
+        updateServicePricesTable();
+        
+        // Close modal
+        const editModal = bootstrap.Modal.getInstance(modal);
+        editModal.hide();
+        
+        showMessage(t('service_updated_successfully'), 'success');
+      } else {
+        throw new Error(data.message || t('failed_to_update_service'));
+      }
+    } catch (error) {
+      console.error('Error updating service:', error);
+      showMessage(t('error_updating_service') + ': ' + error.message, 'error');
+    }
+  });
+
+  // Confirm delete service button
+  confirmDeleteServiceBtn?.addEventListener('click', async function() {
+    const modal = document.getElementById('deleteServiceModal');
+    const serviceId = modal.dataset.serviceId;
+    const deleteModal = bootstrap.Modal.getInstance(modal);
+    
+    try {
+      const response = await fetch(`/api/services/${serviceId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          window.location.href = '/login';
+          return;
+        } else if (response.status === 403) {
+          showMessage(t('access_denied_admin'), 'error');
+          return;
+        } else if (response.status === 400) {
+          // Handle specific error for existing orders - use server message directly
+          // as it's already translated
+          showMessage(data.message || t('failed_to_delete_service'), 'error');
+          return;
+        } else if (response.status === 404) {
+          showMessage(t('service_not_found'), 'error');
+          return;
+        }
+        throw new Error(data.message || t('failed_to_delete_service'));
+      }
+
+      if (data.success) {
+        services = services.filter(s => s.id !== parseInt(serviceId));
+        updateServicePricesTable();
+        
+        // Close modal
+        deleteModal.hide();
+        
+        // Use server message directly as it's already translated
+        showMessage(data.message || t('service_deleted_successfully'), 'success');
+      } else {
+        throw new Error(data.message || t('failed_to_delete_service'));
+      }
+    } catch (error) {
+      console.error('Error deleting service:', error);
+      showMessage(t('error_deleting_service') + ': ' + error.message, 'error');
+    }
+  });
 });
+
+// Order Statistics Functions
+async function fetchOrderStatistics() {
+  try {
+    const period = document.getElementById('statisticsPeriod').value;
+    const loadingIndicator = document.getElementById('statisticsLoadingIndicator');
+    const overallCards = document.getElementById('overallStatisticsCards');
+    const tableBody = document.getElementById('orderStatisticsTableBody');
+
+    // Show loading indicator
+    loadingIndicator.style.display = 'block';
+    overallCards.innerHTML = '';
+    tableBody.innerHTML = '';
+
+    const response = await fetch(`/api/order-statistics?period=${period}`);
+    
+    if (!response.ok) {
+      if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+      } else if (response.status === 403) {
+        showMessage(t('access_denied_admin'), 'error');
+        return;
+      }
+      const data = await response.json();
+      throw new Error(data.message || t('error_fetching_order_statistics'));
+    }
+
+    const data = await response.json();
+    
+    if (data.success) {
+      updateOrderStatisticsDisplay(data.data);
+      showMessage(t('order_statistics_fetched_successfully'), 'success');
+    } else {
+      throw new Error(data.message || t('error_fetching_order_statistics'));
+    }
+  } catch (error) {
+    console.error('Error fetching order statistics:', error);
+    showMessage(t('error_fetching_order_statistics') + ': ' + error.message, 'error');
+  } finally {
+    document.getElementById('statisticsLoadingIndicator').style.display = 'none';
+  }
+}
+
+function updateOrderStatisticsDisplay(data) {
+  const { service_statistics, overall_statistics } = data;
+  
+  // Update overall statistics cards
+  updateOverallStatisticsCards(overall_statistics);
+  
+  // Update service statistics table
+  updateServiceStatisticsTable(service_statistics, overall_statistics.total_revenue);
+}
+
+function updateOverallStatisticsCards(overallStats) {
+  const cardsContainer = document.getElementById('overallStatisticsCards');
+  
+  cardsContainer.innerHTML = `
+    <div class="col-md-4">
+      <div class="card text-center">
+        <div class="card-body">
+          <h5 class="card-title">${t('total_orders')}</h5>
+          <h2 class="text-primary">${overallStats.total_orders}</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center">
+        <div class="card-body">
+          <h5 class="card-title">${t('total_revenue')}</h5>
+          <h2 class="text-success">$${overallStats.total_revenue.toFixed(2)}</h2>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center">
+        <div class="card-body">
+          <h5 class="card-title">${t('average_order_value')}</h5>
+          <h2 class="text-info">$${overallStats.average_order_value.toFixed(2)}</h2>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function updateServiceStatisticsTable(serviceStats, totalRevenue) {
+  const tableBody = document.getElementById('orderStatisticsTableBody');
+  
+  if (!serviceStats || serviceStats.length === 0) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="6" class="text-center">${t('no_services_found')}</td>
+      </tr>
+    `;
+    return;
+  }
+
+  tableBody.innerHTML = serviceStats.map(stat => {
+    const percentage = totalRevenue > 0 ? ((stat.total_revenue / totalRevenue) * 100).toFixed(1) : '0.0';
+    
+    return `
+      <tr>
+        <td>${translateServiceName(stat.service_name)}</td>
+        <td>${stat.order_count}</td>
+        <td>${stat.total_quantity}</td>
+        <td>$${stat.total_revenue.toFixed(2)}</td>
+        <td>$${stat.average_order_value.toFixed(2)}</td>
+        <td>${percentage}%</td>
+      </tr>
+    `;
+  }).join('');
+}

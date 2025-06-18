@@ -1,11 +1,13 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
-const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcryptjs");
+const { PrismaClient } = require("@prisma/client");
 
-const prisma = new PrismaClient();
 const router = express.Router();
 const verifyTokenExceptLogin = require("../middleware/authMiddleware");
+
+// Use Prisma client directly
+const prisma = new PrismaClient();
 
 // Error handling middleware
 const handleError = (
@@ -16,6 +18,13 @@ const handleError = (
   status = 500,
 ) => {
   console.error(`${titleKey}:`, error);
+  
+  // Check if it's a database connection error
+  if (error.message && error.message.includes('Server has closed the connection')) {
+    console.error('Database connection lost, attempting to reconnect...');
+    // You could add reconnection logic here if needed
+  }
+  
   res.status(status).render("error", {
     errorTitle: res.__?.(titleKey) || titleKey,
     errorMessage: res.__?.(messageKey) || messageKey,

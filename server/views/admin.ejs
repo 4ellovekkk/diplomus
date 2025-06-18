@@ -110,7 +110,6 @@
           <th><%= t('email') %></th>
           <th><%= t('role') %></th>
           <th><%= t('status') %></th>
-          <th><%= t('created_at') %></th>
           <th><%= t('actions') %></th>
         </tr>
       </thead>
@@ -153,10 +152,6 @@
               <option value="employee">Employee</option>
               <option value="admin">Admin</option>
             </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label"><%= t('created_at') %></label>
-            <input type="text" id="viewCreatedAt" class="form-control" />
           </div>
           <div class="mb-3">
             <label class="form-label"><%= t('name') %></label>
@@ -230,7 +225,6 @@
       <table class="table table-bordered table-hover align-middle text-center">
         <thead class="table-light">
           <tr>
-            <th><%= t('id') %></th>
             <th><%= t('user_id') %></th>
             <th><%= t('field') %></th>
             <th><%= t('timestamp') %></th>
@@ -267,7 +261,6 @@
       <table class="table table-bordered table-hover align-middle text-center">
         <thead class="table-light">
           <tr>
-            <th><%= t('id') %></th>
             <th><%= t('service_name') %></th>
             <th><%= t('description') %></th>
             <th><%= t('base_price') %></th>
@@ -275,6 +268,60 @@
           </tr>
         </thead>
         <tbody id="servicePricesTableBody">
+          <!-- Dynamic content will be inserted here -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Order Statistics Section -->
+  <section class="admin-panel container py-4">
+    <div class="order-statistics-header">
+      <h1><%= t('order_statistics') %></h1>
+    </div>
+    
+    <!-- Period Filter -->
+    <div class="row gy-3 align-items-end mb-4">
+      <div class="col-md-3">
+        <label for="statisticsPeriod" class="form-label"><%= t('time_period') %></label>
+        <select id="statisticsPeriod" class="form-select" onchange="fetchOrderStatistics()">
+          <option value="7"><%= t('last_7_days') %></option>
+          <option value="30" selected><%= t('last_30_days') %></option>
+          <option value="90"><%= t('last_90_days') %></option>
+          <option value="365"><%= t('last_year') %></option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button class="btn btn-outline-primary" onclick="fetchOrderStatistics()">
+          <i class="bi bi-arrow-clockwise"></i> <%= t('refresh') %>
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="statisticsLoadingIndicator" class="text-muted mb-3" style="display: none;">
+      <%= t('loading_statistics') %>
+    </div>
+
+    <!-- Overall Statistics Cards -->
+    <div class="row mb-4" id="overallStatisticsCards">
+      <!-- Dynamic content will be inserted here -->
+    </div>
+
+    <!-- Service Statistics Table -->
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle text-center">
+        <thead class="table-light">
+          <tr>
+            <th><%= t('service_name') %></th>
+            <th><%= t('order_count') %></th>
+            <th><%= t('total_quantity') %></th>
+            <th><%= t('total_revenue') %></th>
+            <th><%= t('average_order_value') %></th>
+            <th><%= t('percentage_of_total') %></th>
+          </tr>
+        </thead>
+        <tbody id="orderStatisticsTableBody">
           <!-- Dynamic content will be inserted here -->
         </tbody>
       </table>
@@ -365,6 +412,59 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn" data-bs-dismiss="modal"><%= t('ok') %></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Service Modal -->
+  <div class="modal fade" id="editServiceModal" tabindex="-1" aria-labelledby="editServiceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editServiceModalLabel"><%= t('edit_service') %></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t('close') %>"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editServiceForm">
+            <div class="mb-3">
+              <label for="editServiceName" class="form-label"><%= t('service_name_label') %></label>
+              <input type="text" class="form-control" id="editServiceName" required>
+            </div>
+            <div class="mb-3">
+              <label for="editServiceDescription" class="form-label"><%= t('service_description_label') %></label>
+              <textarea class="form-control" id="editServiceDescription" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="editServicePrice" class="form-label"><%= t('base_price_label') %></label>
+              <input type="number" class="form-control" id="editServicePrice" min="0" step="0.01" required>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" data-bs-dismiss="modal"><%= t('cancel') %></button>
+          <button type="button" class="btn btn-primary" id="saveEditServiceBtn"><%= t('save') %></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Service Confirmation Modal -->
+  <div class="modal fade" id="deleteServiceModal" tabindex="-1" aria-labelledby="deleteServiceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteServiceModalLabel"><%= t('delete_service') %></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t('close') %>"></button>
+        </div>
+        <div class="modal-body">
+          <p id="deleteServiceMessage"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" data-bs-dismiss="modal"><%= t('cancel') %></button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteServiceBtn">
+            <i class="bi bi-trash"></i> <%= t('delete') %>
+          </button>
         </div>
       </div>
     </div>
