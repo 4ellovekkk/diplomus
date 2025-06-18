@@ -183,8 +183,6 @@
                                                         <p><strong><%= __('print_pages') %>:</strong> 
                                                             <% if (options.print_pages === 'all') { %>
                                                                 <%= __('pages_all') %>
-                                                            <% } else if (options.print_pages && options.totalDocumentPages) { %>
-                                                                <%= options.print_pages %>
                                                             <% } else if (options.print_pages) { %>
                                                                 <%= options.print_pages %>
                                                             <% } else if (options.totalDocumentPages) { %>
@@ -342,15 +340,23 @@
                             orderCard.remove();
 
                             if (document.querySelectorAll('.order-card').length === 0) {
-                                document.getElementById('orders-container').innerHTML = `
-                                    <div class="alert alert-info">
-                                        <%= __('no_orders_in_queue') %>
-                                    </div>
-                                `;
+                                document.getElementById('orders-container').innerHTML = 
+                                    '<div class="alert alert-info"><%= __("no_orders_in_queue") %></div>';
                             }
 
-                            completeOrderModal.hide();
+                            // Close the confirmation modal first
+                            const confirmModal = bootstrap.Modal.getInstance(document.getElementById('completeOrderModal'));
+                            confirmModal.hide();
+                            
+                            // Show success message after confirmation modal is closed
                             successModal.show();
+                            
+                            // Automatically close success modal after 2 seconds
+                            setTimeout(() => {
+                                successModal.hide();
+                                // Reset the confirmation button's dataset
+                                document.getElementById('confirmCompleteBtn').dataset.orderId = '';
+                            }, 2000);
                         } else {
                             throw new Error('<%= __("error_completing_order") %>');
                         }

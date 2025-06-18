@@ -306,7 +306,7 @@
         printPagesInput.addEventListener('input', function() {
             if (!this.value.trim()) {
                 if (totalPages > 0) {
-                    pagesInput.value = "<%= __('all') %> (" + totalPages + " <%= __('pages') %>)";
+                    pagesInput.value = "<%= __('pages_all') %> (" + totalPages + " <%= __('pages') %>)";
                 }
             }
         });

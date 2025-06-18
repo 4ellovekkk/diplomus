@@ -330,6 +330,11 @@ app.get("/api/changelog", async (req, res) => {
             username: true,
           },
         },
+        users_Changelog_userIdTousers: {
+          select: {
+            username: true,
+          },
+        },
       },
     });
 
@@ -409,6 +414,16 @@ app.get(
             role: "customer",
             is_locked: false,
           },
+        });
+      }
+
+      // Check if user is locked
+      if (user.is_locked) {
+        return res.status(403).render("error", {
+          errorTitle: res.__('error_account_locked'),
+          errorMessage: res.__('error_account_locked_message'),
+          errorDetails: { code: 403 },
+          locale: req.getLocale()
         });
       }
 

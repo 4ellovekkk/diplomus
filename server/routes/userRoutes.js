@@ -375,14 +375,26 @@ router.post(
         return res.status(400).json({ message: "Invalid user ID" });
       }
 
-      // First get the current lock status
+      // First get the current user
       const user = await prisma.users.findUnique({
         where: { id },
-        select: { is_locked: true },
+        select: { 
+          is_locked: true,
+          role: true,
+          goodleId: true 
+        },
       });
 
       if (!user) {
         return res.status(404).json({ message: "User not found" });
+      }
+
+      // Prevent locking admin users
+      if (user.role === "admin") {
+        return res.status(403).json({ 
+          message: "Cannot lock admin users",
+          success: false 
+        });
       }
 
       // Toggle the lock status
@@ -390,7 +402,18 @@ router.post(
         where: { id },
         data: { is_locked: !user.is_locked },
       });
-      console.log(updatedUser);
+
+      // Log the change
+      await prisma.Changelog.create({
+        data: {
+          userId: id,
+          field: "is_locked",
+          oldValue: String(user.is_locked),
+          newValue: String(!user.is_locked),
+          changedBy: req.user.userId,
+        },
+      });
+
       res.json({
         success: true,
         user: updatedUser,

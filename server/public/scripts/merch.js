@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const textInput = document.getElementById('text-input');
     const textColorPicker = document.getElementById('text-color-picker');
     const fontSize = document.getElementById('font-size');
+    const fontFamily = document.getElementById('font-family');
     const imageUpload = document.getElementById('image-upload');
     const customImage = document.getElementById('custom-image');
     const imageWrapper = document.getElementById('image-wrapper');
@@ -39,6 +40,14 @@ document.addEventListener('DOMContentLoaded', function () {
     fontSize.addEventListener('input', function () {
         textOverlay.style.fontSize = this.value + 'px';
     });
+
+    // Change font family
+    fontFamily.addEventListener('change', function () {
+        textOverlay.style.fontFamily = this.value;
+    });
+
+    // Initialize font family
+    textOverlay.style.fontFamily = fontFamily.value;
 
     // Upload custom image with authorization check
     imageUpload.addEventListener('change', async function (e) {
@@ -238,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Draw the text if it exists
         if (textOverlay.textContent.trim()) {
             const textRect = textOverlay.getBoundingClientRect();
-            ctx.font = window.getComputedStyle(textOverlay).font;
+            ctx.font = `${window.getComputedStyle(textOverlay).fontSize} ${fontFamily.value}`;
             ctx.fillStyle = textOverlay.style.color || '#000000';
             ctx.textAlign = 'center';
             ctx.fillText(
@@ -275,6 +284,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 text: textOverlay.textContent.trim() || null,
                 textColor: textColorPicker.value,
                 fontSize: fontSize.value,
+                fontFamily: fontFamily.value,
                 position: {
                     x: parseFloat(textOverlay.style.left) || 50,
                     y: parseFloat(textOverlay.style.top) || 50
@@ -316,6 +326,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     text: designDetails.text,
                     textColor: designDetails.textColor,
                     fontSize: designDetails.fontSize,
+                    fontFamily: designDetails.fontFamily,
                     position: designDetails.position,
                     imagePosition: designDetails.imagePosition,
                     imageSize: designDetails.imageSize

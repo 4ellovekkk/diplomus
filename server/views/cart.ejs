@@ -27,6 +27,17 @@
                 <% Object.entries(item.options).forEach(([key, value]) => { %>
                   <% if (key === 'viewButton') { %>
                     <%- value %>
+                  <% } else if (key === 'print_pages') { %>
+                    <span class="option-tag">
+                      <%= __('print_pages') %>: 
+                      <% if (typeof value === 'object' && value.en && value.ru) { %>
+                        <%= locale === 'ru' ? value.ru : value.en %>
+                      <% } else if (value === 'all') { %>
+                        <%= __('pages_all') %>
+                      <% } else { %>
+                        <%= value %>
+                      <% } %>
+                    </span>
                   <% } else if (key !== 'design') { %>
                     <span class="option-tag"><%= key %>: <%= value %></span>
                   <% } %>

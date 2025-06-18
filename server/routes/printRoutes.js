@@ -103,6 +103,14 @@ router.post("/print", upload.single("document"), async (req, res) => {
       totalDocumentPages: parseInt(totalDocumentPages) || 1
     });
 
+    // Handle multilingual page ranges
+    let printPagesDisplay;
+    if (!print_pages || print_pages === "all") {
+      printPagesDisplay = "all";
+    } else {
+      printPagesDisplay = print_pages;
+    }
+
     // Construct item for cart
     const cartItem = {
       service_id: service.id,
@@ -111,7 +119,7 @@ router.post("/print", upload.single("document"), async (req, res) => {
       quantity: parseInt(copies) || 1,
       options: {
         filename: req.file.originalname,
-        print_pages: print_pages || "all",
+        print_pages: printPagesDisplay,
         totalDocumentPages: totalDocumentPages,
         color: color === "color" ? "color" : "black & white",
         paper_size,

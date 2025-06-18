@@ -1,6 +1,19 @@
 // Get translation function from window object
 const t = window.t || ((key) => key);
 
+// Function to show message block
+function showMessage(message, type = 'info', duration = 3000) {
+  const messageBlock = document.getElementById('messageBlock');
+  messageBlock.textContent = message;
+  messageBlock.className = `message-block ${type}`;
+  messageBlock.classList.add('show');
+
+  // Hide message after duration
+  setTimeout(() => {
+    messageBlock.classList.remove('show');
+  }, duration);
+}
+
 // Debounce function to limit how often fetchUsers is called during typing
 let debounceTimer;
 function debouncedFetchUsers() {
@@ -48,7 +61,7 @@ function fetchUsers(page = 1) {
     })
     .catch((error) => {
       console.error("Error fetching users:", error);
-      alert(t("error_fetching_users") + ": " + error.message);
+      showMessage(t("error_fetching_users") + ": " + error.message, 'error');
     })
     .finally(() => {
       document.getElementById("loadingIndicator").style.display = "none";
@@ -75,7 +88,6 @@ function updateUserTable(users) {
     const formattedDate = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, "0")}-${String(createdAt.getDate()).padStart(2, "0")}`;
 
     row.innerHTML = `
-      <td>${user.id}</td>
       <td>${user.username}</td>
       <td>${user.email}</td>
       <td>${user.role}</td>
@@ -160,8 +172,11 @@ function viewUser(id) {
       const user = data.user;
       const placeholder = "—";
 
+      // Store the user ID in the modal's dataset
+      const modal = document.getElementById("viewUserModal");
+      modal.dataset.userId = user.id;
+
       // Set basic user info
-      document.getElementById("viewUserId").value = user.id || placeholder;
       document.getElementById("viewUsername").value = user.username || placeholder;
       document.getElementById("viewEmail").value = user.email || placeholder;
       document.getElementById("viewRole").value = user.role || "customer";
@@ -175,7 +190,7 @@ function viewUser(id) {
       document.getElementById("viewAddress").value = user.adress || placeholder;
       setFormReadOnly(true);
       // Show the modal
-      const userModal = new bootstrap.Modal(document.getElementById("viewUserModal"));
+      const userModal = new bootstrap.Modal(modal);
       userModal.show();
     })
     .catch((error) => {
@@ -198,13 +213,11 @@ function editUser(userId) {
     })
     .then((data) => {
       const user = data.user;
-      // Populate the fields in the modal form
-      const idField = document.getElementById("viewUserId");
-      idField.value = user.id;
-      idField.readOnly = true;
-      idField.disabled = true;
-      idField.classList.add('bg-light'); // Add a visual indication that it's disabled
+      // Store the user ID in the modal's dataset
+      const modal = document.getElementById("viewUserModal");
+      modal.dataset.userId = user.id;
       
+      // Populate the fields in the modal form
       document.getElementById("viewUsername").value = user.username;
       document.getElementById("viewEmail").value = user.email;
       document.getElementById("viewRole").value = user.role || "customer";
@@ -216,8 +229,7 @@ function editUser(userId) {
       document.getElementById("viewAddress").value = user.address || ""; // Set 'address' if available
       setFormReadOnly(false);
       // Show the modal
-      const modalElement = document.getElementById("viewUserModal");
-      const userModal = new bootstrap.Modal(modalElement); // Use Bootstrap modal
+      const userModal = new bootstrap.Modal(modal);
       userModal.show();
     })
     .catch((error) => {
@@ -261,7 +273,7 @@ document.addEventListener('DOMContentLoaded', function() {
           throw new Error(t('user_not_found'));
         } else if (response.status === 403) {
           throw new Error(t('access_denied_admin'));
-        } else if (data.message && data.message.includes('existing orders')) {
+        } else if (response.status === 400 && data.message && data.message.includes('existing orders')) {
           throw new Error(t('cannot_delete_user_with_orders'));
         } else {
           throw new Error(data.message || t('failed_to_delete_user'));
@@ -294,6 +306,7 @@ function toggleUserLock(userId) {
     })
     .then((data) => {
       if (data.success) {
+        showMessage(data.message, 'success');
         fetchUsers(currentPage);
       } else {
         throw new Error(data.message || t("failed_to_toggle_user_lock"));
@@ -301,14 +314,15 @@ function toggleUserLock(userId) {
     })
     .catch((error) => {
       console.error("Error toggling user lock:", error);
-      alert(t("error_toggling_user_lock") + ": " + error.message);
+      showMessage(t("error_toggling_user_lock") + ": " + error.message, 'error');
     });
 }
 
 // Function to save user changes
 function saveUserFromModal(event) {
   event.preventDefault();
-  const userId = document.getElementById("viewUserId").value;
+  const modal = document.getElementById("viewUserModal");
+  const userId = modal.dataset.userId;
   const userData = {
     username: document.getElementById("viewUsername").value,
     email: document.getElementById("viewEmail").value,
@@ -329,7 +343,7 @@ function saveUserFromModal(event) {
     })
     .then((data) => {
       if (data.success) {
-        alert(t("user_updated_successfully"));
+        showMessage(t("user_updated_successfully"), 'success');
         const modal = bootstrap.Modal.getInstance(document.getElementById("viewUserModal"));
         modal.hide();
         fetchUsers(currentPage);
@@ -339,7 +353,7 @@ function saveUserFromModal(event) {
     })
     .catch((error) => {
       console.error("Error updating user:", error);
-      alert(t("error_updating_user") + ": " + error.message);
+      showMessage(t("error_updating_user") + ": " + error.message, 'error');
     });
 }
 
@@ -395,10 +409,10 @@ async function fetchChangelog(page = 1) {
         const row = document.createElement("tr");
         row.innerHTML = `
           <td>${entry.id}</td>
-          <td>${entry.userId}</td>
+          <td>${entry.users_Changelog_userIdTousers?.username || t('unknown_user')}</td>
           <td>${entry.field}</td>
           <td>${entry.changedAt}</td>
-          <td>${entry.users_Changelog_changedByTousers?.username || "N/A"}</td>
+          <td>${entry.users_Changelog_changedByTousers?.username || t('unknown_user')}</td>
           <td>${entry.oldValue}</td>
           <td>${entry.newValue}</td>
         `;

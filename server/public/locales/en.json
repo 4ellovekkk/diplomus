@@ -427,5 +427,17 @@
   "cannot_delete_user_with_orders": "Cannot delete this user because they have existing orders. Please delete or reassign their orders first.",
   "invalid_quantity": "Quantity cannot be negative",
   "failed_to_update_quantity": "Failed to update quantity",
-  "error_updating_quantity": "Error updating quantity"
+  "error_updating_quantity": "Error updating quantity",
+  "font_family_label": "Font",
+  "font_arial": "Arial",
+  "font_times": "Times New Roman",
+  "font_courier": "Courier New",
+  "font_georgia": "Georgia",
+  "font_verdana": "Verdana",
+  "font_impact": "Impact",
+  "font_comic_sans": "Comic Sans MS",
+  "complete_order": "Complete Order",
+  "confirm": "Confirm",
+  "ok": "OK",
+  "order_status": "Order Status"
 }

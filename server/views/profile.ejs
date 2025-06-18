@@ -258,6 +258,8 @@
       option_pages: '<%= __("option_pages") %>',
       option_size: '<%= __("option_size") %>',
       totalDocumentPages: '<%= __("totalDocumentPages") %>',
+      pages_all: '<%= __("pages_all") %>',
+      all: '<%= __("all") %>',
 
       // Orders translations
       order_id: '<%= __("order_id") %>',
@@ -744,8 +746,9 @@
                                     translatedValue = value;
                                     break;
                                   case 'pages':
+                                  case 'print_pages':
                                     translatedKey = translations.option_pages;
-                                    translatedValue = value === 'all' ? translations.pages_all : value;
+                                    translatedValue = (typeof value === 'string' && value.toLowerCase() === 'all') ? translations.pages_all : value;
                                     break;
                                   case 'color':
                                     translatedKey = translations.option_color;

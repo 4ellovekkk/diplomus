@@ -118,6 +118,18 @@
             <input type="range" id="font-size" min="10" max="50" value="<%= fontSize || 20 %>">
         </div>
         <div>
+            <label for="font-family"><%= __('font_family_label') %>:</label>
+            <select id="font-family" class="form-select">
+                <option value="Arial"><%= __('font_arial') %></option>
+                <option value="Times New Roman"><%= __('font_times') %></option>
+                <option value="Courier New"><%= __('font_courier') %></option>
+                <option value="Georgia"><%= __('font_georgia') %></option>
+                <option value="Verdana"><%= __('font_verdana') %></option>
+                <option value="Impact"><%= __('font_impact') %></option>
+                <option value="Comic Sans MS"><%= __('font_comic_sans') %></option>
+            </select>
+        </div>
+        <div>
             <label for="image-upload"><%= __('image_upload_label') %>:</label>
             <input type="file" 
                    id="image-upload" 

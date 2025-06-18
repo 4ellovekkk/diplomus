@@ -19,6 +19,7 @@ const merchDesignSchema = new mongoose.Schema({
     text: String,
     textColor: String,
     fontSize: Number,
+    fontFamily: String,
     position: {
       x: Number,
       y: Number
