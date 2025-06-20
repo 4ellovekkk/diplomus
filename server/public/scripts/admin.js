@@ -135,7 +135,7 @@ function updateUserTable(users) {
     row.innerHTML = `
       <td>${user.username}</td>
       <td>${user.email}</td>
-      <td>${user.role}</td>
+      <td>${t('role_' + user.role)}</td>
       <td>${user.is_locked ? t("locked") : t("active")}</td>
       <td>
         <button class="btn btn-sm btn-outline-primary me-1" title="${t("view")}" onclick="viewUser(${user.id})">
@@ -344,6 +344,7 @@ function toggleUserLock(userId) {
     })
     .then((data) => {
       if (data.success) {
+        // Use the translated message from the backend
         showMessage(data.message, 'success');
         fetchUsers(currentPage);
       } else {

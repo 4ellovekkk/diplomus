@@ -392,7 +392,7 @@ router.post(
       // Prevent locking admin users
       if (user.role === "admin") {
         return res.status(403).json({ 
-          message: "Cannot lock admin users",
+          message: req.__("cannot_lock_admin"),
           success: false 
         });
       }
@@ -417,7 +417,7 @@ router.post(
       res.json({
         success: true,
         user: updatedUser,
-        message: `User account ${updatedUser.is_locked ? "locked" : "unlocked"} successfully`,
+        message: req.__(updatedUser.is_locked ? "user_locked_success" : "user_unlocked_success"),
       });
     } catch (error) {
       console.error("Error toggling user lock:", error);

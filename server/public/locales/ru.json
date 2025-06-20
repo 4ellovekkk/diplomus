@@ -504,5 +504,11 @@
   "service_description_document_printing": "Высококачественная печать документов с различными опциями, включая цветную печать, размер бумаги и двустороннюю печать.",
   "service_description_custom_merch_design": "Футболка с вашим индивидуальным дизайном",
   "service_description_graphic_designer_consultation": "Консультация с профессиональным дизайнером для разработки вашей бренд-идентичности, мерча, логотипов и т.д.",
-  "service_description_unknown_product": "Описание неизвестного продукта"
+  "service_description_unknown_product": "Описание неизвестного продукта",
+  "user_locked_success": "Аккаунт пользователя успешно заблокирован.",
+  "user_unlocked_success": "Аккаунт пользователя успешно разблокирован.",
+  "cannot_lock_admin": "Нельзя заблокировать администратора.",
+  "role_customer": "Клиент",
+  "role_employee": "Сотрудник",
+  "role_admin": "Администратор"
 }

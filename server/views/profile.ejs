@@ -1130,7 +1130,9 @@
                                 <tr>
                                   <td>
                                     <div>
-                                      <strong>${item.options.type === 'merch' ? translations.custom_tshirt : item.service_name}</strong>
+                                      <strong>
+                                        ${item.options.type === 'merch' ? translations.custom_tshirt : (translations['service_' + (item.service_name || '').toLowerCase().replace(/\s+/g, '_')] || translations[item.service_name && item.service_name.toLowerCase().replace(/\s+/g, '_')] || translations[item.service_name] || item.service_name)}
+                                      </strong>
                                       ${item.options.type === 'merch' ? `
                                         <small class="text-muted d-block">${translations.custom_tshirt_desc}</small>
                                       ` : ''}

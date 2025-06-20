@@ -148,9 +148,9 @@
           <div class="mb-3">
             <label class="form-label"><%= t('role') %></label>
             <select id="viewRole" class="form-select">
-              <option value="customer">Customer</option>
-              <option value="employee">Employee</option>
-              <option value="admin">Admin</option>
+              <% ['customer', 'employee', 'admin'].forEach(function(role) { %>
+                <option value="<%= role %>"><%= t('role_' + role) %></option>
+              <% }); %>
             </select>
           </div>
           <div class="mb-3">

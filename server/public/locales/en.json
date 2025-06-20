@@ -489,5 +489,11 @@
   "service_description_document_printing": "High-quality document printing service with various options including color, paper size, and double-sided printing.",
   "service_description_custom_merch_design": "T-shirt with your own custom design",
   "service_description_graphic_designer_consultation": "Consultation with professional graphic designer for development of your brand identity, merch, logos, etc.",
-  "service_description_unknown_product": "Unknown product description"
+  "service_description_unknown_product": "Unknown product description",
+  "user_locked_success": "User account locked successfully.",
+  "user_unlocked_success": "User account unlocked successfully.",
+  "cannot_lock_admin": "Cannot lock admin users.",
+  "role_customer": "Customer",
+  "role_employee": "Employee",
+  "role_admin": "Admin"
 }
